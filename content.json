@@ -1,0 +1,56 @@
+{
+  "hero": {
+    "heading": "Building real tools for real work.",
+    "sub": "I’m an electrician and sheet metal worker turned developer — creating simple, dependable apps to make everyday work smoother. Less paperwork, more progress.",
+    "ctaRoadmap": "See what’s in the works",
+    "ctaContact": "Get in touch"
+  },
+  "about": {
+    "h2": "Where hard work meets clean code.",
+    "p1": "Frozen River Software started when I realized the tools I was building for myself could help others too. What began as a few scripts and experiments has turned into a growing collection of practical apps for tradespeople, small businesses, and anyone tired of juggling paperwork.",
+    "p2": "I’m not a big company — it’s just me (and a rotating cast of prototypes). But I take pride in building software that actually helps. Real-world tested, clearly documented, and built with the same care I used to put into every install and service call.",
+    "exp": [
+      "15+ years in the trades — residential & commercial installation and service",
+      "Worked with homeowners, corporations, and government institutions"
+    ],
+    "stack": {
+      "frontend": "React, Next.js, Expo",
+      "backend": "NestJS, Node, TypeScript",
+      "db": "PostgreSQL / SQLite (Drizzle)",
+      "infra": "Vercel, Cloudflare, GitHub Actions",
+      "ai": "OpenAI + local OCR & image recovery"
+    }
+  },
+  "projects": {
+    "items": [
+      { "title": "Job scheduling & invoicing app", "body": "Keeps work organized and cuts down on paperwork. (Name and demo coming soon.)" },
+      { "title": "PDF measurement tool", "body": "Measure scaled drawings right in your browser." },
+      { "title": "Receipt scanner", "body": "AI-assisted restoration for faded receipts to keep records readable." }
+    ],
+    "rAndD": "Exploring automation to handle the boring parts — from job costing to auto-filling invoices."
+  },
+  "roadmap": {
+    "title": "Where things are headed",
+    "copy": "Currently deep in development — building, testing, and occasionally rebuilding. Pilot testing and early feedback will open soon. If you run a small team, service business, or just like trying new tools, I’ll be looking for early testers in the coming weeks and months. I’d love to hear from you.",
+    "items": [
+      { "label": "Now", "text": "Core features in active development; private test builds." },
+      { "label": "Soon", "text": "Invite-only pilot with a small group for real-world feedback." },
+      { "label": "Next", "text": "Public demos and early access sign-ups." }
+    ]
+  },
+  "contact": {
+    "title": "Let’s talk",
+    "copy": "If you’ve got a problem worth solving, I’d love to hear it. Questions, collaborations, or early testing invites — all welcome.",
+    "btn": "Send a message",
+    "email": "info@frozenriversoftware.com",
+    "onePager": "Download one-pager (coming soon)",
+    "webEmail": "web@frozenriversoftware.com"
+  },
+  "newsletter": {
+    "title": "Newsletter",
+    "copy": "I don’t spam. I just occasionally overshare progress updates.",
+    "placeholder": "you@example.com",
+    "cta": "Join"
+  },
+  "changelog": "This month: fixed 12 bugs, broke 8 new things, progress net = +4."
+}
