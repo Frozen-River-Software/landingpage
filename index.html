@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Frozen River Software — Building real tools for real work</title>
+  <meta name="description" content="I build simple, dependable software to make everyday work smoother. Less paperwork, more progress." />
+  <link rel="icon" href="/favicon.ico" />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      /* Brand & theme */
+      --brand: #019191;           /* your logo color */
+      --brand-hover: #00A5A5;
+      --near-black: #091919;      /* your logo dark (also accent background) */
+
+      /* Dark theme palette */
+      --bg: #0B0F10;              /* page background */
+      --surface-1: #0F1516;       /* cards / sections */
+      --surface-2: #111A1B;       /* alt surface */
+      --border: #1C2A2B;          /* hairlines */
+
+      --text: #E7F2F2;            /* primary text */
+      --muted: #A9C1C1;           /* secondary text */
+      --dim: #7D9494;             /* subtle text */
+      --focus: #00B3B3;           /* focus ring */
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font-family:"Work Sans", system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+      line-height:1.6;
+    }
+    a{color:var(--brand); text-decoration:none}
+    a:hover{color:var(--brand-hover)}
+    img{max-width:100%; height:auto}
+
+    /* Layout */
+    .container{max-width:1120px; margin-inline:auto; padding:0 20px}
+    header{
+      position:sticky; top:0; z-index:40; backdrop-filter:saturate(140%) blur(8px);
+      background:color-mix(in oklab, var(--bg) 70%, black 30% / 0.4);
+      border-bottom:1px solid var(--border);
+    }
+    .header-inner{display:flex; align-items:center; justify-content:space-between; height:64px}
+    .brand{display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:.2px}
+    .brand-mark{width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:8px; background:var(--near-black); outline:2px solid var(--brand)}
+
+    nav a{color:var(--muted); margin-left:20px}
+    nav a:hover{color:var(--text)}
+
+    .section{padding:72px 0}
+    .section.alt{background:var(--surface-1); border-block:1px solid var(--border)}
+    .h1{font-family:Manrope, system-ui, sans-serif; font-weight:800; letter-spacing:-.02em; line-height:1.15; font-size:clamp(32px, 5vw, 48px)}
+    .h2{font-family:Manrope, system-ui, sans-serif; font-weight:800; letter-spacing:-.01em; line-height:1.2; font-size:clamp(22px, 3.2vw, 28px); margin:0 0 10px}
+    .lede{color:var(--muted); font-size:1.125rem}
+
+    /* Cards */
+    .grid{display:grid; gap:20px}
+    @media(min-width:768px){ .grid.cols-2{grid-template-columns:1fr 1fr} .grid.cols-3{grid-template-columns:repeat(3,1fr)} }
+    .card{background:var(--surface-1); border:1px solid var(--border); border-radius:16px; padding:20px; transition:transform .2s ease, box-shadow .2s ease}
+    .card:hover{transform:translateY(-2px)}
+
+    /* Buttons */
+    .btn{display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:12px 16px; border-radius:12px; font-weight:600; border:1px solid transparent}
+    .btn.primary{background:var(--brand); color:#001;}
+    .btn.primary:hover{background:var(--brand-hover)}
+    .btn.ghost{border-color:var(--border); color:var(--text); background:transparent}
+    .btn.ghost:hover{border-color:var(--brand); color:var(--brand)}
+
+    /* Timeline */
+    .timeline{position:relative; padding-left:28px}
+    .timeline::before{content:""; position:absolute; left:10px; top:4px; bottom:4px; width:2px; background:var(--border)}
+    .titem{position:relative; margin:0 0 18px}
+    .titem::before{content:""; position:absolute; left:-28px; top:6px; width:12px; height:12px; border-radius:50%; background:var(--brand)}
+    .muted{color:var(--dim)}
+
+    /* Forms */
+    input[type=email], input[type=text], textarea{width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:var(--surface-2); color:var(--text)}
+    input[type=email]:focus, input[type=text]:focus, textarea:focus{outline:2px solid var(--focus); outline-offset:2px; border-color:transparent}
+
+    /* Footer */
+    footer{border-top:1px solid var(--border); padding:28px 0; color:var(--dim)}
+
+    /* Reveal */
+    .reveal{opacity:0; translate:0 12px}
+    .reveal.show{opacity:1; translate:0 0; transition:all .5s ease}
+  </style>
+  <script>
+    // Git-backed content loader: fetches /content.json (if present) and populates the page.
+    // Edit flow: change content.json in your repo → commit → host redeploys (zero downtime).
+    (function(){
+      const defaults = {
+        hero: {
+          heading: "Building real tools for real work.",
+          sub: "I’m an electrician and sheet metal worker turned developer — creating simple, dependable apps to make everyday work smoother. Less paperwork, more progress.",
+          ctaRoadmap: "See what’s in the works",
+          ctaContact: "Get in touch"
+        },
+        about: {
+          h2: "Where hard work meets clean code.",
+          p1: "Frozen River Software started when I realized the tools I was building for myself could help others too. What began as a few scripts and experiments has turned into a growing collection of practical apps for tradespeople, small businesses, and anyone tired of juggling paperwork.",
+          p2: "I’m not a big company — it’s just me (and a rotating cast of prototypes). But I take pride in building software that actually helps. Real‑world tested, clearly documented, and built with the same care I used to put into every install and service call.",
+          exp: [
+            "15+ years in the trades — residential & commercial installation and service",
+            "Worked with homeowners, corporations, and government institutions"
+          ],
+          stack: {
+            frontend: "React, Next.js, Expo",
+            backend: "NestJS, Node, TypeScript",
+            db: "PostgreSQL / SQLite (Drizzle)",
+            infra: "Vercel, Cloudflare, GitHub Actions",
+            ai: "OpenAI + local OCR & image recovery"
+          }
+        },
+        projects: {
+          items: [
+            { title: "Job scheduling & invoicing app", body: "Keeps work organized and cuts down on paperwork. (Name and demo coming soon.)" },
+            { title: "PDF measurement tool", body: "Measure scaled drawings right in your browser." },
+            { title: "Receipt scanner", body: "AI‑assisted restoration for faded receipts to keep records readable." }
+          ],
+          rAndD: "Exploring automation to handle the boring parts — from job costing to auto‑filling invoices."
+        },
+        roadmap: {
+          title: "Where things are headed",
+          copy: "Currently deep in development — building, testing, and occasionally rebuilding. Pilot testing and early feedback will open soon. If you run a small team, service business, or just like trying new tools, I’ll be looking for early testers in the coming weeks and months. I’d love to hear from you.",
+          items: [
+            { label: "Now", text: "Core features in active development; private test builds." },
+            { label: "Soon", text: "Invite‑only pilot with a small group for real‑world feedback." },
+            { label: "Next", text: "Public demos and early access sign‑ups." }
+          ]
+        },
+        contact: {
+          title: "Let’s talk",
+          copy: "If you’ve got a problem worth solving, I’d love to hear it. Questions, collaborations, or early testing invites — all welcome.",
+          btn: "Send a message",
+          email: "info@your-domain.com",
+          onePager: "Download one‑pager (coming soon)",
+          webEmail: "web@your-domain.com"
+        },
+        newsletter: {
+          title: "Newsletter",
+          copy: "I don’t spam. I just occasionally overshare progress updates.",
+          placeholder: "you@example.com",
+          cta: "Join"
+        },
+        changelog: "This month: fixed 12 bugs, broke 8 new things, progress net = +4."
+      };
+
+      function setText(id, val){ const el = document.getElementById(id); if(el && val!=null) el.textContent = val; }
+      function setHTML(id, val){ const el = document.getElementById(id); if(el && val!=null) el.innerHTML = val; }
+      function setAttr(id, attr, val){ const el = document.getElementById(id); if(el && val!=null) el.setAttribute(attr, val); }
+
+      function populate(c){
+        setText('hero-heading', c.hero.heading);
+        setText('hero-sub', c.hero.sub);
+        setText('cta-roadmap', c.hero.ctaRoadmap);
+        setText('cta-contact', c.hero.ctaContact);
+
+        setText('about-h2', c.about.h2);
+        setText('about-p1', c.about.p1);
+        setText('about-p2', c.about.p2);
+        const exp = document.getElementById('exp-list');
+        if(exp){ exp.innerHTML=''; (c.about.exp||[]).forEach(t=>{ const li=document.createElement('li'); li.textContent=t; exp.appendChild(li); }); }
+        setText('stack-frontend', c.about.stack.frontend);
+        setText('stack-backend', c.about.stack.backend);
+        setText('stack-db', c.about.stack.db);
+        setText('stack-infra', c.about.stack.infra);
+        setText('stack-ai', c.about.stack.ai);
+
+        (c.projects.items||[]).forEach((p,i)=>{
+          setText(`proj${i}-title`, p.title);
+          setText(`proj${i}-body`, p.body);
+        });
+        setText('projects-randd', c.projects.rAndD);
+
+        setText('roadmap-title', c.roadmap.title);
+        setText('roadmap-copy', c.roadmap.copy);
+        (c.roadmap.items||[]).forEach((it,i)=>{ setText(`r${i}-label`, it.label); setText(`r${i}-text`, it.text); });
+
+        setText('contact-title', c.contact.title);
+        setText('contact-copy', c.contact.copy);
+        setText('contact-btn', c.contact.btn);
+        setAttr('contact-btn', 'href', `mailto:${c.contact.email}`);
+        setText('contact-onepager', c.contact.onePager);
+        setAttr('web-quote', 'href', `mailto:${c.contact.webEmail}`);
+
+        setText('nl-title', c.newsletter.title);
+        setText('nl-copy', c.newsletter.copy);
+        const inp = document.getElementById('subEmail'); if(inp) inp.placeholder = c.newsletter.placeholder;
+        setText('nl-cta', c.newsletter.cta);
+
+        setText('changelog', c.changelog);
+      }
+
+      function merge(a,b){
+        if(Array.isArray(a) && Array.isArray(b)) return b;
+        if(a && typeof a==='object' && b && typeof b==='object'){
+          const out = {...a};
+          for(const k of Object.keys(b)) out[k] = merge(a[k], b[k]);
+          return out;
+        }
+        return (b===undefined)? a : b;
+      }
+
+      fetch('/content.json', {cache:'no-store'})
+        .then(r=> r.ok? r.json(): Promise.reject())
+        .then(data=> populate(merge(defaults, data)))
+        .catch(()=> populate(defaults));
+    })();
+  </script>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="container header-inner">
+      <div class="brand">
+        <!-- Replace with your SVG logo; this is just a placeholder box using your colors -->
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Frozen River Software</span>
+      </div>
+      <nav aria-label="Primary">
+        <a href="#about">About</a>
+        <a href="#projects">Projects</a>
+        <a href="#roadmap">Roadmap</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="section">
+      <div class="container grid cols-2">
+        <div class="reveal">
+          <h1 class="h1" id="hero-heading">Building real tools for real work.</h1>
+          <p class="lede" id="hero-sub">I’m an electrician and sheet metal worker turned developer — creating simple, dependable apps to make everyday work smoother. Less paperwork, more progress.</p>
+          <div style="margin-top:18px; display:flex; gap:12px; flex-wrap:wrap">
+            <a class="btn primary" href="#roadmap" id="cta-roadmap">See what’s in the works</a>
+            <a class="btn ghost" href="#contact" id="cta-contact">Get in touch</a>
+          </div>
+        </div>
+        <div class="reveal">
+          <div class="card" aria-label="Focus areas">
+            <h2 class="h2" style="margin-bottom:8px">Focus areas</h2>
+            <div class="grid cols-2">
+              <div class="card" style="padding:12px">Scheduling & Dispatch</div>
+              <div class="card" style="padding:12px">Invoicing & Payments</div>
+              <div class="card" style="padding:12px">Inventory & Field Data</div>
+              <div class="card" style="padding:12px">Offline‑first Mobile</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section id="about" class="section alt">
+      <div class="container grid cols-2">
+        <div class="reveal">
+          <h2 class="h2" id="about-h2">Where hard work meets clean code.</h2>
+          <p id="about-p1">Frozen River Software started when I realized the tools I was building for myself could help others too. What began as a few scripts and experiments has turned into a growing collection of practical apps for tradespeople, small businesses, and anyone tired of juggling paperwork.</p>
+          <p id="about-p2">I’m not a big company — it’s just me (and a rotating cast of prototypes). But I take pride in building software that actually helps. Real‑world tested, clearly documented, and built with the same care I used to put into every install and service call.</p>
+        </div>
+        <aside class="reveal">
+          <div class="card">
+            <h3 class="h2" style="font-size:20px">Experience & stack</h3>
+            <ul id="exp-list" style="margin:10px 0 14px; padding-left:18px">
+              <li>15+ years in the trades — residential & commercial installation and service</li>
+              <li>Worked with homeowners, corporations, and government institutions</li>
+            </ul>
+            <div class="grid cols-2">
+              <div>
+                <div class="muted" style="font-weight:600; margin-bottom:6px">Frontend</div>
+                <div id="stack-frontend">React, Next.js, Expo</div>
+              </div>
+              <div>
+                <div class="muted" style="font-weight:600; margin-bottom:6px">Backend</div>
+                <div id="stack-backend">NestJS, Node, TypeScript</div>
+              </div>
+              <div>
+                <div class="muted" style="font-weight:600; margin-bottom:6px">Database</div>
+                <div id="stack-db">PostgreSQL / SQLite (Drizzle)</div>
+              </div>
+              <div>
+                <div class="muted" style="font-weight:600; margin-bottom:6px">Infra</div>
+                <div id="stack-infra">Vercel, Cloudflare, GitHub Actions</div>
+              </div>
+              <div>
+                <div class="muted" style="font-weight:600; margin-bottom:6px">AI tools</div>
+                <div id="stack-ai">OpenAI + local OCR & image recovery</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Projects -->
+    <section id="projects" class="section">
+      <div class="container">
+        <h2 class="h2">What’s on the workbench</h2>
+        <p class="muted">A few tools designed to make everyday jobs faster and smarter:</p>
+        <div class="grid cols-3" style="margin-top:16px">
+          <article class="card reveal">
+            <h3 id="proj0-title" style="margin:0 0 6px; font-weight:700">Job scheduling & invoicing app</h3>
+            <p id="proj0-body" class="muted">Keeps work organized and cuts down on paperwork. (Name and demo coming soon.)</p>
+          </article>
+          <article class="card reveal">
+            <h3 id="proj1-title" style="margin:0 0 6px; font-weight:700">PDF measurement tool</h3>
+            <p id="proj1-body" class="muted">Measure scaled drawings right in your browser.</p>
+          </article>
+          <article class="card reveal">
+            <h3 id="proj2-title" style="margin:0 0 6px; font-weight:700">Receipt scanner</h3>
+            <p id="proj2-body" class="muted">AI‑assisted restoration for faded receipts to keep records readable.</p>
+          </article>
+        </div>
+        <div class="card reveal" style="margin-top:16px">
+          <strong>AI integrations (R&D)</strong>
+          <p id="projects-randd" class="muted" style="margin:6px 0 0">Exploring automation to handle the boring parts — from job costing to auto‑filling invoices.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section id="roadmap" class="section alt">
+      <div class="container">
+        <h2 class="h2" id="roadmap-title">Where things are headed</h2>
+        <p id="roadmap-copy">Currently deep in development — building, testing, and occasionally rebuilding. Pilot testing and early feedback will open soon. If you run a small team, service business, or just like trying new tools, I’ll be looking for early testers in the coming weeks and months. I’d love to hear from you.</p>
+        <div class="timeline" style="margin-top:14px">
+          <div class="titem"><strong id="r0-label">Now</strong><div id="r0-text" class="muted">Core features in active development; private test builds.</div></div>
+          <div class="titem"><strong id="r1-label">Soon</strong><div id="r1-text" class="muted">Invite‑only pilot with a small group for real‑world feedback.</div></div>
+          <div class="titem"><strong id="r2-label">Next</strong><div id="r2-text" class="muted">Public demos and early access sign‑ups.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact + Website services -->
+    <section id="contact" class="section">
+      <div class="container grid cols-2">
+        <div class="reveal">
+          <h2 class="h2" id="contact-title">Let’s talk</h2>
+          <p id="contact-copy">If you’ve got a problem worth solving, I’d love to hear it. Questions, collaborations, or early testing invites — all welcome.</p>
+          <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap">
+            <a id="contact-btn" class="btn primary" href="mailto:info@your-domain.com">Send a message</a>
+            <a class="btn ghost" href="#" id="contact-onepager">Download one‑pager (coming soon)</a>
+          </div>
+
+          <!-- Newsletter placeholder -->
+          <div class="card" style="margin-top:16px">
+            <strong id="nl-title">Newsletter</strong>
+            <p id="nl-copy" class="muted" style="margin:6px 0 10px">I don’t spam. I just occasionally overshare progress updates.</p>
+            <form onsubmit="subscribe(event)">
+              <label class="muted" style="display:block; margin-bottom:8px">Email</label>
+              <div style="display:flex; gap:10px; align-items:center">
+                <input type="email" id="subEmail" placeholder="you@example.com" required />
+                <button class="btn primary" type="submit" id="nl-cta">Join</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Mini changelog -->
+          <div class="card" style="margin-top:16px">
+            <strong data-edit>Mini Changelog</strong>
+            <p id="changelog" class="muted" style="margin:6px 0 0">This month: fixed 12 bugs, broke 8 new things, progress net = +4.</p>
+          </div>
+        </div>
+
+        <!-- Sidebar: Website services -->
+        <aside class="reveal">
+          <div class="card">
+            <h3 class="h2" style="font-size:20px">Need a website?</h3>
+            <p>I take on small website projects when I have room. I can build it and hand it off, or build & maintain it for you.</p>
+            <a id="web-quote" class="btn ghost" href="mailto:web@your-domain.com">Request a website quote</a>
+            <p class="muted" style="margin-top:10px; font-size:.9rem">Separate inbox so I don’t miss your request.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container" style="display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap">
+      <div>© <span id="year"></span> Frozen River Software</div>
+      <div style="display:flex; gap:14px">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="mailto:info@your-domain.com">Email</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Auto year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Simple reveal on scroll
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('show'); io.unobserve(e.target); } });
+    }, {threshold: 0.1});
+    document.querySelectorAll('.reveal').forEach(el=> io.observe(el));
+
+    // Newsletter placeholder handler — replace with your provider later
+    function subscribe(e){
+      e.preventDefault();
+      alert('Thanks! I\'ll keep you posted.');
+    }
+  </script>
+</body>
+</html>
