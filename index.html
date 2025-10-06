@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Frozen River Software — From the field to the cloud</title>
+  <title>Frozen River Software — From the field to the Cloud</title>
   <meta name="description" content="I build simple, dependable software to make everyday work smoother. Less paperwork, more progress." />
   <link rel="canonical" href="https://www.frozenriversoftware.com/" />
   <!-- Open Graph / Twitter -->
-  <meta property="og:title" content="Frozen River Software — From the field to the cloud" />
+  <meta property="og:title" content="Frozen River Software — From the field to the Cloud" />
   <meta property="og:description" content="I build simple, dependable software to make everyday work smoother. Less paperwork, more progress." />
   <meta property="og:image" content="/assets/og.jpg" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Frozen River Software" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Frozen River Software — From the field to the cloud" />
+  <meta name="twitter:title" content="Frozen River Software — From the field to the Cloud" />
   <meta name="twitter:description" content="I build simple, dependable software to make everyday work smoother. Less paperwork, more progress." />
   <meta name="twitter:image" content="/assets/og.jpg" />
   <link rel="icon" href="/favicon.ico" />
@@ -152,15 +152,18 @@
     /* Floating website card (popup-like) */
     #web-float{position:fixed; right:24px; top:88px; width:320px; max-width:92vw; background:var(--surface-1); border:1px solid var(--border); border-radius:16px; box-shadow:0 12px 28px rgba(0,0,0,.45); padding:14px; z-index:100; opacity:0; transform:translateY(-8px); pointer-events:none; transition:opacity .25s ease, transform .25s ease}
     #web-float.show{opacity:1; transform:translateY(0); pointer-events:auto}
-    #web-float.collapsed{transform:translateY(0) translateX(calc(100% - 14px));}
-    /* Arrow on left edge of box (near content) */
-    #web-float.collapsed::before{content:'\2039'; /* ‹ expand left */ position:absolute; left:2px; top:50%; transform:translateY(-50%); color:var(--brand); font-size:18px; line-height:1}
-    #web-float.show:not(.collapsed)::after{content:'\203A'; /* › close right */ position:absolute; left:6px; top:50%; transform:translateY(-50%); color:var(--brand); font-size:18px; line-height:1; opacity:.8}
-    #web-float .web-edge{position:absolute; left:0; top:0; bottom:0; width:14px; background:transparent; border:none; cursor:pointer}
-    /* Arrow glow hint */
-    @keyframes glowblink{ 0%,100%{ opacity:.8; text-shadow:0 0 0 var(--brand);} 50%{ opacity:1; text-shadow:0 0 8px var(--brand);} }
-    #web-float.hint.collapsed::before{ animation:glowblink 1s ease-in-out infinite }
-    #web-float.hint.show:not(.collapsed)::after{ animation:glowblink 1s ease-in-out infinite }
+    #web-float.collapsed{transform:translateY(0) translateX(calc(100% - 24px));}
+    /* Arrow on left edge of box (near content), spans sliver vertically */
+    #web-float.collapsed::before{content:'\2039'; /* ‹ expand left */ position:absolute; left:0; top:0; bottom:0; width:24px; display:flex; align-items:center; justify-content:center; color:var(--brand); font-size:32px; line-height:1}
+    #web-float.show:not(.collapsed)::after{content:'\203A'; /* › close right */ position:absolute; left:0; top:0; bottom:0; width:24px; display:flex; align-items:center; justify-content:center; color:var(--brand); font-size:32px; line-height:1; opacity:.95}
+    #web-float .web-edge{position:absolute; left:0; top:0; bottom:0; width:24px; background:transparent; border:none; cursor:pointer}
+    /* Arrow glow hint: 3s blinking, 3s rest (6s cycle) */
+    @keyframes glowcycle{
+      0%,10%,20%,30%,40%,50%,100%{ opacity:.85; text-shadow:0 0 0 var(--brand); }
+      5%,15%,25%,35%,45%{ opacity:1; text-shadow:0 0 12px var(--brand); }
+    }
+    #web-float.hint-cycling.collapsed::before{ animation:glowcycle 6s ease-in-out infinite }
+    #web-float.hint-cycling.show:not(.collapsed)::after{ animation:glowcycle 6s ease-in-out infinite }
 
     /* Focus list */
     .focus-list{list-style:none; margin:10px 0 0; padding:0; display:grid; gap:10px}
@@ -214,7 +217,7 @@
     (function(){
       const defaults = {
         hero: {
-          heading: "From the field to the cloud.",
+          heading: "From the field to the Cloud.",
           sub: "I’m an electrician and sheet metal worker turned developer — creating simple, dependable apps to make everyday work smoother. Less paperwork, more progress.",
           ctaRoadmap: "See what’s in the works",
           ctaContact: "Get in touch"
@@ -813,12 +816,12 @@
       try{ const saved = sessionStorage.getItem('webFloatCollapsed'); if(saved!=null){ setCollapsed(saved==='1'); restored=true; } }catch(_){ }
       let wasVisible = false;
       // collapse when clicking edge while open
-      edge?.addEventListener('click', (e)=>{ e.stopPropagation(); setCollapsed(!el.classList.contains('collapsed')); });
+      edge?.addEventListener('click', (e)=>{ e.stopPropagation(); setCollapsed(!el.classList.contains('collapsed')); try{ el.classList.remove('hint-cycling'); sessionStorage.setItem('webFloatHinted','1'); }catch(_){ } });
       // Click behavior: expand when collapsed; otherwise collapse if not clicking an action control
       el.addEventListener('click', (e)=>{
-        if(el.classList.contains('collapsed')){ setCollapsed(false); return; }
+        if(el.classList.contains('collapsed')){ setCollapsed(false); try{ el.classList.remove('hint-cycling'); sessionStorage.setItem('webFloatHinted','1'); }catch(_){ } return; }
         const isAction = e.target.closest('a,button');
-        if(!isAction) setCollapsed(true);
+        if(!isAction){ setCollapsed(true); try{ el.classList.remove('hint-cycling'); sessionStorage.setItem('webFloatHinted','1'); }catch(_){ } }
       });
       function onScroll(){
         const proj = document.getElementById('projects');
@@ -830,11 +833,10 @@
           if(!wasVisible){
             // first time shown this session: default to collapsed if not restored
             if(!restored){ setCollapsed(true); }
-            // add hint glow once per session
+            // start hint cycle once per session (glow 3s, rest 3s)
             try{
               if(sessionStorage.getItem('webFloatHinted')!=='1'){
-                el.classList.add('hint');
-                setTimeout(()=>{ el.classList.remove('hint'); sessionStorage.setItem('webFloatHinted','1'); }, 4000);
+                el.classList.add('hint-cycling');
               }
             }catch(_){ /* ignore */ }
           }
