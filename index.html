@@ -152,15 +152,17 @@
     /* Floating website card (popup-like) */
     #web-float{position:fixed; right:24px; top:88px; width:320px; max-width:92vw; background:var(--surface-1); border:1px solid var(--border); border-radius:16px; box-shadow:0 12px 28px rgba(0,0,0,.45); padding:14px; z-index:100; opacity:0; transform:translateY(-8px); pointer-events:none; transition:opacity .25s ease, transform .25s ease}
     #web-float.show{opacity:1; transform:translateY(0); pointer-events:auto}
-    #web-float.collapsed{transform:translateY(0) translateX(calc(100% - 24px));}
-    /* Arrow on left edge of box (near content), spans sliver vertically */
-    #web-float.collapsed::before{content:'\2039'; /* ‹ expand left */ position:absolute; left:0; top:0; bottom:0; width:24px; display:flex; align-items:center; justify-content:center; color:var(--brand); font-size:32px; line-height:1}
-    #web-float.show:not(.collapsed)::after{content:'\203A'; /* › close right */ position:absolute; left:0; top:0; bottom:0; width:24px; display:flex; align-items:center; justify-content:center; color:var(--brand); font-size:32px; line-height:1; opacity:.95}
-    #web-float .web-edge{position:absolute; left:0; top:0; bottom:0; width:24px; background:transparent; border:none; cursor:pointer}
+    /* Hide card a bit more when collapsed (leave ~8px of card showing) */
+    #web-float.collapsed{transform:translateY(0) translateX(calc(100% - 8px));}
+    /* Arrow sits just off the card's left edge; spans the full sliver height */
+    #web-float.collapsed::before{content:'\2039'; /* ‹ expand left */ position:absolute; left:-32px; top:0; bottom:0; width:32px; display:flex; align-items:center; justify-content:center; color:var(--brand); font-size:40px; line-height:1}
+    #web-float.show:not(.collapsed)::after{content:'\203A'; /* › close right */ position:absolute; left:-32px; top:0; bottom:0; width:32px; display:flex; align-items:center; justify-content:center; color:var(--brand); font-size:40px; line-height:1; opacity:.95}
+    /* Click target follows the arrow area off-card */
+    #web-float .web-edge{position:absolute; left:-32px; top:0; bottom:0; width:32px; background:transparent; border:none; cursor:pointer}
     /* Arrow glow hint: 3s blinking, 3s rest (6s cycle) */
     @keyframes glowcycle{
-      0%,10%,20%,30%,40%,50%,100%{ opacity:.85; text-shadow:0 0 0 var(--brand); }
-      5%,15%,25%,35%,45%{ opacity:1; text-shadow:0 0 12px var(--brand); }
+      0%,50%,100%{ opacity:.85; text-shadow:0 0 0 var(--brand); }
+      8%,16%,24%{ opacity:1; text-shadow:0 0 14px var(--brand), 0 0 28px var(--brand); }
     }
     #web-float.hint-cycling.collapsed::before{ animation:glowcycle 6s ease-in-out infinite }
     #web-float.hint-cycling.show:not(.collapsed)::after{ animation:glowcycle 6s ease-in-out infinite }
