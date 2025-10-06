@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Frozen River Software — One‑Pager</title>
+  <meta name="description" content="A quick overview of Frozen River Software: problem, solution, focus areas, and how to get in touch." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Work+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --brand:#019191; --bg:#0B0F10; --surface:#0F1516; --text:#E7F2F2; --muted:#A9C1C1; --border:#1C2A2B;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:"Work Sans",system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif; color:var(--text); background:var(--bg); line-height:1.6}
+    .wrap{max-width:900px; margin:0 auto; padding:32px 20px}
+    header{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px}
+    .logo{display:flex; align-items:center; gap:10px}
+    .logo img{height:28px}
+    .brand{font-family:Manrope,system-ui,sans-serif; font-weight:800; letter-spacing:-.01em}
+    h1,h2{font-family:Manrope,system-ui,sans-serif; font-weight:800; letter-spacing:-.01em}
+    h1{font-size:26px; margin:8px 0}
+    h2{font-size:18px; margin:18px 0 8px}
+    .card{background:transparent; border:none; border-radius:12px; padding:0; margin-top:10px}
+    .grid{display:grid; gap:12px}
+    @media(min-width:800px){ .grid.cols-2{grid-template-columns:1fr 1fr} }
+    ul{margin:8px 0 8px 18px}
+    .muted{color:var(--muted)}
+    .pill{display:inline-block; padding:4px 10px; border:1px solid var(--border); border-radius:999px; background:rgba(255,255,255,.03); margin:2px 6px 2px 0}
+    .btn{display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text); text-decoration:none}
+    .btn:hover{border-color:var(--brand); color:var(--brand)}
+    footer{margin-top:16px; color:var(--muted); font-size:.95rem}
+    .force-white{background:#fff !important; color:#000 !important}
+    .force-white .card{background:#fff !important; border:none !important}
+    .force-white .muted{color:#444 !important}
+    .force-white a{color:#000 !important}
+    @media print{
+      @page { size: Letter portrait; margin: 0.5in; }
+      body{background:#fff; color:#000; print-color-adjust: exact; -webkit-print-color-adjust: exact; font-size:10.5pt}
+      .wrap{width:auto; max-width:7.5in; margin:0 auto; padding:0}
+      header{margin-bottom:6mm}
+      .logo img{height:22px}
+      h1{font-size:16pt; margin:4mm 0 2mm}
+      h2{font-size:12pt; margin:3mm 0 2mm}
+      .card{background:#fff; border:none; padding:0; margin-top:4mm; page-break-inside:avoid}
+      .grid{gap:4mm}
+      ul{margin:2mm 0 2mm 6mm}
+      a{color:#000; text-decoration:none}
+      .btn{display:none !important}
+    }
+  </style>
+  <meta name="color-scheme" content="dark light" />
+  <meta name="robots" content="noindex" />
+  <base href=".." />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">
+        <img src="assets/logo.svg" alt="" />
+        <div class="brand">Frozen River Software</div>
+      </div>
+      <div>
+        <span class="pill" style="border-color: rgba(1,145,145,.4)">Early access</span>
+        <a href="#" class="btn" onclick="window.print(); return false;" title="Print or save as PDF">Print / Save PDF</a>
+      </div>
+    </header>
+
+    <div class="card">
+      <h1>Built with hands‑on experience. Coded with purpose.</h1>
+      <p class="muted">Red Seal sheet metal + Red Seal electrician (Master Electrician). Practical software for trades and service teams.</p>
+    </div>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h2>Problem → Solution</h2>
+        <p><strong>Problem:</strong> Paperwork, scheduling chaos, and scattered tools slow jobs and complicate billing.</p>
+        <p><strong>Solution:</strong> Simple, dependable apps that save time, reduce admin, and keep crews moving.</p>
+      </div>
+      <div class="card">
+        <h2>Focus Areas</h2>
+        <div>
+          <span class="pill">Scheduling &amp; dispatch</span>
+          <span class="pill">Invoicing &amp; payments</span>
+          <span class="pill">Inventory &amp; field data</span>
+          <span class="pill">Offline‑first mobile</span>
+          <span class="pill">AI learning &amp; integration</span>
+          <span class="pill">Quotes &amp; takeoffs</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h2>Benefits</h2>
+        <ul>
+          <li>Less admin, faster billing, fewer mistakes</li>
+          <li>Clear visibility across jobs and stock</li>
+          <li>Works even with low signal or offline</li>
+          <li>Built from real field experience</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>Status &amp; Roadmap</h2>
+        <ul>
+          <li><strong>Now:</strong> Core features in development</li>
+          <li><strong>Pilot:</strong> Invite small teams for feedback</li>
+          <li><strong>Preview:</strong> Public demos &amp; early access</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Get in touch</h2>
+      <p>Email: <a href="mailto:info@frozenriversoftware.com">info@frozenriversoftware.com</a></p>
+      <p>Website: <a href="https://www.frozenriversoftware.com">www.frozenriversoftware.com</a></p>
+    </div>
+
+    <footer>
+      Alberta, Canada • © <span id="y"></span> Frozen River Software
+    </footer>
+  </div>
+  <script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+  <!-- Open this page, then use the Print button or browser print to save PDF -->
+</body>
+</html>

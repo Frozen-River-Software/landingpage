@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Accessibility — Frozen River Software</title>
+  <meta name="description" content="Accessibility statement for Frozen River Software." />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Work+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0B0F10;--text:#E7F2F2;--muted:#A9C1C1;--border:#1C2A2B}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:"Work Sans",system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;line-height:1.6}
+    a{color:#019191;text-decoration:none}
+    a:hover{color:#00A5A5}
+    .container{max-width:820px;margin:0 auto;padding:40px 20px}
+    h1,h2{font-family:Manrope,system-ui,sans-serif;font-weight:800;letter-spacing:-.01em}
+    h2{font-size:20px;margin:18px 0 8px}
+    .card{border:1px solid var(--border);border-radius:14px;padding:20px;background:#0F1516}
+    ul{margin:8px 0 8px 18px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <p><a href="/">← Back to home</a></p>
+    <h1>Accessibility</h1>
+    <div class="card">
+      <p>Frozen River Software aims to make this website usable by as many people as possible. We strive to meet WCAG 2.1 AA guidelines where practical and to continuously improve based on feedback.</p>
+      <h2>Our approach</h2>
+      <ul>
+        <li>Semantic HTML, clear headings, and keyboard-accessible controls</li>
+        <li>Visible focus styles and sufficient color contrast</li>
+        <li>Reduced motion support via prefers-reduced-motion</li>
+        <li>Descriptive labels, alt text, and ARIA where needed</li>
+      </ul>
+      <h2>Known limitations</h2>
+      <ul>
+        <li>Some visual enhancements may not be fully navigable by screen readers</li>
+        <li>Experimental animations are disabled when reduced motion is requested</li>
+      </ul>
+      <h2>Feedback</h2>
+      <p>If you encounter an accessibility issue, please email <a href="mailto:info@frozenriversoftware.com">info@frozenriversoftware.com</a> with a description and your browser/device. We’ll do our best to address it promptly.</p>
+      <p class="muted">Last updated: <span id="adate"></span></p>
+    </div>
+  </div>
+  <script>(function(){const d=new Date();const s=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;document.getElementById('adate').textContent=s;})();</script>
+</body>
+</html>
+

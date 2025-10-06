@@ -5,10 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Frozen River Software — Building real tools for real work</title>
   <meta name="description" content="I build simple, dependable software to make everyday work smoother. Less paperwork, more progress." />
+  <link rel="canonical" href="https://www.frozenriversoftware.com/" />
+  <!-- Open Graph / Twitter -->
+  <meta property="og:title" content="Frozen River Software — Building real tools for real work" />
+  <meta property="og:description" content="I build simple, dependable software to make everyday work smoother. Less paperwork, more progress." />
+  <meta property="og:image" content="/assets/og.jpg" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Frozen River Software" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Frozen River Software — Building real tools for real work" />
+  <meta name="twitter:description" content="I build simple, dependable software to make everyday work smoother. Less paperwork, more progress." />
+  <meta name="twitter:image" content="/assets/og.jpg" />
   <link rel="icon" href="/favicon.ico" />
 
   <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
 
   <style>
     :root{
@@ -31,6 +45,7 @@
 
     *{box-sizing:border-box}
     html,body{height:100%}
+    html{scroll-behavior:smooth}
     body{
       margin:0; background:var(--bg); color:var(--text);
       font-family:"Work Sans", system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
@@ -38,6 +53,7 @@
     }
     a{color:var(--brand); text-decoration:none}
     a:hover{color:var(--brand-hover)}
+    a:focus-visible, .btn:focus-visible{outline:2px solid var(--focus); outline-offset:3px}
     img{max-width:100%; height:auto}
 
     /* Layout */
@@ -48,13 +64,16 @@
       border-bottom:1px solid var(--border);
     }
     .header-inner{display:flex; align-items:center; justify-content:space-between; height:64px}
-    .brand{display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:.2px}
-    .brand-mark{width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:8px; background:var(--near-black); outline:2px solid var(--brand)}
+    .brand{display:flex; align-items:center; gap:12px; letter-spacing:.2px}
+    .brand-logo{height:36px; width:auto; display:block}
+    .brand-name{font-family:"Ubuntu", system-ui, sans-serif; font-size:22px; line-height:1; font-weight:500}
+    .tm{font-size:.6em; vertical-align:super; margin-left:2px; color:var(--muted)}
 
     nav a{color:var(--muted); margin-left:20px}
     nav a:hover{color:var(--text)}
 
-    .section{padding:72px 0}
+    .section{padding:72px 0; scroll-margin-top:80px}
+    main{will-change: filter, transform}
     .section.alt{background:var(--surface-1); border-block:1px solid var(--border)}
     .h1{font-family:Manrope, system-ui, sans-serif; font-weight:800; letter-spacing:-.02em; line-height:1.15; font-size:clamp(32px, 5vw, 48px)}
     .h2{font-family:Manrope, system-ui, sans-serif; font-weight:800; letter-spacing:-.01em; line-height:1.2; font-size:clamp(22px, 3.2vw, 28px); margin:0 0 10px}
@@ -79,6 +98,83 @@
     .titem{position:relative; margin:0 0 18px}
     .titem::before{content:""; position:absolute; left:-28px; top:6px; width:12px; height:12px; border-radius:50%; background:var(--brand)}
     .muted{color:var(--dim)}
+    .card-title{font-family:Manrope, system-ui, sans-serif; font-weight:800; font-size:20px; margin:0 0 8px}
+    .actions{margin-top:12px; display:flex; gap:10px; flex-wrap:wrap}
+    .btn[aria-disabled="true"]{opacity:.6; pointer-events:none}
+
+    /* Projects */
+    .media{border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--surface-2)}
+    .media img{display:block; width:100%; height:auto}
+    .badge{display:inline-flex; align-items:center; height:22px; padding:0 8px; border-radius:999px; font-size:.8rem; font-weight:600; background:var(--surface-2); border:1px solid var(--border); color:var(--muted)}
+    .badge.pilot{background:color-mix(in oklab, var(--brand) 20%, transparent); color:var(--text); border-color:color-mix(in oklab, var(--brand) 40%, var(--border))}
+    .badge.alpha{background:#2a1b33; border-color:#3a2b43; color:#d7c3e9}
+    .badge.soon{background:#1b2a33; border-color:#2b3a43; color:#c3d7e9}
+    .tags{display:flex; gap:6px; list-style:none; margin:0; padding:0}
+    .tags .tag{font-size:.75rem; padding:2px 8px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border); color:var(--dim)}
+
+    /* Roadmap badges */
+    .badge.stage{margin-left:8px}
+
+    /* Projects sticky aside */
+    .proj-layout{display:grid; gap:16px; grid-template-columns:1fr}
+    .proj-main{min-width:0}
+    @media(min-width:1024px){
+      .proj-layout{grid-template-columns:1fr}
+      .proj-aside{position:sticky; top:88px}
+    }
+
+    /* Contact layout tweaks */
+    #contact .grid > .reveal:first-child{align-self:stretch}
+    #updates-card{height:100%; display:flex; flex-direction:column}
+
+    /* Footer (enterprise feel) */
+    footer{border-top:1px solid var(--border); padding:28px 0 20px}
+    footer a{color:var(--muted)}
+    footer a:hover{color:var(--text)}
+    footer .f-wrap{display:grid; gap:22px; margin-bottom:16px}
+    @media(min-width:768px){ footer .f-wrap{grid-template-columns:repeat(4, minmax(0,1fr))} }
+    footer .f-col{min-width:0}
+    @media(min-width:768px){ footer .f-col{padding-right:16px; border-right:1px solid var(--border)} footer .f-col:last-child{border-right:none; padding-right:0} }
+    footer .f-col h4{font-family:Manrope, system-ui, sans-serif; font-weight:800; font-size:12px; letter-spacing:.08em; text-transform:uppercase; margin:0 0 10px; color:var(--muted)}
+    footer .f-col ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px}
+    footer .f-col ul li{font-size:.95rem}
+    footer .f-bottom{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding-top:14px; border-top:1px solid var(--border); color:var(--muted); font-size:.95rem}
+
+    /* Mail modal */
+    .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.5); z-index:80}
+    .modal.show{display:flex}
+    .modal-box{width:min(560px, 92vw); background:var(--surface-1); border:1px solid var(--border); border-radius:16px; padding:16px}
+    .modal-close{position:absolute; right:16px; top:16px; width:32px; height:32px; border:1px solid var(--border); background:transparent; color:var(--muted); border-radius:8px; cursor:pointer}
+    .modal label{display:block; font-weight:600; margin:10px 0 6px; color:var(--muted)}
+    .modal input[type=text], .modal input[type=email], .modal textarea{width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:var(--surface-2); color:var(--text)}
+    .modal textarea{min-height:140px; resize:vertical}
+
+    /* Floating website card (popup-like) */
+    #web-float{position:fixed; right:24px; top:88px; width:320px; max-width:92vw; background:var(--surface-1); border:1px solid var(--border); border-radius:16px; box-shadow:0 12px 28px rgba(0,0,0,.45); padding:14px; z-index:100; opacity:0; transform:translateY(-8px); pointer-events:none; transition:opacity .25s ease, transform .25s ease}
+    #web-float.show{opacity:1; transform:translateY(0); pointer-events:auto}
+    #web-float.collapsed{transform:translateY(0) translateX(calc(100% - 14px)); opacity:1}
+    #web-float.collapsed::before{content:'\2039'; /* ‹ */ position:absolute; left:2px; top:50%; transform:translateY(-50%); color:var(--brand); font-size:18px; line-height:1}
+    #web-float .web-edge{position:absolute; right:0; top:0; bottom:0; width:14px; background:transparent; border:none; cursor:pointer}
+
+    /* Focus list */
+    .focus-list{list-style:none; margin:10px 0 0; padding:0; display:grid; gap:10px}
+    @media(min-width:768px){ .focus-list{grid-template-columns:1fr 1fr} }
+    @media(min-width:1024px){ .focus-list{grid-template-columns:repeat(3,1fr)} }
+    .focus-item{display:flex; gap:12px; align-items:flex-start; padding:12px; border:1px solid var(--border); border-radius:16px; background:var(--surface-2)}
+    .chip{width:28px; height:28px; border-radius:50%; background:var(--brand); color:#001; display:inline-flex; align-items:center; justify-content:center; flex:0 0 28px}
+    .focus-title{font-weight:700}
+
+    /* Tabs layout */
+    .focus-tabs{display:grid; gap:12px}
+    @media(min-width:768px){ .focus-tabs{grid-template-columns: 1fr 2fr} }
+    .ftablist{display:flex; gap:8px; flex-wrap:wrap}
+    @media(min-width:768px){ .ftablist{display:flex; flex-direction:column} }
+    .ftab{display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); border-radius:12px; cursor:pointer}
+    .ftab[aria-selected="true"]{border-color:var(--brand); box-shadow:0 0 0 2px color-mix(in oklab, var(--brand) 70%, transparent 30%)}
+    .ftab:hover{border-color:var(--brand); color:var(--brand)}
+    .fpanels{position:relative}
+    .fpanel{border:1px solid var(--border); background:var(--surface-1); border-radius:12px; padding:12px}
+    .fp-list{margin:0; padding:0 0 0 18px}
 
     /* Forms */
     input[type=email], input[type=text], textarea{width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:var(--surface-2); color:var(--text)}
@@ -88,8 +184,23 @@
     footer{border-top:1px solid var(--border); padding:28px 0; color:var(--dim)}
 
     /* Reveal */
-    .reveal{opacity:0; translate:0 12px}
-    .reveal.show{opacity:1; translate:0 0; transition:all .5s ease}
+    .reveal{opacity:0; transform:translateY(12px)}
+    .reveal.show{opacity:1; transform:none; transition:opacity .5s ease, transform .5s ease}
+
+    @media (prefers-reduced-motion: reduce){
+      .reveal{opacity:1; transform:none}
+      .reveal.show{opacity:1; transform:none; transition:none}
+    }
+
+    /* Skip link */
+    .skip-link{position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden}
+    .skip-link:focus{left:12px; top:12px; width:auto; height:auto; padding:10px 12px; background:var(--surface-1); color:var(--text); border:1px solid var(--border); border-radius:8px; z-index:100}
+    
+    /* Simple target highlight for in-page navigation */
+    .section{position:relative}
+    .section:target::before{content:""; position:absolute; left:0; top:0; height:3px; width:100%; background:linear-gradient(90deg, var(--brand), var(--brand-hover)); transform:scaleX(0); transform-origin:left center; animation:targetBar .7s cubic-bezier(.2,.8,.2,1) forwards}
+    @keyframes targetBar{ from{transform:scaleX(0)} to{transform:scaleX(1)} }
+    @media (prefers-reduced-motion: reduce){ .section:target::before{animation:none} }
   </style>
   <script>
     // Git-backed content loader: fetches /content.json (if present) and populates the page.
@@ -173,15 +284,56 @@
         setText('stack-infra', c.about.stack.infra);
         setText('stack-ai', c.about.stack.ai);
 
-        (c.projects.items||[]).forEach((p,i)=>{
-          setText(`proj${i}-title`, p.title);
-          setText(`proj${i}-body`, p.body);
-        });
+        // Projects: featured + grid
+        const items = c.projects.items||[];
+        if(items[0]){
+          setText('feat-title', items[0].title);
+          setText('feat-body', items[0].body);
+          // status
+          const fs = document.getElementById('feat-status');
+          if(fs && items[0].status){ fs.textContent = items[0].status; fs.classList.add(items[0].status.toLowerCase()); fs.style.display='inline-flex'; }
+          // tags
+          const ft = document.getElementById('feat-tags');
+          if(ft && Array.isArray(items[0].tags) && items[0].tags.length){ ft.innerHTML=''; items[0].tags.forEach(t=>{ const li=document.createElement('li'); li.className='tag'; li.textContent=t; ft.appendChild(li); }); ft.style.display='flex'; }
+          // image
+          const fmWrap = document.getElementById('feat-media'); const fimg = document.getElementById('feat-img');
+          if(fmWrap && fimg && items[0].image){ fimg.src=items[0].image; fmWrap.style.display='block'; }
+          // demo
+          const fd = document.getElementById('feat-demo'); if(fd && items[0].demoUrl){ fd.href=items[0].demoUrl; fd.style.display='inline-flex'; if(items[0].ctaLabel) fd.textContent = items[0].ctaLabel; }
+        }
+        for(let i=1;i<Math.min(4, items.length); i++){
+          const p = items[i];
+          setText(`proj${i-1}-title`, p.title);
+          setText(`proj${i-1}-body`, p.body);
+          const bs = document.getElementById(`proj${i-1}-status`);
+          if(bs && p.status){ bs.textContent=p.status; bs.classList.add(p.status.toLowerCase()); bs.style.display='inline-flex'; }
+          const tg = document.getElementById(`proj${i-1}-tags`);
+          if(tg && Array.isArray(p.tags) && p.tags.length){ tg.innerHTML=''; p.tags.forEach(t=>{ const li=document.createElement('li'); li.className='tag'; li.textContent=t; tg.appendChild(li); }); tg.style.display='flex'; }
+          const demo = document.getElementById(`proj${i-1}-demo`);
+          if(demo && p.demoUrl){ demo.href=p.demoUrl; demo.style.display='inline-flex'; if(p.ctaLabel) demo.textContent = p.ctaLabel; }
+        }
         setText('projects-randd', c.projects.rAndD);
 
         setText('roadmap-title', c.roadmap.title);
         setText('roadmap-copy', c.roadmap.copy);
-        (c.roadmap.items||[]).forEach((it,i)=>{ setText(`r${i}-label`, it.label); setText(`r${i}-text`, it.text); });
+        (c.roadmap.items||[]).forEach((it,i)=>{
+          setText(`r${i}-label`, it.label);
+          setText(`r${i}-text`, it.text);
+          // Add stage badge if label contains an em dash
+          const labEl = document.getElementById(`r${i}-label`);
+          if(labEl && typeof it.label === 'string' && it.label.includes('—')){
+            const parts = it.label.split('—');
+            const name = (parts[0]||'').trim();
+            const stage = (parts[1]||'').trim();
+            labEl.textContent = name;
+            const parent = labEl.parentElement;
+            if(parent){
+              let badge = parent.querySelector('.badge.stage');
+              if(!badge){ badge = document.createElement('span'); badge.className = 'badge stage'; labEl.insertAdjacentElement('afterend', badge); }
+              badge.textContent = stage;
+            }
+          }
+        });
 
         setText('contact-title', c.contact.title);
         setText('contact-copy', c.contact.copy);
@@ -189,6 +341,11 @@
         setAttr('contact-btn', 'href', `mailto:${c.contact.email}`);
         setText('contact-onepager', c.contact.onePager);
         setAttr('web-quote', 'href', `mailto:${c.contact.webEmail}`);
+        const mf = document.getElementById('mail-form');
+        if(mf){
+          if(c.contact.formEndpoint) mf.dataset.endpoint = c.contact.formEndpoint;
+          if(c.contact.webFormEndpoint) mf.dataset.endpointWeb = c.contact.webFormEndpoint;
+        }
 
         setText('nl-title', c.newsletter.title);
         setText('nl-copy', c.newsletter.copy);
@@ -196,6 +353,23 @@
         setText('nl-cta', c.newsletter.cta);
 
         setText('changelog', c.changelog);
+        const cdate = document.getElementById('changelog-date');
+        const csep = document.getElementById('changelog-sep');
+        if(cdate && csep){
+          if(c.changelogDate){ cdate.textContent = c.changelogDate; csep.style.display='inline'; }
+          else { cdate.textContent=''; csep.style.display='none'; }
+        }
+        // previous update (optional)
+        const pw = document.getElementById('changelog-prev-wrap');
+        const pdate = document.getElementById('changelog-prev-date');
+        const psep = document.getElementById('changelog-prev-sep');
+        const ptxt = document.getElementById('changelog-prev');
+        if(c.changelogPrev || c.changelogPrevDate){
+          if(pw) pw.style.display='block';
+          if(pdate) pdate.textContent = c.changelogPrevDate||'';
+          if(psep) psep.style.display = c.changelogPrevDate? 'inline' : 'none';
+          if(ptxt) ptxt.textContent = c.changelogPrev||'';
+        }
       }
 
       function merge(a,b){
@@ -217,12 +391,14 @@
 </head>
 <body>
   <!-- Header -->
+  <a href="#main" class="skip-link">Skip to content</a>
   <header>
     <div class="container header-inner">
       <div class="brand">
-        <!-- Replace with your SVG logo; this is just a placeholder box using your colors -->
-        <span class="brand-mark" aria-hidden="true"></span>
-        <span>Frozen River Software</span>
+        <a href="/" aria-label="Home">
+          <img src="/assets/logo.svg" alt="" class="brand-logo" />
+        </a>
+        <span class="brand-name">Frozen River Software <span class="tm" aria-hidden="true">™</span></span>
       </div>
       <nav aria-label="Primary">
         <a href="#about">About</a>
@@ -233,7 +409,7 @@
     </div>
   </header>
 
-  <main>
+  <main id="main">
     <!-- Hero -->
     <section class="section">
       <div class="container grid cols-2">
@@ -247,12 +423,89 @@
         </div>
         <div class="reveal">
           <div class="card" aria-label="Focus areas">
-            <h2 class="h2" style="margin-bottom:8px">Focus areas</h2>
-            <div class="grid cols-2">
-              <div class="card" style="padding:12px">Scheduling & Dispatch</div>
-              <div class="card" style="padding:12px">Invoicing & Payments</div>
-              <div class="card" style="padding:12px">Inventory & Field Data</div>
-              <div class="card" style="padding:12px">Offline‑first Mobile</div>
+            <div class="focus-tabs">
+              <div class="ftablist" role="tablist" aria-orientation="vertical">
+                <button class="ftab" id="ftab-0" role="tab" aria-selected="true" aria-controls="fpanel-0">
+                  <span class="chip" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1Zm12 7H5v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9ZM6 7h12V6H6v1Zm3 5h2v2H9v-2Z"/></svg></span>
+                  <span>Scheduling & dispatch</span>
+                </button>
+                <button class="ftab" id="ftab-1" role="tab" aria-selected="false" aria-controls="fpanel-1" tabindex="-1">
+                  <span class="chip" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6 3h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-4l-4 3v-3H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm1 4v2h10V7H7Zm0 4v2h7v-2H7Z"/></svg></span>
+                  <span>Invoicing & payments</span>
+                </button>
+                <button class="ftab" id="ftab-2" role="tab" aria-selected="false" aria-controls="fpanel-2" tabindex="-1">
+                  <span class="chip" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12H5a2 2 0 0 1-2-2V6Zm10 0a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6V6Zm-8 1h4v3H5V7Zm10 0h4v3h-4V7Z"/></svg></span>
+                  <span>Inventory & field data</span>
+                </button>
+                <button class="ftab" id="ftab-3" role="tab" aria-selected="false" aria-controls="fpanel-3" tabindex="-1">
+                  <span class="chip" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm3 18h4v-1h-4v1ZM7 5v12h10V5H7Z"/></svg></span>
+                  <span>Offline‑first mobile</span>
+                </button>
+                <button class="ftab" id="ftab-4" role="tab" aria-selected="false" aria-controls="fpanel-4" tabindex="-1">
+                  <span class="chip" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="6" cy="12" r="2"/><circle cx="18" cy="7" r="2"/><circle cx="16" cy="17" r="2"/><path d="M7.7 11.3 16.3 7.7M7.9 12.9 14.8 16.2" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></span>
+                  <span>AI learning & integration</span>
+                </button>
+                <button class="ftab" id="ftab-5" role="tab" aria-selected="false" aria-controls="fpanel-5" tabindex="-1">
+                  <span class="chip" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M4 3h12a2 2 0 0 1 2 2v12H6a2 2 0 0 1-2-2V3Z"/><path d="M7 6h8v2H7zm0 4h8v2H7z"/><path d="M6 19h12v2H6z"/></svg></span>
+                  <span>Quotes & takeoffs</span>
+                </button>
+              </div>
+              <div class="fpanels">
+                <section id="fpanel-0" class="fpanel" role="tabpanel" aria-labelledby="ftab-0">
+                  <h3 class="h2" style="font-size:20px; margin:0 0 8px">Scheduling & dispatch</h3>
+                  <ul class="fp-list">
+                    <li>Drag‑and‑drop jobs and crew assignments</li>
+                    <li>SMS/email reminders and confirmations</li>
+                    <li>Daily/weekly views with route hints</li>
+                    <li>Time windows, priorities, and notes</li>
+                  </ul>
+                </section>
+                <section id="fpanel-1" class="fpanel" role="tabpanel" aria-labelledby="ftab-1" hidden>
+                  <h3 class="h2" style="font-size:20px; margin:0 0 8px">Invoicing & payments</h3>
+                  <ul class="fp-list">
+                    <li>Estimates → invoices with one click</li>
+                    <li>Multiple tax rates and line items</li>
+                    <li>Online card/ACH payments</li>
+                    <li>Exports for accounting (e.g., QuickBooks)</li>
+                  </ul>
+                </section>
+                <section id="fpanel-2" class="fpanel" role="tabpanel" aria-labelledby="ftab-2" hidden>
+                  <h3 class="h2" style="font-size:20px; margin:0 0 8px">Inventory & field data</h3>
+                  <ul class="fp-list">
+                    <li>Barcode/QR scan on mobile</li>
+                    <li>Multi‑location stock with reorder points</li>
+                    <li>Photo/notes from the field</li>
+                    <li>Job kitting and simple BOMs</li>
+                  </ul>
+                </section>
+                <section id="fpanel-3" class="fpanel" role="tabpanel" aria-labelledby="ftab-3" hidden>
+                  <h3 class="h2" style="font-size:20px; margin:0 0 8px">Offline‑first mobile</h3>
+                  <ul class="fp-list">
+                    <li>Works offline; syncs when back online</li>
+                    <li>Background sync and conflict safety</li>
+                    <li>Photo capture and annotations</li>
+                    <li>Low‑signal mode for job sites</li>
+                  </ul>
+                </section>
+                <section id="fpanel-4" class="fpanel" role="tabpanel" aria-labelledby="ftab-4" hidden>
+                  <h3 class="h2" style="font-size:20px; margin:0 0 8px">AI learning & integration</h3>
+                  <ul class="fp-list">
+                    <li>Extract data from PDFs/photos</li>
+                    <li>Suggest tasks and checklists</li>
+                    <li>Auto‑categorize receipts/expenses</li>
+                    <li>Privacy‑first, opt‑in automation</li>
+                  </ul>
+                </section>
+                <section id="fpanel-5" class="fpanel" role="tabpanel" aria-labelledby="ftab-5" hidden>
+                  <h3 class="h2" style="font-size:20px; margin:0 0 8px">Quotes & takeoffs</h3>
+                  <ul class="fp-list">
+                    <li>Measure scaled PDFs and images</li>
+                    <li>Assemblies and common parts</li>
+                    <li>Export BOM and materials list</li>
+                    <li>Estimate versions and approvals</li>
+                  </ul>
+                </section>
+              </div>
             </div>
           </div>
         </div>
@@ -269,7 +522,7 @@
         </div>
         <aside class="reveal">
           <div class="card">
-            <h3 class="h2" style="font-size:20px">Experience & stack</h3>
+            <h3 class="h2" style="font-size:20px">🧰 Experience & Stack</h3>
             <ul id="exp-list" style="margin:10px 0 14px; padding-left:18px">
               <li>15+ years in the trades — residential & commercial installation and service</li>
               <li>Worked with homeowners, corporations, and government institutions</li>
@@ -292,8 +545,8 @@
                 <div id="stack-infra">Vercel, Cloudflare, GitHub Actions</div>
               </div>
               <div>
-                <div class="muted" style="font-weight:600; margin-bottom:6px">AI tools</div>
-                <div id="stack-ai">OpenAI + local OCR & image recovery</div>
+                <div class="muted" style="font-weight:600; margin-bottom:6px">AI & Image Tools</div>
+                <div id="stack-ai">OpenAI API, local OCR, and image restoration pipelines</div>
               </div>
             </div>
           </div>
@@ -305,24 +558,67 @@
     <section id="projects" class="section">
       <div class="container">
         <h2 class="h2">What’s on the workbench</h2>
-        <p class="muted">A few tools designed to make everyday jobs faster and smarter:</p>
-        <div class="grid cols-3" style="margin-top:16px">
-          <article class="card reveal">
-            <h3 id="proj0-title" style="margin:0 0 6px; font-weight:700">Job scheduling & invoicing app</h3>
-            <p id="proj0-body" class="muted">Keeps work organized and cuts down on paperwork. (Name and demo coming soon.)</p>
-          </article>
-          <article class="card reveal">
-            <h3 id="proj1-title" style="margin:0 0 6px; font-weight:700">PDF measurement tool</h3>
-            <p id="proj1-body" class="muted">Measure scaled drawings right in your browser.</p>
-          </article>
-          <article class="card reveal">
-            <h3 id="proj2-title" style="margin:0 0 6px; font-weight:700">Receipt scanner</h3>
-            <p id="proj2-body" class="muted">AI‑assisted restoration for faded receipts to keep records readable.</p>
-          </article>
-        </div>
-        <div class="card reveal" style="margin-top:16px">
-          <strong>AI integrations (R&D)</strong>
-          <p id="projects-randd" class="muted" style="margin:6px 0 0">Exploring automation to handle the boring parts — from job costing to auto‑filling invoices.</p>
+        <p class="muted">Early tools in various stages — from rough cuts to pilot‑ready.</p>
+
+        <div class="proj-layout" style="margin-top:16px">
+          <div class="proj-main" style="display:grid; gap:16px">
+            <div class="proj-feature card reveal" style="display:grid; gap:12px">
+              <div class="media" id="feat-media" aria-hidden="true" style="display:none">
+                <img id="feat-img" alt="" />
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+                  <span class="badge" id="feat-status" style="display:none"></span>
+                  <ul class="tags" id="feat-tags" style="display:none"></ul>
+                </div>
+                <h3 id="feat-title" style="margin:8px 0 6px; font-weight:700">Featured project</h3>
+                <p id="feat-body" class="muted">Short description.</p>
+                <div style="margin-top:8px; display:flex; gap:10px; flex-wrap:wrap">
+                  <a id="feat-demo" class="btn ghost" href="#" style="display:none">View demo</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="proj-grid grid cols-3">
+              <article class="card reveal">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+                  <span class="badge" id="proj0-status" style="display:none"></span>
+                  <ul class="tags" id="proj0-tags" style="display:none"></ul>
+                </div>
+                <h3 id="proj0-title" style="margin:8px 0 6px; font-weight:700">Project</h3>
+                <p id="proj0-body" class="muted">Description</p>
+                <a id="proj0-demo" class="btn ghost" href="#" style="display:none; margin-top:6px">View demo</a>
+              </article>
+              <article class="card reveal">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+                  <span class="badge" id="proj1-status" style="display:none"></span>
+                  <ul class="tags" id="proj1-tags" style="display:none"></ul>
+                </div>
+                <h3 id="proj1-title" style="margin:8px 0 6px; font-weight:700">Project</h3>
+                <p id="proj1-body" class="muted">Description</p>
+                <a id="proj1-demo" class="btn ghost" href="#" style="display:none; margin-top:6px">View demo</a>
+              </article>
+              <article class="card reveal">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+                  <span class="badge" id="proj2-status" style="display:none"></span>
+                  <ul class="tags" id="proj2-tags" style="display:none"></ul>
+                </div>
+                <h3 id="proj2-title" style="margin:8px 0 6px; font-weight:700">Project</h3>
+                <p id="proj2-body" class="muted">Description</p>
+                <a id="proj2-demo" class="btn ghost" href="#" style="display:none; margin-top:6px">View demo</a>
+              </article>
+            </div>
+
+            <div class="card reveal">
+              <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap">
+                <div>
+                  <strong>AI integrations (R&D)</strong>
+                  <p id="projects-randd" class="muted" style="margin:6px 0 0">Exploring automation to handle the boring parts — from job costing to auto‑filling invoices.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
         </div>
       </div>
     </section>
@@ -336,48 +632,60 @@
           <div class="titem"><strong id="r0-label">Now</strong><div id="r0-text" class="muted">Core features in active development; private test builds.</div></div>
           <div class="titem"><strong id="r1-label">Soon</strong><div id="r1-text" class="muted">Invite‑only pilot with a small group for real‑world feedback.</div></div>
           <div class="titem"><strong id="r2-label">Next</strong><div id="r2-text" class="muted">Public demos and early access sign‑ups.</div></div>
+          <div class="titem"><strong id="r3-label">Beyond</strong><div id="r3-text" class="muted">Integrations and ecosystem.</div></div>
+        </div>
+        <div style="margin-top:12px">
+          <a class="btn ghost" href="#" id="btn-pilot">Volunteer for pilot</a>
         </div>
       </div>
     </section>
 
-    <!-- Contact + Website services -->
+    <!-- Contact + Newsletter -->
     <section id="contact" class="section">
       <div class="container grid cols-2">
-        <div class="reveal">
-          <h2 class="h2" id="contact-title">Let’s talk</h2>
-          <p id="contact-copy">If you’ve got a problem worth solving, I’d love to hear it. Questions, collaborations, or early testing invites — all welcome.</p>
-          <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap">
-            <a id="contact-btn" class="btn primary" href="mailto:info@your-domain.com">Send a message</a>
-            <a class="btn ghost" href="#" id="contact-onepager">Download one‑pager (coming soon)</a>
-          </div>
-
-          <!-- Newsletter placeholder -->
-          <div class="card" style="margin-top:16px">
-            <strong id="nl-title">Newsletter</strong>
-            <p id="nl-copy" class="muted" style="margin:6px 0 10px">I don’t spam. I just occasionally overshare progress updates.</p>
-            <form onsubmit="subscribe(event)">
-              <label class="muted" style="display:block; margin-bottom:8px">Email</label>
-              <div style="display:flex; gap:10px; align-items:center">
-                <input type="email" id="subEmail" placeholder="you@example.com" required />
-                <button class="btn primary" type="submit" id="nl-cta">Join</button>
-              </div>
-            </form>
-          </div>
-
-          <!-- Mini changelog -->
-          <div class="card" style="margin-top:16px">
-            <strong data-edit>Mini Changelog</strong>
-            <p id="changelog" class="muted" style="margin:6px 0 0">This month: fixed 12 bugs, broke 8 new things, progress net = +4.</p>
+        <div class="reveal" style="display:flex; flex-direction:column; gap:16px">
+          <!-- Updates (left) -->
+          <div class="card" id="updates-card">
+            <h3 class="card-title" data-edit>Updates</h3>
+            <p class="muted" style="margin:6px 0 0">
+              <span id="changelog-date"></span><span id="changelog-sep" style="display:none"> — </span><span id="changelog">This month: fixed 12 bugs, broke 8 new things, progress net = +4.</span>
+            </p>
+            <p class="muted" id="changelog-prev-wrap" style="margin:6px 0 0; display:none">
+              <span id="changelog-prev-date"></span><span id="changelog-prev-sep" style="display:none"> — </span><span id="changelog-prev"></span>
+            </p>
           </div>
         </div>
 
-        <!-- Sidebar: Website services -->
-        <aside class="reveal">
+        <!-- Right column: Contact then Newsletter -->
+        <aside class="reveal" style="display:flex; flex-direction:column; gap:16px; justify-content:flex-end">
+          <div class="card" id="contact-card">
+            <h3 class="card-title" id="contact-title">Let’s talk</h3>
+            <p id="contact-copy">If you’ve got a problem worth solving, I’d love to hear it. Questions, collaborations, or early testing invites — all welcome.</p>
+            <div class="actions">
+              <a id="contact-btn" class="btn primary" href="mailto:info@frozenriversoftware.com">Send a message</a>
+              <a class="btn ghost" href="assets/one-pager.pdf" target="_blank" rel="noopener" id="contact-onepager" title="View one‑pager (PDF)">View one‑pager (PDF)</a>
+            </div>
+          </div>
           <div class="card">
-            <h3 class="h2" style="font-size:20px">Need a website?</h3>
-            <p>I take on small website projects when I have room. I can build it and hand it off, or build & maintain it for you.</p>
-            <a id="web-quote" class="btn ghost" href="mailto:web@your-domain.com">Request a website quote</a>
-            <p class="muted" style="margin-top:10px; font-size:.9rem">Separate inbox so I don’t miss your request.</p>
+            <h3 class="card-title" id="nl-title">Newsletter</h3>
+            <p id="nl-copy" class="muted" style="margin:6px 0 10px">I don’t spam. I just occasionally overshare progress updates.</p>
+            <form
+              action="https://buttondown.com/api/emails/embed-subscribe/frozenriver"
+              method="post"
+              target="popupwindow"
+              onsubmit="window.open('https://buttondown.com/frozenriver', 'popupwindow')"
+            >
+              <label for="subEmail" class="muted" style="display:block; margin-bottom:8px">Email</label>
+              <div style="display:flex; gap:10px; align-items:center">
+                <input type="email" name="email" id="subEmail" placeholder="you@example.com" required />
+                <button class="btn primary" type="submit" id="nl-cta">Join</button>
+              </div>
+              <input type="hidden" value="true" name="embed" />
+            </form>
+            <p style="margin-top:10px">
+              <a class="muted" href="https://buttondown.com/refer/frozenriver" target="_blank" rel="noopener noreferrer">Powered by Buttondown</a>
+            </p>
+            <div id="nl-msg" class="muted" style="display:none; margin-top:8px">Thanks — check your inbox to confirm. You can unsubscribe anytime via the link in any email.</div>
           </div>
         </aside>
       </div>
@@ -385,15 +693,82 @@
   </main>
 
   <footer>
-    <div class="container" style="display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap">
-      <div>© <span id="year"></span> Frozen River Software</div>
-      <div style="display:flex; gap:14px">
-        <a href="#">Privacy</a>
-        <a href="#">Terms</a>
-        <a href="mailto:info@your-domain.com">Email</a>
+    <div class="container">
+      <div class="f-wrap">
+        <div class="f-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#roadmap">Roadmap</a></li>
+            <li><a href="#updates-card">Updates</a></li>
+            <li><a href="assets/one-pager.pdf" target="_blank" rel="noopener">One‑pager (PDF)</a></li>
+          </ul>
+        </div>
+        <div class="f-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="privacy.html">Privacy</a></li>
+            <li><a href="terms.html">Terms</a></li>
+            <li><a href="accessibility.html">Accessibility</a></li>
+          </ul>
+        </div>
+        <div class="f-col">
+          <h4>Security & Data</h4>
+          <ul>
+            <li><a href="responsible-disclosure.html">Responsible Disclosure</a></li>
+            <li><a href="subprocessors.html">Subprocessors</a></li>
+            <li><a href="sitemap.xml">Sitemap</a></li>
+          </ul>
+        </div>
+        <div class="f-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="mailto:info@frozenriversoftware.com">Contact</a></li>
+            <li class="muted">Alberta, Canada</li>
+          </ul>
+        </div>
+      </div>
+      <div class="f-bottom">
+        <div>© <span id="year"></span> Frozen River Software</div>
+        <div>Frozen River Software and the logo are trademarks of Frozen River Software.</div>
       </div>
     </div>
   </footer>
+
+  <!-- Floating website services card -->
+  <div id="web-float" aria-live="polite" aria-label="Website services" aria-expanded="true">
+    <button class="web-edge" type="button" aria-label="Collapse or expand"></button>
+    <div style="display:flex; flex-direction:column; gap:8px">
+      <div class="card-title" style="font-size:18px">Need a website?</div>
+      <p class="muted" style="margin:0">I take on small website projects when I have room. I can build it and hand it off, or build &amp; maintain it for you.</p>
+      <div class="actions" style="margin-top:6px">
+        <a id="web-quote-float" class="btn ghost" href="mailto:web@frozenriversoftware.com">Start a conversation</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mail modal -->
+  <div id="mail-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="mail-title">
+    <div class="modal-box">
+      <button class="modal-close" type="button" aria-label="Close">×</button>
+      <h3 id="mail-title" class="card-title">Send a message</h3>
+      <form id="mail-form" data-endpoint="">
+        <label for="mail-name">Your name</label>
+        <input id="mail-name" type="text" placeholder="Jane Doe" />
+        <label for="mail-from">Your email</label>
+        <input id="mail-from" type="email" placeholder="you@example.com" />
+        <label for="mail-subject">Subject</label>
+        <input id="mail-subject" type="text" placeholder="General inquiry" />
+        <label for="mail-body">Message</label>
+        <textarea id="mail-body" placeholder="Hi Frozen River Software,\n\n[Write your message here]\n\nThanks,\n[Your name]"></textarea>
+        <input type="text" id="mail-website" name="website" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0" tabindex="-1" aria-hidden="true" />
+        <div class="actions" style="margin-top:12px">
+          <button class="btn primary" type="submit">Open email</button>
+          <button class="btn ghost" type="button" id="mail-cancel">Cancel</button>
+        </div>
+        <div id="mail-status" class="muted" style="display:none; margin-top:8px"></div>
+      </form>
+    </div>
+  </div>
 
   <script>
     // Auto year
@@ -405,11 +780,149 @@
     }, {threshold: 0.1});
     document.querySelectorAll('.reveal').forEach(el=> io.observe(el));
 
-    // Newsletter placeholder handler — replace with your provider later
-    function subscribe(e){
-      e.preventDefault();
-      alert('Thanks! I\'ll keep you posted.');
-    }
+    // Buttondown handles submission via the popup window.
+    (function(){
+      const form = document.querySelector('#contact form[action*="buttondown.com"]');
+      if(!form) return;
+      const btn = form.querySelector('#nl-cta');
+      const msg = document.getElementById('nl-msg');
+      form.addEventListener('submit', ()=>{
+        if(btn){ btn.textContent = 'Thanks!'; btn.setAttribute('aria-disabled','true'); }
+        if(msg){ msg.style.display = 'block'; }
+      });
+    })();
+
+    // Floating website card: show when hitting Workbench; stays fixed as you scroll
+    (function(){
+      const el = document.getElementById('web-float');
+      if(!el) return;
+      const edge = el.querySelector('.web-edge');
+      function setCollapsed(v){
+        el.classList.toggle('collapsed', v);
+        el.setAttribute('aria-expanded', (!v).toString());
+        try{ sessionStorage.setItem('webFloatCollapsed', v? '1':'0'); }catch(_){ }
+      }
+      // restore collapsed state
+      try{ setCollapsed(sessionStorage.getItem('webFloatCollapsed')==='1'); }catch(_){ }
+      // collapse when clicking edge while open
+      edge?.addEventListener('click', (e)=>{ e.stopPropagation(); setCollapsed(!el.classList.contains('collapsed')); });
+      // Click behavior: expand when collapsed; otherwise collapse if not clicking an action control
+      el.addEventListener('click', (e)=>{
+        if(el.classList.contains('collapsed')){ setCollapsed(false); return; }
+        const isAction = e.target.closest('a,button');
+        if(!isAction) setCollapsed(true);
+      });
+      function onScroll(){
+        const proj = document.getElementById('projects');
+        if(!proj) return;
+        const top = proj.getBoundingClientRect().top + window.scrollY;
+        if(window.scrollY + 40 >= top){ el.classList.add('show'); }
+        else { el.classList.remove('show'); }
+      }
+      window.addEventListener('scroll', onScroll, {passive:true});
+      onScroll();
+    })();
+
+    // Tabs: focus areas
+    (function(){
+      const list = document.querySelector('.ftablist');
+      if(!list) return;
+      const tabs = Array.from(list.querySelectorAll('.ftab'));
+      const panels = tabs.map(t => document.getElementById(t.getAttribute('aria-controls')));
+      function select(idx){
+        tabs.forEach((t,i)=>{
+          const sel = i===idx;
+          t.setAttribute('aria-selected', sel);
+          t.tabIndex = sel? 0 : -1;
+          if(panels[i]) panels[i].hidden = !sel;
+        });
+        tabs[idx].focus({preventScroll:true});
+      }
+      tabs.forEach((t,idx)=>{
+        t.addEventListener('click', ()=> select(idx));
+        t.addEventListener('keydown', (e)=>{
+          if(e.key==='ArrowDown' || e.key==='ArrowRight'){ e.preventDefault(); select((idx+1)%tabs.length); }
+          if(e.key==='ArrowUp' || e.key==='ArrowLeft'){ e.preventDefault(); select((idx-1+tabs.length)%tabs.length); }
+          if(e.key==='Home'){ e.preventDefault(); select(0); }
+          if(e.key==='End'){ e.preventDefault(); select(tabs.length-1); }
+        });
+      });
+    })();
+
+    // Mail modal logic (subject/message → mailto)
+    (function(){
+      const modal = document.getElementById('mail-modal');
+      if(!modal) return;
+      const nameEl = document.getElementById('mail-name');
+      const fromEl = document.getElementById('mail-from');
+      const subjectEl = document.getElementById('mail-subject');
+      const bodyEl = document.getElementById('mail-body');
+      const form = document.getElementById('mail-form');
+      const honeypot = document.getElementById('mail-website');
+      const closeBtn = modal.querySelector('.modal-close');
+      const cancelBtn = document.getElementById('mail-cancel');
+      const contactBtn = document.getElementById('contact-btn');
+      const pilotBtn = document.getElementById('btn-pilot');
+      const webBtn = document.getElementById('web-quote-float');
+      const statusEl = document.getElementById('mail-status');
+      let lastFocus = null;
+      let targetKind = 'info'; // 'info' or 'web'
+
+      function open(subject='General inquiry', kind='info'){
+        lastFocus = document.activeElement;
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden','false');
+        // reset fields each open
+        (nameEl.value = ''), (fromEl.value = ''), (bodyEl.value = '');
+        subjectEl.value = subject;
+        targetKind = kind;
+        // update title per kind
+        const title = document.getElementById('mail-title');
+        if(title){ title.textContent = kind==='web' ? 'Website project inquiry' : 'Send a message'; }
+        setTimeout(()=> subjectEl.focus(), 0);
+        document.addEventListener('keydown', onKey);
+      }
+      function close(){
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden','true');
+        document.removeEventListener('keydown', onKey);
+        if(lastFocus) lastFocus.focus();
+      }
+      function onKey(e){ if(e.key==='Escape') close(); }
+      modal.addEventListener('click', (e)=>{ if(e.target===modal) close(); });
+      closeBtn?.addEventListener('click', close);
+      cancelBtn?.addEventListener('click', close);
+
+      contactBtn?.addEventListener('click', (e)=>{ e.preventDefault(); open('Inquiry from website', 'info'); });
+      pilotBtn?.addEventListener('click', (e)=>{ e.preventDefault(); open('Volunteer for pilot', 'info'); });
+      webBtn?.addEventListener('click', (e)=>{ e.preventDefault(); open('Website project — intro', 'web'); });
+
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        if(honeypot && honeypot.value){ return; }
+        const subj = subjectEl.value.trim() || 'Inquiry from website';
+        const body = bodyEl.value.trim() || 'Hi,\n\n[Write your message here]\n\nThanks,';
+        const name = nameEl.value.trim();
+        const from = fromEl.value.trim();
+        const endpoint = targetKind==='web' ? (form.dataset.endpointWeb||'') : (form.dataset.endpoint||'');
+        const toAddr = targetKind==='web' ? 'web@frozenriversoftware.com' : 'info@frozenriversoftware.com';
+        // If a form endpoint is configured for this kind, try to POST it; otherwise mailto fallback
+        if(endpoint){
+          statusEl.style.display='block';
+          statusEl.textContent='Sending…';
+          try{
+            const res = await fetch(endpoint, { method:'POST', headers:{'Accept':'application/json','Content-Type':'application/json'}, body: JSON.stringify({ name, email: from, message: body, _subject: subj, _replyto: from, to: toAddr }) });
+            if(res.ok){ statusEl.textContent='Thanks — message sent.'; setTimeout(()=>{ statusEl.style.display='none'; close(); }, 1200); return; }
+            statusEl.textContent='Could not send. Opening your email client…';
+          }catch(_){ statusEl.textContent='Could not send. Opening your email client…'; }
+        }
+        const mailto = `mailto:${toAddr}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body + (from? '\n\nFrom: ' + from : '') + (name? '\nName: ' + name : ''))}`;
+        window.location.href = mailto;
+        setTimeout(close, 300);
+      });
+    })();
+
+    // One‑pager: direct PDF (handled by anchor target="_blank")
   </script>
 </body>
 </html>

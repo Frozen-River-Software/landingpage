@@ -1,0 +1,4 @@
+Contact: mailto:info@frozenriversoftware.com
+Policy: https://www.frozenriversoftware.com/responsible-disclosure.html
+Expires: 2026-01-01T00:00:00.000Z
+
