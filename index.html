@@ -157,6 +157,10 @@
     #web-float.collapsed::before{content:'\2039'; /* ‹ expand left */ position:absolute; left:2px; top:50%; transform:translateY(-50%); color:var(--brand); font-size:18px; line-height:1}
     #web-float.show:not(.collapsed)::after{content:'\203A'; /* › close right */ position:absolute; left:6px; top:50%; transform:translateY(-50%); color:var(--brand); font-size:18px; line-height:1; opacity:.8}
     #web-float .web-edge{position:absolute; left:0; top:0; bottom:0; width:14px; background:transparent; border:none; cursor:pointer}
+    /* Arrow glow hint */
+    @keyframes glowblink{ 0%,100%{ opacity:.8; text-shadow:0 0 0 var(--brand);} 50%{ opacity:1; text-shadow:0 0 8px var(--brand);} }
+    #web-float.hint.collapsed::before{ animation:glowblink 1s ease-in-out infinite }
+    #web-float.hint.show:not(.collapsed)::after{ animation:glowblink 1s ease-in-out infinite }
 
     /* Focus list */
     .focus-list{list-style:none; margin:10px 0 0; padding:0; display:grid; gap:10px}
@@ -805,7 +809,9 @@
         try{ sessionStorage.setItem('webFloatCollapsed', v? '1':'0'); }catch(_){ }
       }
       // restore collapsed state
-      try{ setCollapsed(sessionStorage.getItem('webFloatCollapsed')==='1'); }catch(_){ }
+      let restored = false;
+      try{ const saved = sessionStorage.getItem('webFloatCollapsed'); if(saved!=null){ setCollapsed(saved==='1'); restored=true; } }catch(_){ }
+      let wasVisible = false;
       // collapse when clicking edge while open
       edge?.addEventListener('click', (e)=>{ e.stopPropagation(); setCollapsed(!el.classList.contains('collapsed')); });
       // Click behavior: expand when collapsed; otherwise collapse if not clicking an action control
@@ -818,8 +824,25 @@
         const proj = document.getElementById('projects');
         if(!proj) return;
         const top = proj.getBoundingClientRect().top + window.scrollY;
-        if(window.scrollY + 40 >= top){ el.classList.add('show'); }
-        else { el.classList.remove('show'); }
+        const shouldShow = window.scrollY + 40 >= top;
+        if(shouldShow){
+          el.classList.add('show');
+          if(!wasVisible){
+            // first time shown this session: default to collapsed if not restored
+            if(!restored){ setCollapsed(true); }
+            // add hint glow once per session
+            try{
+              if(sessionStorage.getItem('webFloatHinted')!=='1'){
+                el.classList.add('hint');
+                setTimeout(()=>{ el.classList.remove('hint'); sessionStorage.setItem('webFloatHinted','1'); }, 4000);
+              }
+            }catch(_){ /* ignore */ }
+          }
+          wasVisible = true;
+        } else {
+          el.classList.remove('show');
+          wasVisible = false;
+        }
       }
       window.addEventListener('scroll', onScroll, {passive:true});
       onScroll();
