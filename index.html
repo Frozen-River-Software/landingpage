@@ -171,7 +171,7 @@
     #updates-card{height:100%; display:flex; flex-direction:column}
 
     /* Footer (enterprise feel) */
-    footer{border-top:1px solid var(--border); padding:28px 0 20px}
+    footer{border-top:3px solid transparent; border-image:linear-gradient(90deg, var(--brand), transparent 50%) 1; padding:28px 0 20px; background:linear-gradient(180deg, transparent, rgba(1,145,145,.02))}
     footer a{color:var(--muted)}
     footer a:hover{color:var(--text)}
     footer .f-wrap{display:grid; gap:22px; margin-bottom:16px}
@@ -248,10 +248,12 @@
     @media (prefers-reduced-motion: reduce){ .section:target::before{animation:none} }
 
     /* Loading indicator */
-    .loading-overlay{position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:9999; transition:opacity .4s ease, visibility .4s ease}
+    .loading-overlay{position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; z-index:9999; transition:opacity .4s ease, visibility .4s ease}
     .loading-overlay.loaded{opacity:0; visibility:hidden}
-    .spinner{width:48px; height:48px; border:4px solid var(--border); border-top-color:var(--brand); border-radius:50%; animation:spin 0.8s linear infinite}
+    .spinner{width:48px; height:48px; border:4px solid var(--border); border-top-color:var(--brand); border-radius:50%; animation:spin 0.8s linear infinite; background:linear-gradient(135deg, rgba(1,145,145,.1), transparent)}
+    .loading-text{color:var(--muted); font-size:.9rem; animation:loadPulse 1.5s ease-in-out infinite}
     @keyframes spin{ to{transform:rotate(360deg)} }
+    @keyframes loadPulse{ 0%, 100%{opacity:.5} 50%{opacity:1} }
     
     /* Scroll hint */
     .scroll-hint{text-align:center; margin-top:32px; color:var(--muted); font-size:.9rem; font-weight:500; animation:scrollPulse 3s ease-in-out infinite}
@@ -264,8 +266,26 @@
       0%, 100%{ transform:translateY(0); }
       50%{ transform:translateY(6px); }
     }
+    
+    /* Hero background animation */
+    .hero-bg{position:absolute; inset:0; overflow:hidden; opacity:.06; pointer-events:none}
+    .hero-bg::before{content:""; position:absolute; width:600px; height:600px; background:radial-gradient(circle, var(--brand), transparent 70%); top:-200px; right:-100px; animation:heroFloat 20s ease-in-out infinite}
+    .hero-bg::after{content:""; position:absolute; width:400px; height:400px; background:radial-gradient(circle, var(--brand-hover), transparent 70%); bottom:-100px; left:-50px; animation:heroFloat 25s ease-in-out infinite reverse}
+    @keyframes heroFloat{
+      0%, 100%{ transform:translate(0, 0) scale(1); }
+      50%{ transform:translate(30px, -30px) scale(1.1); }
+    }
+    
+    /* Feature icon pulse */
+    .feature-icon-box{transition:transform .3s ease, box-shadow .3s ease}
+    .feature-icon-box:hover{transform:scale(1.05); box-shadow:0 0 20px rgba(1,145,145,.3)}
+    
+    /* Section title accents */
+    .section-title-accent{position:relative; display:inline-block}
+    .section-title-accent::after{content:""; position:absolute; bottom:-4px; left:0; width:60px; height:3px; background:linear-gradient(90deg, var(--brand), transparent); border-radius:999px}
+    
     @media (prefers-reduced-motion: reduce){
-      .scroll-hint, .scroll-hint .arrows{ animation:none; }
+      .scroll-hint, .scroll-hint .arrows, .hero-bg::before, .hero-bg::after{ animation:none; }
     }
   </style>
 
@@ -503,6 +523,7 @@
   <!-- Loading overlay -->
   <div id="loading-overlay" class="loading-overlay">
     <div class="spinner"></div>
+    <div class="loading-text">Loading...</div>
   </div>
 
   <!-- Header -->
@@ -526,8 +547,9 @@
 
   <main id="main">
     <!-- Hero -->
-    <section class="section">
-      <div class="container grid cols-2">
+    <section class="section" style="position:relative; overflow:hidden">
+      <div class="hero-bg"></div>
+      <div class="container grid cols-2" style="position:relative">
         <div class="reveal">
           <h1 class="h1" id="hero-heading">Built with hands‑on experience. Coded with purpose.</h1>
           <p class="lede" id="hero-sub">I'm an electrician and sheet metal worker turned developer — creating simple, dependable apps to make everyday work smoother. Less paperwork, more progress.</p>
@@ -544,7 +566,7 @@
             <div style="display:grid; gap:14px; position:relative">
               <!-- Feature 1 -->
               <div style="display:flex; gap:12px; align-items:flex-start">
-                <div style="width:40px; height:40px; border-radius:12px; background:rgba(1,145,145,.15); border:1px solid rgba(1,145,145,.3); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                <div class="feature-icon-box" style="width:40px; height:40px; border-radius:12px; background:rgba(1,145,145,.15); border:1px solid rgba(1,145,145,.3); display:flex; align-items:center; justify-content:center; flex-shrink:0">
                   <span style="font-size:20px">📱</span>
                 </div>
                 <div style="flex:1">
@@ -555,7 +577,7 @@
               
               <!-- Feature 2 -->
               <div style="display:flex; gap:12px; align-items:flex-start">
-                <div style="width:40px; height:40px; border-radius:12px; background:rgba(1,145,145,.15); border:1px solid rgba(1,145,145,.3); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                <div class="feature-icon-box" style="width:40px; height:40px; border-radius:12px; background:rgba(1,145,145,.15); border:1px solid rgba(1,145,145,.3); display:flex; align-items:center; justify-content:center; flex-shrink:0">
                   <span style="font-size:20px">🧠</span>
                 </div>
                 <div style="flex:1">
@@ -566,7 +588,7 @@
               
               <!-- Feature 3 -->
               <div style="display:flex; gap:12px; align-items:flex-start">
-                <div style="width:40px; height:40px; border-radius:12px; background:rgba(1,145,145,.15); border:1px solid rgba(1,145,145,.3); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                <div class="feature-icon-box" style="width:40px; height:40px; border-radius:12px; background:rgba(1,145,145,.15); border:1px solid rgba(1,145,145,.3); display:flex; align-items:center; justify-content:center; flex-shrink:0">
                   <span style="font-size:20px">🔍</span>
                 </div>
                 <div style="flex:1">
@@ -577,7 +599,7 @@
               
               <!-- Feature 4 -->
               <div style="display:flex; gap:12px; align-items:flex-start">
-                <div style="width:40px; height:40px; border-radius:12px; background:rgba(1,145,145,.15); border:1px solid rgba(1,145,145,.3); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                <div class="feature-icon-box" style="width:40px; height:40px; border-radius:12px; background:rgba(1,145,145,.15); border:1px solid rgba(1,145,145,.3); display:flex; align-items:center; justify-content:center; flex-shrink:0">
                   <span style="font-size:20px">📊</span>
                 </div>
                 <div style="flex:1">
@@ -605,7 +627,7 @@
     <section id="about" class="section alt">
       <div class="container grid cols-2">
         <div class="reveal">
-          <h2 class="h2" id="about-h2">Where hard work meets clean code.</h2>
+          <h2 class="h2" id="about-h2"><span class="section-title-accent">Where hard work meets clean code.</span></h2>
           <p id="about-p1">Frozen River Software started when I realized the tools I was building for myself could help others too. What began as a few scripts and experiments has turned into a growing collection of practical apps for tradespeople, small businesses, and anyone tired of juggling paperwork.</p>
           <p id="about-p2">I’m not a big company — it’s just me (and a rotating cast of prototypes). But I take pride in building software that actually helps. Real‑world tested, clearly documented, and built with the same care I used to put into every install and service call.</p>
         </div>
@@ -677,7 +699,7 @@
     <!-- Projects -->
     <section id="projects" class="section">
       <div class="container">
-        <h2 class="h2">What's shipping now</h2>
+        <h2 class="h2"><span class="section-title-accent">What's shipping now</span></h2>
         <p class="muted">Focused on document intelligence — building the foundation for smarter paperwork.</p>
 
         <div style="margin-top:24px; display:grid; gap:20px">
@@ -764,7 +786,7 @@
     <!-- Roadmap -->
     <section id="roadmap" class="section alt">
       <div class="container">
-        <h2 class="h2" id="roadmap-title">Where things are headed</h2>
+        <h2 class="h2" id="roadmap-title"><span class="section-title-accent">Where things are headed</span></h2>
         <p id="roadmap-copy">Building multiple tools, each at different stages. Here's what's cooking:</p>
         
         <div class="project-roadmap">
@@ -862,7 +884,7 @@
 
     <!-- Contact + Newsletter -->
     <section id="contact" class="section">
-      <div class="container grid cols-2">
+      <div class="container grid cols-2" style="align-items:stretch">
         <div class="reveal" style="display:flex; flex-direction:column; gap:16px">
           <!-- Updates (left) -->
           <div class="card" id="updates-card" style="position:relative; overflow:hidden">
@@ -899,16 +921,16 @@
         </div>
 
         <!-- Right column: Contact then Newsletter -->
-        <aside class="reveal" style="display:flex; flex-direction:column; gap:16px; justify-content:flex-end">
-          <div class="card" id="contact-card">
-            <h3 class="card-title" id="contact-title">Let’s talk</h3>
+        <aside class="reveal" style="display:flex; flex-direction:column; gap:16px">
+          <div class="card" id="contact-card" style="flex:1; display:flex; flex-direction:column">
+            <h3 class="card-title" id="contact-title">Let's talk</h3>
             <p id="contact-copy">If you’ve got a problem worth solving, I’d love to hear it. Questions, collaborations, or early testing invites — all welcome.</p>
             <div class="actions">
               <a id="contact-btn" class="btn primary" href="mailto:info@frozenriversoftware.com">Send a message</a>
               <a class="btn ghost" href="assets/one-pager.pdf" target="_blank" rel="noopener" id="contact-onepager" title="View one‑pager (PDF)">View one‑pager (PDF)</a>
             </div>
           </div>
-          <div class="card">
+          <div class="card" style="flex:1; display:flex; flex-direction:column">
             <h3 class="card-title" id="nl-title">Newsletter</h3>
             <p id="nl-copy" class="muted" style="margin:6px 0 10px">I don’t spam. I just occasionally overshare progress updates.</p>
             <form
