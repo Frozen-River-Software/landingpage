@@ -408,20 +408,15 @@
 
         setText('changelog', c.changelog);
         const cdate = document.getElementById('changelog-date');
-        const csep = document.getElementById('changelog-sep');
-        if(cdate && csep){
-          if(c.changelogDate){ cdate.textContent = c.changelogDate; csep.style.display='inline'; }
-          else { cdate.textContent=''; csep.style.display='none'; }
-        }
+        if(cdate && c.changelogDate) cdate.textContent = c.changelogDate;
+        
         // previous update (optional)
         const pw = document.getElementById('changelog-prev-wrap');
         const pdate = document.getElementById('changelog-prev-date');
-        const psep = document.getElementById('changelog-prev-sep');
         const ptxt = document.getElementById('changelog-prev');
-        if(c.changelogPrev || c.changelogPrevDate){
-          if(pw) pw.style.display='block';
+        if((c.changelogPrev || c.changelogPrevDate) && pw){
+          pw.style.display='block';
           if(pdate) pdate.textContent = c.changelogPrevDate||'';
-          if(psep) psep.style.display = c.changelogPrevDate? 'inline' : 'none';
           if(ptxt) ptxt.textContent = c.changelogPrev||'';
         }
       }
@@ -711,14 +706,32 @@
       <div class="container grid cols-2">
         <div class="reveal" style="display:flex; flex-direction:column; gap:16px">
           <!-- Updates (left) -->
-          <div class="card" id="updates-card">
-            <h3 class="card-title" data-edit>Updates</h3>
-            <p class="muted" style="margin:6px 0 0">
-              <span id="changelog-date"></span><span id="changelog-sep" style="display:none"> — </span><span id="changelog">This month: fixed 12 bugs, broke 8 new things, progress net = +4.</span>
-            </p>
-            <p class="muted" id="changelog-prev-wrap" style="margin:6px 0 0; display:none">
-              <span id="changelog-prev-date"></span><span id="changelog-prev-sep" style="display:none"> — </span><span id="changelog-prev"></span>
-            </p>
+          <div class="card" id="updates-card" style="position:relative; overflow:hidden">
+            <div style="position:absolute; top:0; right:0; width:100px; height:100px; background:radial-gradient(circle at top right, rgba(1,145,145,0.1), transparent); pointer-events:none"></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+              <h3 class="card-title" style="margin:0">Latest Updates</h3>
+              <a href="/blog/index.html" style="font-size:.9rem; color:var(--brand); text-decoration:none; display:flex; align-items:center; gap:4px">
+                View all <span style="font-size:1.2em">→</span>
+              </a>
+            </div>
+            
+            <!-- Current update -->
+            <div style="padding:12px; background:var(--surface-2); border:1px solid var(--border); border-left:3px solid var(--brand); border-radius:8px; margin-bottom:12px">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px">
+                <span id="changelog-date" style="font-weight:600; color:var(--brand); font-size:.9rem"></span>
+                <span style="display:inline-block; width:4px; height:4px; background:var(--muted); border-radius:50%"></span>
+                <span style="font-size:.85rem; color:var(--dim); text-transform:uppercase; letter-spacing:.05em">Latest</span>
+              </div>
+              <p id="changelog" style="margin:0; color:var(--text); line-height:1.6">This month: fixed 12 bugs, broke 8 new things, progress net = +4.</p>
+            </div>
+            
+            <!-- Previous update -->
+            <div id="changelog-prev-wrap" style="display:none; padding:10px; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.05); border-radius:6px">
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px">
+                <span id="changelog-prev-date" style="font-size:.85rem; color:var(--muted)"></span>
+              </div>
+              <p id="changelog-prev" style="margin:0; color:var(--muted); font-size:.95rem; line-height:1.5"></p>
+            </div>
           </div>
         </div>
 

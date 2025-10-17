@@ -58,8 +58,8 @@
     "placeholder": "you@example.com",
     "cta": "Join"
   },
-  "changelogDate": "Oct 5, 2025",
-  "changelog": "Website launched 🍻",
-  "changelogPrevDate": "Sept 2025",
-  "changelogPrev": "This month: fixed 12 bugs, broke 8 new things, progress net = +4."
+  "changelogDate": "Oct 15, 2025",
+  "changelog": "Major pivot: Shifting focus to invoice & receipt scanning with AI-powered document intelligence. Building smart tools that learn your business patterns. Job scheduling app on hold to avoid burnout and ship something useful faster.",
+  "changelogPrevDate": "Oct 5, 2025",
+  "changelogPrev": "Website launched with professional pages (FAQ, blog, security.txt), enhanced SEO, and branding assets. 🍻"
 }
