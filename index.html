@@ -657,68 +657,86 @@
     <!-- Projects -->
     <section id="projects" class="section">
       <div class="container">
-        <h2 class="h2">What’s on the workbench</h2>
-        <p class="muted">Early tools in various stages — from rough cuts to pilot‑ready.</p>
+        <h2 class="h2">What's shipping now</h2>
+        <p class="muted">Focused on document intelligence — building the foundation for smarter paperwork.</p>
 
-        <div class="proj-layout" style="margin-top:16px">
-          <div class="proj-main" style="display:grid; gap:16px">
-            <div class="proj-feature card reveal" style="display:grid; gap:12px">
-              <div class="media" id="feat-media" aria-hidden="true" style="display:none">
-                <img id="feat-img" alt="" />
+        <div style="margin-top:24px; display:grid; gap:20px">
+          <!-- Active Project 1: Invoice Scanner -->
+          <div class="card reveal" style="background:linear-gradient(135deg, rgba(1,145,145,.05) 0%, transparent 50%); border-left:3px solid var(--brand)">
+            <div style="display:flex; align-items:flex-start; gap:16px; flex-wrap:wrap">
+              <div style="flex:1; min-width:280px">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px">
+                  <span style="font-size:32px">📄</span>
+                  <div>
+                    <h3 style="margin:0; font-weight:700; font-size:1.3rem">Invoice & Receipt Scanner</h3>
+                    <span class="badge alpha" style="margin-top:4px; display:inline-flex">Pre-Alpha • 35%</span>
+                  </div>
+                </div>
+                <p class="muted" style="margin:10px 0">AI-powered document capture that learns your business patterns. Currently building the foundation — depends on the learning system to work its magic.</p>
+                
+                <div style="margin-top:16px">
+                  <strong style="font-size:.9rem; color:var(--muted)">Recent progress:</strong>
+                  <ul style="margin:8px 0; padding-left:20px; color:var(--muted); font-size:.95rem">
+                    <li>Document capture pipeline architecture</li>
+                    <li>OCR integration and data extraction testing</li>
+                    <li>Pattern recognition groundwork</li>
+                  </ul>
+                </div>
               </div>
-              <div>
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
-                  <span class="badge" id="feat-status" style="display:none"></span>
-                  <ul class="tags" id="feat-tags" style="display:none"></ul>
-                </div>
-                <h3 id="feat-title" style="margin:8px 0 6px; font-weight:700">Featured project</h3>
-                <p id="feat-body" class="muted">Short description.</p>
-                <div style="margin-top:8px; display:flex; gap:10px; flex-wrap:wrap">
-                  <a id="feat-demo" class="btn ghost" href="#" style="display:none">View demo</a>
-                </div>
-              </div>
-            </div>
-
-            <div class="proj-grid grid cols-3">
-              <article class="card reveal">
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
-                  <span class="badge" id="proj0-status" style="display:none"></span>
-                  <ul class="tags" id="proj0-tags" style="display:none"></ul>
-                </div>
-                <h3 id="proj0-title" style="margin:8px 0 6px; font-weight:700">Project</h3>
-                <p id="proj0-body" class="muted">Description</p>
-                <a id="proj0-demo" class="btn ghost" href="#" style="display:none; margin-top:6px">View demo</a>
-              </article>
-              <article class="card reveal">
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
-                  <span class="badge" id="proj1-status" style="display:none"></span>
-                  <ul class="tags" id="proj1-tags" style="display:none"></ul>
-                </div>
-                <h3 id="proj1-title" style="margin:8px 0 6px; font-weight:700">Project</h3>
-                <p id="proj1-body" class="muted">Description</p>
-                <a id="proj1-demo" class="btn ghost" href="#" style="display:none; margin-top:6px">View demo</a>
-              </article>
-              <article class="card reveal">
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
-                  <span class="badge" id="proj2-status" style="display:none"></span>
-                  <ul class="tags" id="proj2-tags" style="display:none"></ul>
-                </div>
-                <h3 id="proj2-title" style="margin:8px 0 6px; font-weight:700">Project</h3>
-                <p id="proj2-body" class="muted">Description</p>
-                <a id="proj2-demo" class="btn ghost" href="#" style="display:none; margin-top:6px">View demo</a>
-              </article>
-            </div>
-
-            <div class="card reveal">
-              <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap">
-                <div>
-                  <strong>AI integrations (R&D)</strong>
-                  <p id="projects-randd" class="muted" style="margin:6px 0 0">Exploring automation to handle the boring parts — from job costing to auto‑filling invoices.</p>
-                </div>
+              <div style="min-width:200px; padding:16px; background:var(--surface-2); border:1px solid var(--border); border-radius:12px">
+                <div style="font-size:.85rem; font-weight:600; color:var(--dim); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px">Coming Next</div>
+                <ul style="margin:0; padding-left:18px; color:var(--muted); font-size:.95rem">
+                  <li>Mobile app foundation</li>
+                  <li>Learning system integration</li>
+                  <li>First alpha test builds</li>
+                </ul>
               </div>
             </div>
           </div>
-          
+
+          <!-- Active Project 2: Learning System -->
+          <div class="card reveal" style="background:linear-gradient(135deg, rgba(100,100,255,.05) 0%, transparent 50%); border-left:3px solid #8b9bff">
+            <div style="display:flex; align-items:flex-start; gap:16px; flex-wrap:wrap">
+              <div style="flex:1; min-width:280px">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px">
+                  <span style="font-size:32px">🧠</span>
+                  <div>
+                    <h3 style="margin:0; font-weight:700; font-size:1.3rem">Aggregated Learning System</h3>
+                    <span class="badge dev" style="margin-top:4px; display:inline-flex">In Development • 60%</span>
+                  </div>
+                </div>
+                <p class="muted" style="margin:10px 0">The brain behind the scanner — AI that learns your vendor formats, categories, and patterns. Gets smarter with every document you process.</p>
+                
+                <div style="margin-top:16px">
+                  <strong style="font-size:.9rem; color:var(--muted)">Recent progress:</strong>
+                  <ul style="margin:8px 0; padding-left:20px; color:var(--muted); font-size:.95rem">
+                    <li>Training algorithms on real invoice formats</li>
+                    <li>Pattern recognition refinement</li>
+                    <li>Vendor classification system</li>
+                  </ul>
+                </div>
+              </div>
+              <div style="min-width:200px; padding:16px; background:var(--surface-2); border:1px solid var(--border); border-radius:12px">
+                <div style="font-size:.85rem; font-weight:600; color:var(--dim); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px">Coming Next</div>
+                <ul style="margin:0; padding-left:18px; color:var(--muted); font-size:.95rem">
+                  <li>Accuracy improvements</li>
+                  <li>Multi-document learning</li>
+                  <li>Export integrations</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Strategy Note -->
+          <div class="card reveal" style="background:rgba(125,148,148,.05); border:1px solid rgba(125,148,148,.2)">
+            <div style="display:flex; align-items:center; gap:12px">
+              <span style="font-size:28px">🎯</span>
+              <div style="flex:1">
+                <strong style="display:block; margin-bottom:6px">Current Strategy</strong>
+                <p class="muted" style="margin:0">Shipping these two tools first, then expanding. Avoiding burnout by building focused, useful tools instead of trying to boil the ocean. Other projects (PDF measurement, job scheduling) resume once these launch.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
