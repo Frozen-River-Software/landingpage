@@ -163,7 +163,7 @@
     /* Hide card but show a bit of edge when collapsed */
     #web-float.collapsed{transform:translateY(0) translateX(calc(100% - 8px));}
     /* Vertical heading text - always visible on the side */
-    #web-float .web-edge-text{position:absolute; left:8px; top:50%; transform:translateY(-50%); writing-mode:vertical-rl; text-orientation:mixed; font-size:18px; font-weight:700; color:var(--text); pointer-events:none}
+    #web-float .web-edge-text{position:absolute; left:8px; top:50%; transform:translateY(-50%) rotate(180deg); writing-mode:vertical-rl; text-orientation:mixed; font-size:18px; font-weight:700; color:var(--text); pointer-events:none; white-space:nowrap}
     /* Arrow on the left edge */
     #web-float.collapsed::before{content:'\2039'; position:absolute; left:-32px; top:0; bottom:0; width:32px; display:flex; align-items:center; justify-content:center; color:var(--brand); font-size:40px; line-height:1}
     #web-float.show:not(.collapsed)::after{content:'\203A'; position:absolute; left:-32px; top:0; bottom:0; width:32px; display:flex; align-items:center; justify-content:center; color:var(--brand); font-size:40px; line-height:1; opacity:.95}
