@@ -160,20 +160,23 @@
     /* Floating website card (popup-like) */
     #web-float{position:fixed; right:24px; top:88px; width:320px; max-width:92vw; background:var(--surface-1); border:1px solid var(--border); border-radius:16px; box-shadow:0 12px 28px rgba(0,0,0,.45); padding:14px; z-index:100; opacity:0; transform:translateY(-8px); pointer-events:none; transition:opacity .25s ease, transform .25s ease}
     #web-float.show{opacity:1; transform:translateY(0); pointer-events:auto}
-    /* Hide card but show edge tab when collapsed */
-    #web-float.collapsed{transform:translateY(0) translateX(calc(100% - 32px));}
-    /* Vertical text tab on the edge */
-    #web-float .web-edge{position:absolute; left:0; top:0; bottom:0; width:32px; background:var(--surface-1); border:1px solid var(--border); border-right:none; border-radius:16px 0 0 16px; cursor:pointer; display:flex; align-items:center; justify-content:center; writing-mode:vertical-rl; text-orientation:mixed; font-size:14px; font-weight:600; color:var(--brand); letter-spacing:.05em; transition:background .2s}
-    #web-float .web-edge:hover{background:var(--surface-2)}
-    #web-float.collapsed .web-edge{box-shadow:-4px 0 12px rgba(0,0,0,.3)}
-    /* Hide edge tab when expanded */
-    #web-float.show:not(.collapsed) .web-edge{display:none}
-    /* Glow hint animation */
+    /* Hide card but show a bit of edge when collapsed */
+    #web-float.collapsed{transform:translateY(0) translateX(calc(100% - 8px));}
+    /* Vertical heading text on the visible edge */
+    #web-float .web-edge-text{position:absolute; left:8px; top:50%; transform:translateY(-50%); writing-mode:vertical-rl; text-orientation:mixed; font-size:18px; font-weight:700; color:var(--text); pointer-events:none; opacity:0; transition:opacity .3s}
+    #web-float.collapsed .web-edge-text{opacity:1}
+    /* Arrow on the left edge */
+    #web-float.collapsed::before{content:'\2039'; position:absolute; left:-32px; top:0; bottom:0; width:32px; display:flex; align-items:center; justify-content:center; color:var(--brand); font-size:40px; line-height:1}
+    #web-float.show:not(.collapsed)::after{content:'\203A'; position:absolute; left:-32px; top:0; bottom:0; width:32px; display:flex; align-items:center; justify-content:center; color:var(--brand); font-size:40px; line-height:1; opacity:.95}
+    /* Click target for arrow */
+    #web-float .web-edge{position:absolute; left:-32px; top:0; bottom:0; width:32px; background:transparent; border:none; cursor:pointer}
+    /* Arrow glow hint */
     @keyframes glowcycle{
-      0%,50%,100%{ opacity:.9; }
-      8%,16%,24%{ opacity:1; text-shadow:0 0 12px var(--brand); }
+      0%,50%,100%{ opacity:.85; text-shadow:0 0 0 var(--brand); }
+      8%,16%,24%{ opacity:1; text-shadow:0 0 14px var(--brand), 0 0 28px var(--brand); }
     }
-    #web-float.hint-cycling.collapsed .web-edge{ animation:glowcycle 6s ease-in-out infinite }
+    #web-float.hint-cycling.collapsed::before{ animation:glowcycle 6s ease-in-out infinite }
+    #web-float.hint-cycling.show:not(.collapsed)::after{ animation:glowcycle 6s ease-in-out infinite }
 
     /* Focus list */
     .focus-list{list-style:none; margin:10px 0 0; padding:0; display:grid; gap:10px}
@@ -710,9 +713,6 @@
             <div style="position:absolute; top:0; right:0; width:100px; height:100px; background:radial-gradient(circle at top right, rgba(1,145,145,0.1), transparent); pointer-events:none"></div>
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
               <h3 class="card-title" style="margin:0">Latest Updates</h3>
-              <a href="#updates-card" style="font-size:.9rem; color:var(--brand); text-decoration:none; display:flex; align-items:center; gap:4px; pointer-events:none; opacity:0.4">
-                All updates here <span style="font-size:1.2em">↓</span>
-              </a>
             </div>
             
             <!-- Current update -->
@@ -818,8 +818,9 @@
 
   <!-- Floating website services card -->
   <div id="web-float" aria-live="polite" aria-label="Website services" aria-expanded="true">
-    <button class="web-edge" type="button" aria-label="Collapse or expand">NEED A WEBSITE?</button>
-    <div style="display:flex; flex-direction:column; gap:8px; padding-left:8px">
+    <button class="web-edge" type="button" aria-label="Collapse or expand"></button>
+    <span class="web-edge-text">Need a website?</span>
+    <div style="display:flex; flex-direction:column; gap:8px">
       <div class="card-title" style="font-size:18px">Need a website?</div>
       <p class="muted" style="margin:0">I take on small website projects when I have room. I can build it and hand it off, or build &amp; maintain it for you.</p>
       <div class="actions" style="margin-top:6px">
