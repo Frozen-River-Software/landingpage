@@ -523,64 +523,59 @@
           </div>
         </div>
         <div class="reveal">
-          <div class="card" aria-label="Document intelligence features">
-            <div class="focus-tabs">
-              <div class="ftablist" role="tablist" aria-orientation="vertical">
-                <button class="ftab" id="ftab-0" role="tab" aria-selected="true" aria-controls="fpanel-0">
-                  <span class="chip" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm3 18h4v-1h-4v1ZM7 5v12h10V5H7Z"/></svg></span>
-                  <span>Smart document capture</span>
-                </button>
-                <button class="ftab" id="ftab-1" role="tab" aria-selected="false" aria-controls="fpanel-1" tabindex="-1">
-                  <span class="chip" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="6" cy="12" r="2"/><circle cx="18" cy="7" r="2"/><circle cx="16" cy="17" r="2"/><path d="M7.7 11.3 16.3 7.7M7.9 12.9 14.8 16.2" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></span>
-                  <span>AI learning system</span>
-                </button>
-                <button class="ftab" id="ftab-2" role="tab" aria-selected="false" aria-controls="fpanel-2" tabindex="-1">
-                  <span class="chip" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6 3h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-4l-4 3v-3H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm1 4v2h10V7H7Zm0 4v2h7v-2H7Z"/></svg></span>
-                  <span>Organization & search</span>
-                </button>
-                <button class="ftab" id="ftab-3" role="tab" aria-selected="false" aria-controls="fpanel-3" tabindex="-1">
-                  <span class="chip" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12H5a2 2 0 0 1-2-2V6Zm10 0a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6V6Zm-8 1h4v3H5V7Zm10 0h4v3h-4V7Z"/></svg></span>
-                  <span>Export & integrations</span>
-                </button>
+          <div class="card" style="background:linear-gradient(135deg, rgba(1,145,145,.08) 0%, transparent 70%); position:relative; overflow:hidden">
+            <div style="position:absolute; top:-50px; right:-50px; width:200px; height:200px; border-radius:50%; background:radial-gradient(circle, rgba(1,145,145,.1), transparent); pointer-events:none"></div>
+            
+            <h3 style="margin:0 0 16px; font-weight:700; font-size:1.2rem; position:relative">What makes it smart</h3>
+            
+            <div style="display:grid; gap:14px; position:relative">
+              <!-- Feature 1 -->
+              <div style="display:flex; gap:12px; align-items:flex-start">
+                <div style="width:40px; height:40px; border-radius:12px; background:rgba(1,145,145,.15); border:1px solid rgba(1,145,145,.3); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                  <span style="font-size:20px">📱</span>
+                </div>
+                <div style="flex:1">
+                  <div style="font-weight:600; margin-bottom:4px; font-size:1rem">Smart Capture</div>
+                  <p style="margin:0; color:var(--muted); font-size:.9rem; line-height:1.5">Mobile camera with auto-crop, enhancement, and batch processing. Works offline anywhere.</p>
+                </div>
               </div>
-              <div class="fpanels">
-                <section id="fpanel-0" class="fpanel" role="tabpanel" aria-labelledby="ftab-0">
-                  <h3 class="h2" style="font-size:20px; margin:0 0 8px">Smart Document Capture</h3>
-                  <ul class="fp-list">
-                    <li>Mobile camera capture with auto-crop and enhancement</li>
-                    <li>PDF and image import from any source</li>
-                    <li>Works offline — capture anywhere, sync when ready</li>
-                    <li>Batch processing for multiple documents</li>
-                  </ul>
-                </section>
-                <section id="fpanel-1" class="fpanel" role="tabpanel" aria-labelledby="ftab-1" hidden>
-                  <h3 class="h2" style="font-size:20px; margin:0 0 8px">AI Learning System</h3>
-                  <ul class="fp-list">
-                    <li>Learns your vendor formats and patterns automatically</li>
-                    <li>Extracts line items, totals, dates, and categories</li>
-                    <li>Gets smarter with every document you process</li>
-                    <li>Privacy-first — your data trains your model, not everyone's</li>
-                  </ul>
-                </section>
-                <section id="fpanel-2" class="fpanel" role="tabpanel" aria-labelledby="ftab-2" hidden>
-                  <h3 class="h2" style="font-size:20px; margin:0 0 8px">Organization & Search</h3>
-                  <ul class="fp-list">
-                    <li>Auto-categorize by vendor, date, type, or amount</li>
-                    <li>Tag and organize with custom labels</li>
-                    <li>Powerful search across all documents and data</li>
-                    <li>Quick filters for expenses, receipts, invoices</li>
-                  </ul>
-                </section>
-                <section id="fpanel-3" class="fpanel" role="tabpanel" aria-labelledby="ftab-3" hidden>
-                  <h3 class="h2" style="font-size:20px; margin:0 0 8px">Export & Integrations</h3>
-                  <ul class="fp-list">
-                    <li>Export to QuickBooks, Xero, and other accounting tools</li>
-                    <li>CSV/Excel exports for custom workflows</li>
-                    <li>Generate expense reports and summaries</li>
-                    <li>API access for custom integrations (coming soon)</li>
-                  </ul>
-                </section>
+              
+              <!-- Feature 2 -->
+              <div style="display:flex; gap:12px; align-items:flex-start">
+                <div style="width:40px; height:40px; border-radius:12px; background:rgba(1,145,145,.15); border:1px solid rgba(1,145,145,.3); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                  <span style="font-size:20px">🧠</span>
+                </div>
+                <div style="flex:1">
+                  <div style="font-weight:600; margin-bottom:4px; font-size:1rem">Learns Your Patterns</div>
+                  <p style="margin:0; color:var(--muted); font-size:.9rem; line-height:1.5">AI that adapts to your vendors, formats, and categories. Gets smarter with every document.</p>
+                </div>
               </div>
+              
+              <!-- Feature 3 -->
+              <div style="display:flex; gap:12px; align-items:flex-start">
+                <div style="width:40px; height:40px; border-radius:12px; background:rgba(1,145,145,.15); border:1px solid rgba(1,145,145,.3); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                  <span style="font-size:20px">🔍</span>
+                </div>
+                <div style="flex:1">
+                  <div style="font-weight:600; margin-bottom:4px; font-size:1rem">Auto-Organize</div>
+                  <p style="margin:0; color:var(--muted); font-size:.9rem; line-height:1.5">Automatically categorizes and tags. Powerful search across all your documents and data.</p>
+                </div>
+              </div>
+              
+              <!-- Feature 4 -->
+              <div style="display:flex; gap:12px; align-items:flex-start">
+                <div style="width:40px; height:40px; border-radius:12px; background:rgba(1,145,145,.15); border:1px solid rgba(1,145,145,.3); display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                  <span style="font-size:20px">📊</span>
+                </div>
+                <div style="flex:1">
+                  <div style="font-weight:600; margin-bottom:4px; font-size:1rem">Export Anywhere</div>
+                  <p style="margin:0; color:var(--muted); font-size:.9rem; line-height:1.5">QuickBooks, Xero, CSV, or custom API. Your data flows where you need it.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div style="margin-top:18px; padding-top:16px; border-top:1px solid var(--border)">
+              <p style="margin:0; font-size:.85rem; color:var(--dim); font-style:italic">Privacy-first: Your data trains your model, not ours.</p>
             </div>
           </div>
         </div>
