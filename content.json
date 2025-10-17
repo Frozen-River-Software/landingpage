@@ -59,7 +59,9 @@
     "cta": "Join"
   },
   "changelogDate": "Oct 15, 2025",
-  "changelog": "Major pivot: Shifting focus to invoice & receipt scanning with AI-powered document intelligence. Building smart tools that learn your business patterns. Job scheduling app on hold to avoid burnout and ship something useful faster.",
-  "changelogPrevDate": "Oct 5, 2025",
-  "changelogPrev": "Website launched with professional pages (FAQ, blog, security.txt), enhanced SEO, and branding assets. 🍻"
+  "changelog": "Website essentials update: Added professional pages (FAQ, blog, 404), security files, enhanced SEO, newsletter feedback, and polished UI components.",
+  "changelogPrevDate": "Oct 10, 2025",
+  "changelogPrev": "Major pivot: Shifting focus to invoice & receipt scanning with AI-powered document intelligence. Building smart tools that learn your business patterns. Job scheduling app on hold to avoid burnout and ship something useful faster.",
+  "changelogPrevDate2": "Oct 5, 2025",
+  "changelogPrev2": "Website launched 🍻"
 }

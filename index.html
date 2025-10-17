@@ -412,7 +412,7 @@
         const cdate = document.getElementById('changelog-date');
         if(cdate && c.changelogDate) cdate.textContent = c.changelogDate;
         
-        // previous update (optional)
+        // previous update 1 (optional)
         const pw = document.getElementById('changelog-prev-wrap');
         const pdate = document.getElementById('changelog-prev-date');
         const ptxt = document.getElementById('changelog-prev');
@@ -420,6 +420,16 @@
           pw.style.display='block';
           if(pdate) pdate.textContent = c.changelogPrevDate||'';
           if(ptxt) ptxt.textContent = c.changelogPrev||'';
+        }
+        
+        // previous update 2 (optional)
+        const pw2 = document.getElementById('changelog-prev-wrap2');
+        const pdate2 = document.getElementById('changelog-prev-date2');
+        const ptxt2 = document.getElementById('changelog-prev2');
+        if((c.changelogPrev2 || c.changelogPrevDate2) && pw2){
+          pw2.style.display='block';
+          if(pdate2) pdate2.textContent = c.changelogPrevDate2||'';
+          if(ptxt2) ptxt2.textContent = c.changelogPrev2||'';
         }
       }
 
@@ -724,12 +734,19 @@
               <p id="changelog" style="margin:0; color:var(--text); line-height:1.6">This month: fixed 12 bugs, broke 8 new things, progress net = +4.</p>
             </div>
             
-            <!-- Previous update -->
-            <div id="changelog-prev-wrap" style="display:none; padding:10px; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.05); border-radius:6px">
+            <!-- Previous updates -->
+            <div id="changelog-prev-wrap" style="display:none; padding:10px; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.05); border-radius:6px; margin-bottom:10px">
               <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px">
                 <span id="changelog-prev-date" style="font-size:.85rem; color:var(--muted)"></span>
               </div>
               <p id="changelog-prev" style="margin:0; color:var(--muted); font-size:.95rem; line-height:1.5"></p>
+            </div>
+            
+            <div id="changelog-prev-wrap2" style="display:none; padding:10px; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.05); border-radius:6px">
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px">
+                <span id="changelog-prev-date2" style="font-size:.85rem; color:var(--muted)"></span>
+              </div>
+              <p id="changelog-prev2" style="margin:0; color:var(--muted); font-size:.95rem; line-height:1.5"></p>
             </div>
           </div>
         </div>
