@@ -35,10 +35,10 @@
     "webFormEndpoint": "https://formspree.io/f/mdkwdpog"
   },
   "newsletter": {
-    "title": "Newsletter",
-    "copy": "I don't spam. I just occasionally overshare progress updates.",
+    "title": "Stay Updated",
+    "copy": "No newsletter yet — but when there's something worth sharing, you'll be the first to know. Sign up to stay in the loop on launches, early access, and big updates.",
     "placeholder": "you@example.com",
-    "cta": "Join"
+    "cta": "Join the list"
   },
   "changelogDate": "Oct 15, 2025",
   "changelog": "Website essentials update: Added professional pages (FAQ, blog, 404), security files, enhanced SEO, newsletter feedback, and polished UI components.",
