@@ -13,14 +13,15 @@
       "15+ years in the trades — residential and commercial installation, service, and maintenance",
       "Worked with homeowners, corporations, and government institutions",
       "20+ years experimenting with code, electronics, and automation",
-      "Exploring AI tools and machine learning as both a hobby and development focus"
+      "Early AI adopter — comfortable with AI tools, consistently on the hunt for the best tools in a rapidly growing environment"
     ],
     "stack": {
-      "frontend": "React, Next.js, Expo",
-      "backend": "NestJS, Node, TypeScript",
-      "db": "PostgreSQL / SQLite (Drizzle)",
-      "infra": "Vercel, Cloudflare, GitHub Actions",
-      "ai": "OpenAI API, local OCR, and image restoration pipelines"
+      "frontend": "React, Next.js, Expo, TailwindCSS",
+      "backend": "NestJS, Node.js, TypeScript, REST APIs",
+      "db": "PostgreSQL, SQLite, Drizzle ORM, Prisma",
+      "infra": "Vercel, Cloudflare, GitHub Actions, Docker",
+      "ai": "OpenAI API, aggregated learning systems, OCR, document classification, image restoration",
+      "tools": "VS Code, Cursor AI, Git/GitHub, Figma, Postman"
     }
   },
   "projects": {

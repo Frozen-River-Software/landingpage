@@ -365,6 +365,7 @@
         setText('stack-db', c.about.stack.db);
         setText('stack-infra', c.about.stack.infra);
         setText('stack-ai', c.about.stack.ai);
+        if(c.about.stack.tools) setText('stack-tools', c.about.stack.tools);
 
         // Projects: featured + grid
         const items = c.projects.items||[];
@@ -643,7 +644,7 @@
               </ul>
               <div style="padding:12px; background:var(--surface-2); border:1px solid var(--border); border-radius:8px">
                 <div style="font-size:.9rem; font-weight:600; margin-bottom:6px; color:var(--text)">Why this matters</div>
-                <p style="margin:0; font-size:.95rem; color:var(--muted); line-height:1.6">I build tools for problems I've actually faced. Not guessing what tradespeople need — I've been there, done the paperwork, felt the frustration.</p>
+                <p style="margin:0; font-size:.95rem; color:var(--muted); line-height:1.6">I build tools for problems I've lived. Two decades of trades work and over 20 years tinkering with code means I understand both the technical side and the real frustration of buried-in-paperwork job sites. Early AI adoption gives me the tools; field experience tells me what's worth building.</p>
               </div>
             </div>
             
@@ -673,6 +674,10 @@
                 <div style="grid-column:1/-1">
                   <div class="muted" style="font-weight:600; margin-bottom:6px; font-size:.85rem; text-transform:uppercase; letter-spacing:.05em">AI & Document Processing</div>
                   <div id="stack-ai" style="font-size:.95rem">OpenAI API, local OCR, and image restoration pipelines</div>
+                </div>
+                <div style="grid-column:1/-1">
+                  <div class="muted" style="font-weight:600; margin-bottom:6px; font-size:.85rem; text-transform:uppercase; letter-spacing:.05em">Development Tools</div>
+                  <div id="stack-tools" style="font-size:.95rem">VS Code, Cursor AI, Git/GitHub, Figma, Postman</div>
                 </div>
               </div>
             </div>
