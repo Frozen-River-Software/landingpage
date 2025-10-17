@@ -105,6 +105,27 @@
     .timeline::before{content:""; position:absolute; left:10px; top:4px; bottom:4px; width:2px; background:var(--border)}
     .titem{position:relative; margin:0 0 18px}
     .titem::before{content:""; position:absolute; left:-28px; top:6px; width:12px; height:12px; border-radius:50%; background:var(--brand)}
+    
+    /* Project roadmap cards */
+    .project-roadmap{display:grid; gap:16px; margin-top:20px}
+    @media(min-width:768px){ .project-roadmap{grid-template-columns:1fr 1fr} }
+    .project-card{background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:20px; position:relative; overflow:hidden}
+    .project-card::before{content:""; position:absolute; top:0; left:0; right:0; height:3px; background:var(--brand); opacity:0.5}
+    .project-card.paused::before{background:var(--dim); opacity:0.3}
+    .project-header{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px}
+    .project-icon{font-size:24px; line-height:1}
+    .project-title{font-weight:700; font-size:1.1rem; margin:0; flex:1}
+    .project-status{display:inline-flex; align-items:center; padding:4px 10px; border-radius:999px; font-size:.8rem; font-weight:600; white-space:nowrap}
+    .project-status.alpha{background:rgba(1,145,145,.2); color:var(--brand); border:1px solid rgba(1,145,145,.4)}
+    .project-status.dev{background:rgba(100,100,255,.15); color:#8b9bff; border:1px solid rgba(100,100,255,.3)}
+    .project-status.paused{background:rgba(125,148,148,.15); color:var(--dim); border:1px solid rgba(125,148,148,.3)}
+    .project-status.planned{background:rgba(255,200,100,.15); color:#ffb366; border:1px solid rgba(255,200,100,.3)}
+    .progress-bar-wrap{background:var(--surface-1); border-radius:999px; height:8px; margin:16px 0 12px; overflow:hidden; position:relative}
+    .progress-bar{height:100%; background:linear-gradient(90deg, var(--brand), var(--brand-hover)); border-radius:999px; transition:width .5s ease}
+    .progress-bar.paused{background:linear-gradient(90deg, var(--dim), var(--muted))}
+    .progress-label{display:flex; align-items:center; justify-content:space-between; font-size:.85rem; color:var(--muted); margin-bottom:8px}
+    .project-next{color:var(--muted); font-size:.95rem; margin:8px 0 0; display:flex; align-items:flex-start; gap:6px}
+    .project-next::before{content:"→"; color:var(--brand); font-weight:bold; flex-shrink:0}
     .muted{color:var(--dim)}
     .card-title{font-family:Manrope, system-ui, sans-serif; font-weight:800; font-size:20px; margin:0 0 8px}
     .actions{margin-top:12px; display:flex; gap:10px; flex-wrap:wrap}
@@ -700,15 +721,81 @@
     <section id="roadmap" class="section alt">
       <div class="container">
         <h2 class="h2" id="roadmap-title">Where things are headed</h2>
-        <p id="roadmap-copy">Currently deep in development — building, testing, and occasionally rebuilding. Pilot testing and early feedback will open soon. If you run a small team, service business, or just like trying new tools, I’ll be looking for early testers in the coming weeks and months. I’d love to hear from you.</p>
-        <div class="timeline" style="margin-top:14px">
-          <div class="titem"><strong id="r0-label">Now</strong><div id="r0-text" class="muted">Core features in active development; private test builds.</div></div>
-          <div class="titem"><strong id="r1-label">Soon</strong><div id="r1-text" class="muted">Invite‑only pilot with a small group for real‑world feedback.</div></div>
-          <div class="titem"><strong id="r2-label">Next</strong><div id="r2-text" class="muted">Public demos and early access sign‑ups.</div></div>
-          <div class="titem"><strong id="r3-label">Beyond</strong><div id="r3-text" class="muted">Integrations and ecosystem.</div></div>
+        <p id="roadmap-copy">Building multiple tools, each at different stages. Here's what's cooking:</p>
+        
+        <div class="project-roadmap">
+          <!-- Invoice Scanner -->
+          <div class="project-card">
+            <div class="project-header">
+              <span class="project-icon">📄</span>
+              <h3 class="project-title">Invoice & Receipt Scanner</h3>
+              <span class="project-status alpha">Alpha</span>
+            </div>
+            <div class="progress-label">
+              <span>Development Progress</span>
+              <span>75%</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar" style="width:75%"></div>
+            </div>
+            <p class="project-next">Mobile app, polish UX, then accounting integrations</p>
+          </div>
+
+          <!-- Learning System -->
+          <div class="project-card">
+            <div class="project-header">
+              <span class="project-icon">🧠</span>
+              <h3 class="project-title">Aggregated Learning System</h3>
+              <span class="project-status dev">In Development</span>
+            </div>
+            <div class="progress-label">
+              <span>Development Progress</span>
+              <span>60%</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar" style="width:60%"></div>
+            </div>
+            <p class="project-next">Training algorithms on real document patterns</p>
+          </div>
+
+          <!-- PDF Tool -->
+          <div class="project-card">
+            <div class="project-header">
+              <span class="project-icon">📐</span>
+              <h3 class="project-title">PDF Measurement Tool</h3>
+              <span class="project-status planned">Planned</span>
+            </div>
+            <div class="progress-label">
+              <span>Development Progress</span>
+              <span>20%</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar" style="width:20%"></div>
+            </div>
+            <p class="project-next">R&D phase, spec'ing features for takeoffs and estimates</p>
+          </div>
+
+          <!-- Job Scheduling -->
+          <div class="project-card paused">
+            <div class="project-header">
+              <span class="project-icon">📅</span>
+              <h3 class="project-title">Job Scheduling App</h3>
+              <span class="project-status paused">On Hold</span>
+            </div>
+            <div class="progress-label">
+              <span>Development Progress</span>
+              <span>40%</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar paused" style="width:40%"></div>
+            </div>
+            <p class="project-next">Resume after document tools launch with real feedback</p>
+          </div>
         </div>
-        <div style="margin-top:12px">
-          <a class="btn ghost" href="#" id="btn-pilot">Volunteer for pilot</a>
+
+        <div style="margin-top:24px; text-align:center">
+          <p class="muted" style="margin-bottom:12px">Want to test early builds or have feedback on priorities?</p>
+          <a class="btn ghost" href="#contact" id="btn-pilot">Get in touch</a>
         </div>
       </div>
     </section>
