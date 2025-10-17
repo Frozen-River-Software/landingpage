@@ -1,4 +1,12 @@
-Contact: mailto:info@frozenriversoftware.com
-Policy: https://www.frozenriversoftware.com/responsible-disclosure.html
-Expires: 2026-01-01T00:00:00.000Z
+# Security Policy for Frozen River Software
+# Updated: 2025-10-15
+# Expires: 2026-10-15
 
+Contact: mailto:info@frozenriversoftware.com
+Expires: 2026-10-15T23:59:59Z
+Preferred-Languages: en
+Canonical: https://www.frozenriversoftware.com/.well-known/security.txt
+Policy: https://www.frozenriversoftware.com/responsible-disclosure.html
+
+# We appreciate responsible disclosure of security vulnerabilities.
+# Please see our responsible disclosure policy for guidelines and response expectations.

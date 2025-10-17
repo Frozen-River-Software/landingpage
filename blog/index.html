@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Blog & Updates — Frozen River Software</title>
+  <meta name="description" content="Updates, progress notes, and thoughts on building document intelligence tools for tradespeople." />
+  <link rel="canonical" href="https://www.frozenriversoftware.com/blog/index.html" />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png" />
+  <meta name="theme-color" content="#0B0F10" />
+  
+  <!-- Vercel Analytics -->
+  <script defer src="/_vercel/insights/script.js"></script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --brand: #019191;
+      --brand-hover: #00A5A5;
+      --bg: #0B0F10;
+      --surface-1: #0F1516;
+      --surface-2: #111A1B;
+      --border: #1C2A2B;
+      --text: #E7F2F2;
+      --muted: #A9C1C1;
+      --dim: #7D9494;
+      --focus: #00B3B3;
+    }
+    *{box-sizing:border-box}
+    html,body{min-height:100%}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font-family:"Work Sans", system-ui, -apple-system, sans-serif;
+      line-height:1.6;
+    }
+    a{color:var(--brand); text-decoration:none}
+    a:hover{color:var(--brand-hover)}
+    a:focus-visible{outline:2px solid var(--focus); outline-offset:3px}
+    .container{max-width:960px; margin-inline:auto; padding:0 20px}
+    header{
+      position:sticky; top:0; z-index:40; backdrop-filter:saturate(140%) blur(8px);
+      background:color-mix(in oklab, var(--bg) 70%, black 30% / 0.4);
+      border-bottom:1px solid var(--border);
+    }
+    .header-inner{display:flex; align-items:center; justify-content:space-between; height:64px}
+    .brand{display:flex; align-items:center; gap:12px}
+    .brand-logo{height:36px; width:auto}
+    .brand-name{font-family:"Ubuntu", system-ui, sans-serif; font-size:22px; font-weight:500}
+    nav a{color:var(--muted); margin-left:20px}
+    nav a:hover{color:var(--text)}
+    main{padding:72px 0}
+    h1{
+      font-family:Manrope, system-ui, sans-serif;
+      font-weight:800;
+      letter-spacing:-.02em;
+      font-size:clamp(32px, 5vw, 48px);
+      margin:0 0 16px;
+    }
+    .lede{color:var(--muted); font-size:1.125rem; margin:0 0 48px}
+    .post-list{list-style:none; margin:0; padding:0; display:grid; gap:20px}
+    .post{
+      background:var(--surface-1);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:28px;
+      transition:transform .2s ease;
+    }
+    .post:hover{transform:translateY(-2px)}
+    .post-meta{
+      display:flex; align-items:center; gap:12px; margin-bottom:12px;
+      font-size:.9rem; color:var(--dim);
+    }
+    .post-date{color:var(--muted)}
+    .post-tag{
+      padding:2px 8px;
+      background:var(--surface-2);
+      border:1px solid var(--border);
+      border-radius:999px;
+      font-size:.85rem;
+    }
+    .post-title{
+      font-family:Manrope, system-ui, sans-serif;
+      font-weight:700;
+      font-size:1.5rem;
+      margin:0 0 12px;
+      color:var(--text);
+    }
+    .post-excerpt{margin:0; color:var(--muted); line-height:1.7}
+    .post-body{color:var(--muted); line-height:1.8}
+    .post-body h2{
+      font-family:Manrope, system-ui, sans-serif;
+      font-weight:700;
+      font-size:1.25rem;
+      margin:24px 0 12px;
+      color:var(--text);
+    }
+    .post-body h3{
+      font-family:Manrope, system-ui, sans-serif;
+      font-weight:600;
+      font-size:1.1rem;
+      margin:20px 0 10px;
+      color:var(--text);
+    }
+    .post-body ul{padding-left:20px}
+    .post-body li{margin:8px 0}
+    .post-body code{
+      background:var(--surface-2);
+      padding:2px 6px;
+      border-radius:4px;
+      font-size:.9em;
+    }
+    footer{
+      border-top:1px solid var(--border);
+      padding:32px 0;
+      margin-top:72px;
+      text-align:center;
+      color:var(--dim);
+    }
+    footer a{color:var(--muted)}
+    footer a:hover{color:var(--text)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container header-inner">
+      <div class="brand">
+        <a href="/" aria-label="Home">
+          <img src="/assets/logo.svg" alt="" class="brand-logo" />
+        </a>
+        <span class="brand-name">Frozen River Software</span>
+      </div>
+      <nav aria-label="Primary">
+        <a href="/">Home</a>
+        <a href="/#about">About</a>
+        <a href="/#projects">Projects</a>
+        <a href="/#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <h1>Blog & Updates</h1>
+      <p class="lede">Progress notes, technical deep-dives, and occasional thoughts on building useful tools.</p>
+
+      <ul class="post-list">
+        <!-- Post 1: The Pivot -->
+        <li class="post">
+          <div class="post-meta">
+            <time class="post-date" datetime="2025-10-15">October 15, 2025</time>
+            <span class="post-tag">Update</span>
+          </div>
+          <h2 class="post-title">Pivoting to Document Intelligence</h2>
+          <div class="post-body">
+            <p><strong>TL;DR:</strong> Putting the big job scheduling app on hold. Focusing on invoice/receipt scanning with smart AI learning instead. Avoiding burnout by building smaller, focused tools first.</p>
+
+            <h3>What changed?</h3>
+            <p>I've been working on a comprehensive job scheduling and invoicing app for trades businesses. It's a massive project — scheduling, dispatch, invoicing, payments, inventory, mobile offline sync, the works. And honestly? It was starting to burn me out.</p>
+
+            <p>I realized I was trying to boil the ocean. Instead of shipping something useful, I was endlessly tweaking features that nobody's even tested yet. Not sustainable, not smart.</p>
+
+            <h3>The new direction</h3>
+            <p>I'm shifting focus to something more focused: <strong>invoice and receipt scanning with intelligent document processing</strong>. Here's why this makes sense:</p>
+            <ul>
+              <li><strong>Smaller scope:</strong> I can ship something useful in weeks, not months</li>
+              <li><strong>Real problem:</strong> Everyone drowns in receipts and invoices, regardless of industry</li>
+              <li><strong>AI leverage:</strong> This is where AI actually shines — extracting data from messy documents</li>
+              <li><strong>Learning opportunity:</strong> Building aggregated learning systems that get smarter over time</li>
+              <li><strong>Foundation for later:</strong> When I revisit the big app, I'll have battle-tested document processing built in</li>
+            </ul>
+
+            <h3>What about the job scheduling app?</h3>
+            <p>It's <strong>on hold, not dead</strong>. I still believe in it. But I need to prove I can ship smaller tools first, learn what actually works, and avoid burning out before anything launches.</p>
+
+            <p>This way, when I do come back to it, I'll have:</p>
+            <ul>
+              <li>Experience shipping and supporting a real product</li>
+              <li>Better understanding of what users actually need (vs. what I think they need)</li>
+              <li>Proven document processing that can plug right in</li>
+              <li>More energy and better focus from not being overwhelmed</li>
+            </ul>
+
+            <h3>What's next?</h3>
+            <p>I'm heads-down building the document scanning tool. Key features:</p>
+            <ul>
+              <li>Mobile capture (iOS/Android)</li>
+              <li>AI-powered OCR and data extraction</li>
+              <li>Aggregated learning that adapts to your specific documents</li>
+              <li>Smart organization and search</li>
+              <li>Export to accounting tools (QuickBooks, Xero, etc.)</li>
+            </ul>
+
+            <p>If you're interested in early testing or just want to follow along, <a href="/#contact">join the newsletter</a>. I'll be sharing progress, learnings, and probably some failures along the way.</p>
+
+            <p style="margin-top:24px; padding-top:20px; border-top:1px solid var(--border)">
+              <em>— Frozen River Software</em>
+            </p>
+          </div>
+        </li>
+
+        <!-- Post 2: Website Launch -->
+        <li class="post">
+          <div class="post-meta">
+            <time class="post-date" datetime="2025-10-05">October 5, 2025</time>
+            <span class="post-tag">Launch</span>
+          </div>
+          <h2 class="post-title">Website Launched 🍻</h2>
+          <div class="post-excerpt">
+            <p>The Frozen River Software website is live. Simple, clean, and built to evolve as the products take shape. No fancy marketing speak — just honest talk about building useful tools for real work.</p>
+            <p style="margin-top:12px"><strong>What's here:</strong> Project overview, roadmap, newsletter signup, and a way to get in touch. More to come as things progress.</p>
+          </div>
+        </li>
+      </ul>
+
+      <div style="margin-top:48px; padding:32px; background:var(--surface-1); border:1px solid var(--border); border-radius:16px; text-align:center">
+        <h3 style="font-family:Manrope, system-ui, sans-serif; font-weight:700; margin:0 0 12px">Want updates delivered?</h3>
+        <p style="color:var(--muted); margin:0 0 16px">Join the newsletter for occasional progress updates (no spam, just the good stuff).</p>
+        <a href="/#contact" style="display:inline-flex; align-items:center; padding:12px 20px; background:var(--brand); color:#001; border-radius:12px; font-weight:600; text-decoration:none">Subscribe to Newsletter</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>
+        <a href="/">Home</a> · 
+        <a href="/#about">About</a> · 
+        <a href="/faq.html">FAQ</a> · 
+        <a href="/privacy.html">Privacy</a> · 
+        <a href="/terms.html">Terms</a>
+      </p>
+      <p style="margin-top:12px">© <span id="year"></span> Frozen River Software</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
+
+
+

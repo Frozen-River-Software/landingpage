@@ -9,14 +9,22 @@
   <!-- Open Graph / Twitter -->
   <meta property="og:title" content="Frozen River Software — From the field to the Cloud" />
   <meta property="og:description" content="I build simple, dependable software to make everyday work smoother. Less paperwork, more progress." />
-  <meta property="og:image" content="/assets/og.jpg" />
+  <meta property="og:image" content="/assets/og.png" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Frozen River Software" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Frozen River Software — From the field to the Cloud" />
   <meta name="twitter:description" content="I build simple, dependable software to make everyday work smoother. Less paperwork, more progress." />
-  <meta name="twitter:image" content="/assets/og.jpg" />
+  <meta name="twitter:image" content="/assets/og.png" />
   <link rel="icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
+  <meta name="theme-color" content="#0B0F10" />
+
+  <!-- Vercel Analytics (privacy-friendly, no cookies) -->
+  <!-- Commented out for local testing - uncomment before deploying to Vercel -->
+  <!-- <script defer src="/_vercel/insights/script.js"></script> -->
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -212,7 +220,42 @@
     .section:target::before{content:""; position:absolute; left:0; top:0; height:3px; width:100%; background:linear-gradient(90deg, var(--brand), var(--brand-hover)); transform:scaleX(0); transform-origin:left center; animation:targetBar .7s cubic-bezier(.2,.8,.2,1) forwards}
     @keyframes targetBar{ from{transform:scaleX(0)} to{transform:scaleX(1)} }
     @media (prefers-reduced-motion: reduce){ .section:target::before{animation:none} }
+
+    /* Loading indicator */
+    .loading-overlay{position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:9999; opacity:1; transition:opacity .3s ease}
+    .loading-overlay.hidden{opacity:0; pointer-events:none}
+    .spinner{width:48px; height:48px; border:4px solid var(--border); border-top-color:var(--brand); border-radius:50%; animation:spin 0.8s linear infinite}
+    @keyframes spin{ to{transform:rotate(360deg)} }
   </style>
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Frozen River Software",
+    "url": "https://www.frozenriversoftware.com",
+    "logo": "https://www.frozenriversoftware.com/assets/logo.svg",
+    "description": "Smart document tools and AI-powered invoice processing for tradespeople and small businesses.",
+    "founder": {
+      "@type": "Person",
+      "name": "Frozen River Software"
+    },
+    "address": {
+      "@type": "PostalAddress",
+      "addressRegion": "Alberta",
+      "addressCountry": "CA"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "email": "info@frozenriversoftware.com",
+      "contactType": "Customer Service"
+    },
+    "sameAs": [
+      "https://github.com/Frozen-River-Software"
+    ]
+  }
+  </script>
   <script>
     // Git-backed content loader: fetches /content.json (if present) and populates the page.
     // Edit flow: change content.json in your repo → commit → host redeploys (zero downtime).
@@ -393,14 +436,37 @@
         return (b===undefined)? a : b;
       }
 
+      const loader = document.getElementById('loading-overlay');
+      console.log('Loading content.json...');
       fetch('/content.json', {cache:'no-store'})
-        .then(r=> r.ok? r.json(): Promise.reject())
-        .then(data=> populate(merge(defaults, data)))
-        .catch(()=> populate(defaults));
+        .then(r=> {
+          console.log('Fetch response:', r.ok);
+          return r.ok? r.json(): Promise.reject();
+        })
+        .then(data=> {
+          console.log('Content loaded, populating...');
+          populate(merge(defaults, data));
+        })
+        .catch((err)=> {
+          console.log('Fetch failed, using defaults:', err);
+          populate(defaults);
+        })
+        .finally(()=> {
+          console.log('Hiding loader...');
+          if(loader){ 
+            loader.classList.add('hidden'); 
+            setTimeout(()=> loader.style.display='none', 300);
+          }
+        });
     })();
   </script>
 </head>
 <body>
+  <!-- Loading overlay (disabled for now - will fix later) -->
+  <div id="loading-overlay" class="loading-overlay" style="display:none">
+    <div class="spinner"></div>
+  </div>
+
   <!-- Header -->
   <a href="#main" class="skip-link">Skip to content</a>
   <header>
@@ -711,12 +777,14 @@
           <ul>
             <li><a href="#roadmap">Roadmap</a></li>
             <li><a href="#updates-card">Updates</a></li>
+            <li><a href="/blog/index.html">Blog</a></li>
             <li><a href="assets/one-pager.pdf" target="_blank" rel="noopener">One‑pager (PDF)</a></li>
           </ul>
         </div>
         <div class="f-col">
-          <h4>Legal</h4>
+          <h4>Resources</h4>
           <ul>
+            <li><a href="/faq.html">FAQ</a></li>
             <li><a href="privacy.html">Privacy</a></li>
             <li><a href="terms.html">Terms</a></li>
             <li><a href="accessibility.html">Accessibility</a></li>
@@ -734,6 +802,7 @@
           <h4>Company</h4>
           <ul>
             <li><a href="mailto:info@frozenriversoftware.com">Contact</a></li>
+            <li><a href="https://github.com/Frozen-River-Software" target="_blank" rel="noopener">GitHub</a></li>
             <li class="muted">Alberta, Canada</li>
           </ul>
         </div>

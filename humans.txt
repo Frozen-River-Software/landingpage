@@ -1,0 +1,50 @@
+/* TEAM */
+
+Developer, Designer, & Builder: Frozen River Software
+Contact: info [at] frozenriversoftware.com
+Location: Alberta, Canada
+
+/* ABOUT */
+
+Frozen River Software builds smart document tools and AI-powered solutions
+for tradespeople and small businesses. Founded by a developer who spent 
+15+ years in the trades (electrical, HVAC, sheet metal), we understand 
+the real-world problems our tools need to solve.
+
+/* SITE */
+
+Last update: 2025-10-15
+Standards: HTML5, CSS3, ES6+
+Components: React, Next.js, Expo
+Backend: NestJS, Node, TypeScript
+Database: PostgreSQL, SQLite (Drizzle ORM)
+Infrastructure: Vercel, Cloudflare, GitHub Actions
+AI & ML: OpenAI API, OCR, Document Intelligence
+Tools: VS Code, Cursor, Git, Figma
+Fonts: Manrope, Work Sans, Ubuntu
+Analytics: Vercel Analytics (privacy-friendly, no cookies)
+
+/* THANKS */
+
+To everyone who's ever fought with paperwork and thought "there has to 
+be a better way" — this one's for you.
+
+To the open source community for building the tools that make this possible.
+
+To the early testers and supporters who believe in the vision.
+
+/* TECH PHILOSOPHY */
+
+- Privacy-first: Your data is yours
+- Offline-capable: Work anywhere, sync when you can
+- AI that helps, doesn't replace: Augment your expertise
+- Real-world tested: Built by someone who's actually done the work
+- Simple but powerful: Don't need a manual to get started
+
+Find us online:
+  Website: https://www.frozenriversoftware.com
+  GitHub: https://github.com/Frozen-River-Software
+  Newsletter: https://buttondown.com/frozenriver
+
+
+

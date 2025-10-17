@@ -2,13 +2,13 @@
   "hero": {
     "heading": "Built with hands-on experience. Coded with purpose.",
     "sub": "Years in the trades taught me what reliable tools feel like. Now I build tools that can work just as hard.",
-    "ctaRoadmap": "See what’s in the works",
+    "ctaRoadmap": "See what's in the works",
     "ctaContact": "Get in touch"
   },
   "about": {
     "h2": "From ductwork to frameworks.",
-    "p1": "Frozen River Software started when I realized the tools I was building for myself could help others too. After more than 15 years in the trades — electrical, HVAC, and sheet metal — I’d had my fair share of job-site inefficiencies. What began as a few scripts and experiments to make my own work easier turned into a growing collection of practical apps for tradespeople, small businesses, and anyone tired of juggling paperwork.",
-    "p2": "I’ve been dabbling in coding, electronics, and automation for over two decades and exploring AI ever since it became public. Frozen River Software is where those interests finally met the real-world experience that shaped them. It’s not a big company — just me (and a rotating cast of prototypes). But I take pride in building software that actually helps: real-world tested, clearly documented, and crafted with the same care I used to put into every install and service call.",
+    "p1": "Frozen River Software started when I realized the tools I was building for myself could help others too. After more than 15 years in the trades — electrical, HVAC, and sheet metal — I'd had my fair share of job-site inefficiencies. What began as a few scripts and experiments to make my own work easier turned into a growing collection of practical apps for tradespeople, small businesses, and anyone tired of juggling paperwork.",
+    "p2": "I've been dabbling in coding, electronics, and automation for over two decades and exploring AI ever since it became public. Frozen River Software is where those interests finally met the real-world experience that shaped them. It's not a big company — just me (and a rotating cast of prototypes). But I take pride in building software that actually helps: real-world tested, clearly documented, and crafted with the same care I used to put into every install and service call.",
     "exp": [
       "15+ years in the trades — residential and commercial installation, service, and maintenance",
       "Worked with homeowners, corporations, and government institutions",
@@ -34,7 +34,7 @@
   },
   "roadmap": {
     "title": "Where things are headed",
-    "copy": "Focused build, tight pilot, then a public preview. If you want to kick the tires early, I’d love to hear from you.",
+    "copy": "Focused build, tight pilot, then a public preview. If you want to kick the tires early, I'd love to hear from you.",
     "items": [
       { "label": "Now — In development", "text": "Scheduling, invoicing, and mobile sync. Private test builds with rapid changes." },
       { "label": "Soon — Pilot", "text": "Invite 5–10 shops to use it on real jobs and iterate weekly from feedback." },
@@ -43,8 +43,8 @@
     ]
   },
   "contact": {
-    "title": "Let’s talk",
-    "copy": "If you’ve got a problem worth solving, I’d love to hear it. Questions, collaborations, or early testing invites — all welcome.",
+    "title": "Let's talk",
+    "copy": "If you've got a problem worth solving, I'd love to hear it. Questions, collaborations, or early testing invites — all welcome.",
     "btn": "Send a message",
     "email": "info@frozenriversoftware.com",
     "onePager": "View one-pager (PDF)",
@@ -54,7 +54,7 @@
   },
   "newsletter": {
     "title": "Newsletter",
-    "copy": "I don’t spam. I just occasionally overshare progress updates.",
+    "copy": "I don't spam. I just occasionally overshare progress updates.",
     "placeholder": "you@example.com",
     "cta": "Join"
   },

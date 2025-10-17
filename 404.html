@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Page Not Found — Frozen River Software</title>
+  <meta name="robots" content="noindex" />
+  <link rel="canonical" href="https://www.frozenriversoftware.com/" />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png" />
+  <meta name="theme-color" content="#0B0F10" />
+  
+  <style>
+    :root{
+      --brand: #019191;
+      --brand-hover: #00A5A5;
+      --bg: #0B0F10;
+      --surface-1: #0F1516;
+      --border: #1C2A2B;
+      --text: #E7F2F2;
+      --muted: #A9C1C1;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%; margin:0; overflow:hidden}
+    body{
+      background:var(--bg); color:var(--text);
+      font-family:"Work Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      line-height:1.6;
+      position:relative;
+    }
+    
+    /* Animated background grid */
+    .bg-grid{
+      position:absolute; inset:0; overflow:hidden; opacity:.15;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: gridMove 20s linear infinite;
+    }
+    @keyframes gridMove{
+      0%{ background-position: 0 0; }
+      100%{ background-position: 50px 50px; }
+    }
+    
+    /* Floating particles */
+    .particles{position:absolute; inset:0; overflow:hidden}
+    .particle{
+      position:absolute; width:4px; height:4px; background:var(--brand);
+      border-radius:50%; opacity:.4;
+      animation: float 15s infinite ease-in-out;
+    }
+    @keyframes float{
+      0%, 100%{ transform: translateY(0) translateX(0); opacity:.4; }
+      50%{ transform: translateY(-100px) translateX(50px); opacity:.8; }
+    }
+    
+    .error-container{
+      position:relative; z-index:10;
+      display:flex; align-items:center; justify-content:center;
+      min-height:100vh; padding:20px;
+    }
+    .error-content{
+      max-width:640px; text-align:center;
+      background:color-mix(in oklab, var(--surface-1) 90%, transparent);
+      border:1px solid var(--border); border-radius:24px;
+      padding:48px 32px; backdrop-filter:blur(20px);
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+      animation: fadeInUp 0.8s ease-out;
+    }
+    @keyframes fadeInUp{
+      from{ opacity:0; transform:translateY(30px); }
+      to{ opacity:1; transform:translateY(0); }
+    }
+    
+    .error-number{
+      font-family:Manrope, system-ui, sans-serif;
+      font-size:clamp(80px, 20vw, 140px);
+      font-weight:800;
+      letter-spacing:-.05em;
+      line-height:1;
+      margin:0 0 24px;
+      background: linear-gradient(135deg, var(--brand) 0%, var(--brand-hover) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: glow 3s ease-in-out infinite;
+    }
+    @keyframes glow{
+      0%, 100%{ filter: drop-shadow(0 0 20px rgba(1, 145, 145, 0.3)); }
+      50%{ filter: drop-shadow(0 0 40px rgba(1, 145, 145, 0.6)); }
+    }
+    
+    .error-icon{
+      width:80px; height:80px; margin:0 auto 20px;
+      border:3px solid var(--brand); border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      position:relative;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse{
+      0%, 100%{ transform:scale(1); opacity:1; }
+      50%{ transform:scale(1.05); opacity:.8; }
+    }
+    .error-icon::before,
+    .error-icon::after{
+      content:''; position:absolute; width:3px; height:24px;
+      background:var(--brand); border-radius:2px;
+    }
+    .error-icon::before{ transform:rotate(45deg); }
+    .error-icon::after{ transform:rotate(-45deg); }
+    
+    h1{
+      font-family:Manrope, system-ui, sans-serif;
+      font-size:clamp(24px, 4vw, 32px);
+      font-weight:700;
+      margin:0 0 12px;
+    }
+    p{color:var(--muted); margin:0 0 32px; font-size:1.1rem}
+    
+    .links{
+      display:flex; flex-direction:column; gap:12px; align-items:center;
+      margin:32px 0 0;
+    }
+    .links a{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:14px 24px; border-radius:12px;
+      text-decoration:none; font-weight:600;
+      transition:all .3s ease; position:relative; overflow:hidden;
+    }
+    .links a::before{
+      content:''; position:absolute; inset:0;
+      background: linear-gradient(45deg, transparent, rgba(255,255,255,.1), transparent);
+      transform: translateX(-100%);
+      transition: transform .6s;
+    }
+    .links a:hover::before{ transform: translateX(100%); }
+    
+    .btn-primary{
+      background:var(--brand); color:#001;
+    }
+    .btn-primary:hover{
+      background:var(--brand-hover); transform:translateY(-3px);
+      box-shadow: 0 10px 30px rgba(1, 145, 145, 0.4);
+    }
+    .btn-ghost{
+      border:1px solid var(--border); color:var(--text);
+      background:rgba(15, 21, 22, 0.5);
+    }
+    .btn-ghost:hover{
+      border-color:var(--brand); color:var(--brand);
+      transform:translateY(-2px);
+    }
+    
+    .quick-links{
+      margin-top:40px; padding-top:32px; border-top:1px solid var(--border);
+    }
+    .quick-links p{font-size:.95rem; margin:0 0 12px}
+    .quick-links a{
+      color:var(--muted); text-decoration:none; margin:0 8px;
+      transition:color .2s;
+    }
+    .quick-links a:hover{ color:var(--brand); text-decoration:underline; }
+    
+    @media(min-width:640px){
+      .links{flex-direction:row; justify-content:center}
+    }
+    @media (prefers-reduced-motion: reduce){
+      *{ animation:none !important; transition:none !important; }
+      .bg-grid{ animation:none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  
+  <div class="particles">
+    <div class="particle" style="left:10%; top:20%; animation-delay:0s"></div>
+    <div class="particle" style="left:20%; top:80%; animation-delay:2s"></div>
+    <div class="particle" style="left:30%; top:40%; animation-delay:4s"></div>
+    <div class="particle" style="left:70%; top:60%; animation-delay:1s"></div>
+    <div class="particle" style="left:80%; top:30%; animation-delay:3s"></div>
+    <div class="particle" style="left:90%; top:70%; animation-delay:5s"></div>
+  </div>
+  
+  <div class="error-container">
+    <div class="error-content">
+      <div class="error-icon"></div>
+      <div class="error-number">404</div>
+      <h1>Page not found</h1>
+      <p>Looks like this page wandered off the job site. Let's get you back on track.</p>
+      
+      <div class="links">
+        <a href="/" class="btn-primary">← Back to Home</a>
+        <a href="/#contact" class="btn-ghost">Contact Us</a>
+      </div>
+      
+      <div class="quick-links">
+        <p style="color:var(--text); font-weight:600">Quick links</p>
+        <p>
+          <a href="/#about">About</a> · 
+          <a href="/#projects">Projects</a> · 
+          <a href="/#roadmap">Roadmap</a> · 
+          <a href="/faq.html">FAQ</a> · 
+          <a href="/blog/index.html">Blog</a>
+        </p>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Add some random movement to particles
+    document.querySelectorAll('.particle').forEach((p, i) => {
+      const duration = 10 + Math.random() * 10;
+      const delay = Math.random() * 5;
+      p.style.animationDuration = duration + 's';
+      p.style.animationDelay = delay + 's';
+    });
+  </script>
+</body>
+</html>

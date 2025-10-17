@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FAQ — Frozen River Software</title>
+  <meta name="description" content="Frequently asked questions about Frozen River Software's document intelligence tools and services." />
+  <link rel="canonical" href="https://www.frozenriversoftware.com/faq.html" />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png" />
+  <meta name="theme-color" content="#0B0F10" />
+  
+  <!-- Vercel Analytics -->
+  <script defer src="/_vercel/insights/script.js"></script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --brand: #019191;
+      --brand-hover: #00A5A5;
+      --bg: #0B0F10;
+      --surface-1: #0F1516;
+      --surface-2: #111A1B;
+      --border: #1C2A2B;
+      --text: #E7F2F2;
+      --muted: #A9C1C1;
+      --dim: #7D9494;
+      --focus: #00B3B3;
+    }
+    *{box-sizing:border-box}
+    html,body{min-height:100%}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font-family:"Work Sans", system-ui, -apple-system, sans-serif;
+      line-height:1.6;
+    }
+    a{color:var(--brand); text-decoration:none}
+    a:hover{color:var(--brand-hover)}
+    a:focus-visible{outline:2px solid var(--focus); outline-offset:3px}
+    .container{max-width:960px; margin-inline:auto; padding:0 20px}
+    header{
+      position:sticky; top:0; z-index:40; backdrop-filter:saturate(140%) blur(8px);
+      background:color-mix(in oklab, var(--bg) 70%, black 30% / 0.4);
+      border-bottom:1px solid var(--border);
+    }
+    .header-inner{display:flex; align-items:center; justify-content:space-between; height:64px}
+    .brand{display:flex; align-items:center; gap:12px}
+    .brand-logo{height:36px; width:auto}
+    .brand-name{font-family:"Ubuntu", system-ui, sans-serif; font-size:22px; font-weight:500}
+    nav a{color:var(--muted); margin-left:20px}
+    nav a:hover{color:var(--text)}
+    main{padding:72px 0}
+    h1{
+      font-family:Manrope, system-ui, sans-serif;
+      font-weight:800;
+      letter-spacing:-.02em;
+      font-size:clamp(32px, 5vw, 48px);
+      margin:0 0 16px;
+    }
+    .lede{color:var(--muted); font-size:1.125rem; margin:0 0 48px}
+    .faq-list{list-style:none; margin:0; padding:0; display:grid; gap:16px}
+    .faq-item{
+      background:var(--surface-1);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:24px;
+    }
+    .faq-q{
+      font-family:Manrope, system-ui, sans-serif;
+      font-weight:700;
+      font-size:1.25rem;
+      margin:0 0 12px;
+      color:var(--text);
+    }
+    .faq-a{margin:0; color:var(--muted)}
+    .faq-a a{text-decoration:underline}
+    footer{
+      border-top:1px solid var(--border);
+      padding:32px 0;
+      margin-top:72px;
+      text-align:center;
+      color:var(--dim);
+    }
+    footer a{color:var(--muted)}
+    footer a:hover{color:var(--text)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container header-inner">
+      <div class="brand">
+        <a href="/" aria-label="Home">
+          <img src="/assets/logo.svg" alt="" class="brand-logo" />
+        </a>
+        <span class="brand-name">Frozen River Software</span>
+      </div>
+      <nav aria-label="Primary">
+        <a href="/">Home</a>
+        <a href="/#about">About</a>
+        <a href="/#projects">Projects</a>
+        <a href="/#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <h1>Frequently Asked Questions</h1>
+      <p class="lede">Common questions about Frozen River Software and our document intelligence tools.</p>
+
+      <ul class="faq-list">
+        <li class="faq-item">
+          <h2 class="faq-q">What does Frozen River Software do?</h2>
+          <p class="faq-a">We build smart document tools powered by AI. Our main focus is invoice and receipt scanning with intelligent learning systems that adapt to your business patterns. We're all about making paperwork effortless for tradespeople and small businesses.</p>
+        </li>
+
+        <li class="faq-item">
+          <h2 class="faq-q">What happened to the job scheduling app?</h2>
+          <p class="faq-a">It's on hold, not canceled. After working on it for a while, I realized I needed to avoid burnout by focusing on smaller, more focused tools first. The job scheduling app is a big project that'll benefit from shipping these smaller tools first and learning what actually works in the real world.</p>
+        </li>
+
+        <li class="faq-item">
+          <h2 class="faq-q">How does the AI learning work?</h2>
+          <p class="faq-a">Our aggregated learning system gets better at understanding your documents over time. It learns your vendor formats, common line items, and business patterns. The more you use it, the smarter it gets at extracting and organizing data. It's AI that augments your expertise, not replaces it.</p>
+        </li>
+
+        <li class="faq-item">
+          <h2 class="faq-q">Is my data private and secure?</h2>
+          <p class="faq-a">Absolutely. We're privacy-first. Your document data is yours — we don't sell it, we don't share it, and AI processing is opt-in. We use industry-standard encryption and follow best practices for data security. See our <a href="/privacy.html">Privacy Policy</a> and <a href="/responsible-disclosure.html">Responsible Disclosure</a> page for details.</p>
+        </li>
+
+        <li class="faq-item">
+          <h2 class="faq-q">When can I start using your tools?</h2>
+          <p class="faq-a">We're currently in private alpha testing. A small pilot program with 5–10 shops is coming soon, followed by a public preview. Join our <a href="/#contact">newsletter</a> or <a href="mailto:info@frozenriversoftware.com">reach out directly</a> if you're interested in early testing.</p>
+        </li>
+
+        <li class="faq-item">
+          <h2 class="faq-q">Will it work offline?</h2>
+          <p class="faq-a">Yes! Our mobile app is being built offline-first. Capture documents and work in the field, then sync when you're back online. We know job sites don't always have great signal.</p>
+        </li>
+
+        <li class="faq-item">
+          <h2 class="faq-q">How much will it cost?</h2>
+          <p class="faq-a">Pricing isn't finalized yet since we're still in development. Our goal is to keep it affordable for small businesses and solo contractors. We'll likely have a free tier for basic features and paid tiers for advanced AI and integrations. Pricing will be announced closer to public preview.</p>
+        </li>
+
+        <li class="faq-item">
+          <h2 class="faq-q">Can it integrate with QuickBooks / Xero / other tools?</h2>
+          <p class="faq-a">That's on the roadmap! First priority is building solid document scanning and learning. Once that's stable, we'll add integrations to popular accounting and workflow tools. If you have specific integration needs, <a href="mailto:info@frozenriversoftware.com">let us know</a>.</p>
+        </li>
+
+        <li class="faq-item">
+          <h2 class="faq-q">Who's behind Frozen River Software?</h2>
+          <p class="faq-a">Just me — a developer who spent 15+ years in the trades (electrical, HVAC, sheet metal) and has been tinkering with code since age 12. I've been using AI tools since OpenAI's public release and understand both the tech side and the real-world problems trades businesses face. Learn more on our <a href="/#about">About section</a>.</p>
+        </li>
+
+        <li class="faq-item">
+          <h2 class="faq-q">Can I hire you for website work?</h2>
+          <p class="faq-a">Sometimes! I take on small website projects when I have capacity. I can build and hand off, or build and maintain for you. <a href="mailto:web@frozenriversoftware.com">Send me an inquiry</a> and I'll let you know if I have room in my schedule.</p>
+        </li>
+
+        <li class="faq-item">
+          <h2 class="faq-q">Do you have open source projects?</h2>
+          <p class="faq-a">Not yet, but that's on the horizon. Once core tools are stable, I plan to open-source some utilities and libraries. Follow us on <a href="https://github.com/Frozen-River-Software" target="_blank" rel="noopener">GitHub</a> to stay updated.</p>
+        </li>
+
+        <li class="faq-item">
+          <h2 class="faq-q">How can I stay updated on progress?</h2>
+          <p class="faq-a">Join our <a href="/#contact">newsletter</a> for occasional updates (no spam, just progress oversharing). You can also check our <a href="/blog/index.html">blog</a> for detailed updates and technical deep-dives.</p>
+        </li>
+      </ul>
+
+      <div style="margin-top:48px; padding:32px; background:var(--surface-1); border:1px solid var(--border); border-radius:16px; text-align:center">
+        <h3 style="font-family:Manrope, system-ui, sans-serif; font-weight:700; margin:0 0 12px">Still have questions?</h3>
+        <p style="color:var(--muted); margin:0 0 16px">We're here to help. Reach out anytime.</p>
+        <a href="mailto:info@frozenriversoftware.com" style="display:inline-flex; align-items:center; padding:12px 20px; background:var(--brand); color:#001; border-radius:12px; font-weight:600; text-decoration:none">Send us a message</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>
+        <a href="/">Home</a> · 
+        <a href="/#about">About</a> · 
+        <a href="/blog/index.html">Blog</a> · 
+        <a href="/privacy.html">Privacy</a> · 
+        <a href="/terms.html">Terms</a>
+      </p>
+      <p style="margin-top:12px">© <span id="year"></span> Frozen River Software</p>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
+
+
+
