@@ -436,20 +436,23 @@
         return (b===undefined)? a : b;
       }
 
-      const loader = document.getElementById('loading-overlay');
+      // Wait for DOM to be ready
+      function hideLoader(){
+        const loader = document.getElementById('loading-overlay');
+        if(loader) loader.classList.add('loaded');
+      }
+      
       fetch('/content.json', {cache:'no-store'})
         .then(r=> r.ok? r.json(): Promise.reject())
         .then(data=> populate(merge(defaults, data)))
         .catch(()=> populate(defaults))
-        .finally(()=> {
-          if(loader) loader.classList.add('loaded');
-        });
+        .finally(hideLoader);
     })();
   </script>
 </head>
 <body>
-  <!-- Loading overlay -->
-  <div id="loading-overlay" class="loading-overlay">
+  <!-- Loading overlay (temporarily disabled - fix timing issue later) -->
+  <div id="loading-overlay" class="loading-overlay" style="display:none">
     <div class="spinner"></div>
   </div>
 
