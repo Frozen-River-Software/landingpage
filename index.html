@@ -30,6 +30,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
+  
+  <!-- Performance hints -->
+  <link rel="dns-prefetch" href="https://buttondown.com">
+  <link rel="dns-prefetch" href="https://formspree.io">
+  
+  <!-- RSS Feed -->
+  <link rel="alternate" type="application/rss+xml" title="Frozen River Software Blog" href="/blog/feed.xml" />
 
   <style>
     :root{
@@ -210,17 +217,6 @@
     .chip{width:28px; height:28px; border-radius:50%; background:var(--brand); color:#001; display:inline-flex; align-items:center; justify-content:center; flex:0 0 28px}
     .focus-title{font-weight:700}
 
-    /* Tabs layout */
-    .focus-tabs{display:grid; gap:12px}
-    @media(min-width:768px){ .focus-tabs{grid-template-columns: 1fr 2fr} }
-    .ftablist{display:flex; gap:8px; flex-wrap:wrap}
-    @media(min-width:768px){ .ftablist{display:flex; flex-direction:column} }
-    .ftab{display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); border-radius:12px; cursor:pointer}
-    .ftab[aria-selected="true"]{border-color:var(--brand); box-shadow:0 0 0 2px color-mix(in oklab, var(--brand) 70%, transparent 30%)}
-    .ftab:hover{border-color:var(--brand); color:var(--brand)}
-    .fpanels{position:relative}
-    .fpanel{border:1px solid var(--border); background:var(--surface-1); border-radius:12px; padding:12px}
-    .fp-list{margin:0; padding:0 0 0 18px}
 
     /* Forms */
     input[type=email], input[type=text], textarea{width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:var(--surface-2); color:var(--text)}
@@ -485,23 +481,24 @@
         return (b===undefined)? a : b;
       }
 
-      // Wait for DOM to be ready
-      function hideLoader(){
-        const loader = document.getElementById('loading-overlay');
-        if(loader) loader.classList.add('loaded');
-      }
-      
+      // Load content and hide spinner
       fetch('/content.json', {cache:'no-store'})
         .then(r=> r.ok? r.json(): Promise.reject())
         .then(data=> populate(merge(defaults, data)))
         .catch(()=> populate(defaults))
-        .finally(hideLoader);
+        .finally(()=> {
+          // Wait for next frame to ensure DOM is ready
+          requestAnimationFrame(()=>{
+            const loader = document.getElementById('loading-overlay');
+            if(loader) loader.classList.add('loaded');
+          });
+        });
     })();
   </script>
 </head>
 <body>
-  <!-- Loading overlay (temporarily disabled - fix timing issue later) -->
-  <div id="loading-overlay" class="loading-overlay" style="display:none">
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="loading-overlay">
     <div class="spinner"></div>
   </div>
 
@@ -1166,31 +1163,6 @@
       onScroll();
     })();
 
-    // Tabs: focus areas
-    (function(){
-      const list = document.querySelector('.ftablist');
-      if(!list) return;
-      const tabs = Array.from(list.querySelectorAll('.ftab'));
-      const panels = tabs.map(t => document.getElementById(t.getAttribute('aria-controls')));
-      function select(idx){
-        tabs.forEach((t,i)=>{
-          const sel = i===idx;
-          t.setAttribute('aria-selected', sel);
-          t.tabIndex = sel? 0 : -1;
-          if(panels[i]) panels[i].hidden = !sel;
-        });
-        tabs[idx].focus({preventScroll:true});
-      }
-      tabs.forEach((t,idx)=>{
-        t.addEventListener('click', ()=> select(idx));
-        t.addEventListener('keydown', (e)=>{
-          if(e.key==='ArrowDown' || e.key==='ArrowRight'){ e.preventDefault(); select((idx+1)%tabs.length); }
-          if(e.key==='ArrowUp' || e.key==='ArrowLeft'){ e.preventDefault(); select((idx-1+tabs.length)%tabs.length); }
-          if(e.key==='Home'){ e.preventDefault(); select(0); }
-          if(e.key==='End'){ e.preventDefault(); select(tabs.length-1); }
-        });
-      });
-    })();
 
     // Mail modal logic (subject/message → mailto)
     (function(){

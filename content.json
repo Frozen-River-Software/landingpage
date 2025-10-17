@@ -24,25 +24,6 @@
       "tools": "VS Code, Cursor AI, Git/GitHub, Figma, Postman"
     }
   },
-  "projects": {
-    "items": [
-      { "title": "Job scheduling & invoicing app", "body": "Keeps work organized and cuts down on paperwork. (Name and demo coming soon.)" },
-      { "title": "PDF measurement tool", "body": "Measure scaled drawings right in your browser." },
-      { "title": "Receipt scanner", "body": "AI-assisted restoration for faded receipts to keep records readable." },
-      { "title": "Inventory & materials", "body": "Track inventory and materials across sites, vehicles, and jobs." }
-    ],
-    "rAndD": "Exploring automation to handle the boring parts — from job costing to auto-filling invoices."
-  },
-  "roadmap": {
-    "title": "Where things are headed",
-    "copy": "Focused build, tight pilot, then a public preview. If you want to kick the tires early, I'd love to hear from you.",
-    "items": [
-      { "label": "Now — In development", "text": "Scheduling, invoicing, and mobile sync. Private test builds with rapid changes." },
-      { "label": "Soon — Pilot", "text": "Invite 5–10 shops to use it on real jobs and iterate weekly from feedback." },
-      { "label": "Next — Public preview", "text": "Open demos, early access sign-ups, and first pass at pricing." },
-      { "label": "Beyond — Integrations", "text": "QuickBooks, Stripe, SMS, PDF takeoffs, and AI-assist where it actually helps." }
-    ]
-  },
   "contact": {
     "title": "Let's talk",
     "copy": "If you've got a problem worth solving, I'd love to hear it. Questions, collaborations, or early testing invites — all welcome.",

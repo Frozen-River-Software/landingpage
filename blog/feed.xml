@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Frozen River Software Blog</title>
+    <link>https://www.frozenriversoftware.com/blog/</link>
+    <description>Updates, progress notes, and thoughts on building practical software for tradespeople and small businesses</description>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 15 Oct 2025 00:00:00 GMT</lastBuildDate>
+    <atom:link href="https://www.frozenriversoftware.com/blog/feed.xml" rel="self" type="application/rss+xml"/>
+    
+    <item>
+      <title>Pivoting to Document Intelligence</title>
+      <link>https://www.frozenriversoftware.com/blog/index.html#pivot</link>
+      <guid>https://www.frozenriversoftware.com/blog/index.html#pivot</guid>
+      <pubDate>Tue, 15 Oct 2025 00:00:00 GMT</pubDate>
+      <description><![CDATA[
+        Putting the big job scheduling app on hold. Focusing on invoice/receipt scanning with smart AI learning instead. Avoiding burnout by building smaller, focused tools first.
+      ]]></description>
+    </item>
+    
+    <item>
+      <title>Website Launched</title>
+      <link>https://www.frozenriversoftware.com/blog/index.html#launch</link>
+      <guid>https://www.frozenriversoftware.com/blog/index.html#launch</guid>
+      <pubDate>Sat, 05 Oct 2025 00:00:00 GMT</pubDate>
+      <description><![CDATA[
+        The Frozen River Software website is live. Simple, clean, and built to evolve as the products take shape. No fancy marketing speak — just honest talk about building useful tools for real work.
+      ]]></description>
+    </item>
+  </channel>
+</rss>
+

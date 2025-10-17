@@ -10,6 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png" />
   <meta name="theme-color" content="#0B0F10" />
+  <link rel="alternate" type="application/rss+xml" title="Frozen River Software Blog" href="/blog/feed.xml" />
   
   <!-- Vercel Analytics -->
   <script defer src="/_vercel/insights/script.js"></script>
@@ -148,8 +149,16 @@
 
   <main>
     <div class="container">
-      <h1>Blog & Updates</h1>
-      <p class="lede">Progress notes, technical deep-dives, and occasional thoughts on building useful tools.</p>
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:48px">
+        <div>
+          <h1>Blog & Updates</h1>
+          <p class="lede" style="margin:0">Progress notes, technical deep-dives, and occasional thoughts on building useful tools.</p>
+        </div>
+        <a href="/blog/feed.xml" style="display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border:1px solid var(--border); border-radius:8px; background:var(--surface-1); color:var(--muted); text-decoration:none; white-space:nowrap; align-self:flex-start">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="18" r="2"/><path d="M4 12a8 8 0 0 1 8-8v2a6 6 0 0 0-6 6H4Zm0-6a14 14 0 0 1 14-14v2A12 12 0 0 0 6 6H4Z"/></svg>
+          RSS Feed
+        </a>
+      </div>
 
       <ul class="post-list">
         <!-- Post 1: The Pivot -->
