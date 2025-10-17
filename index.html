@@ -816,7 +816,7 @@
 
         <div style="margin-top:24px; text-align:center">
           <p class="muted" style="margin-bottom:12px">Want to test early builds or have feedback on priorities?</p>
-          <a class="btn ghost" href="#contact" id="btn-pilot">Get in touch</a>
+          <a class="btn ghost" href="mailto:info@frozenriversoftware.com?subject=Volunteer%20for%20Pilot%20Testing&body=Hi%20Frozen%20River%20Software%2C%0A%0AI%27d%20like%20to%20volunteer%20for%20pilot%20testing%20of%20your%20tools.%20I%20saw%20the%20roadmap%20and%20I%27m%20interested%20in%20helping%20provide%20real-world%20feedback.%0A%0AMy%20business%2Fbackground%3A%0A-%20Industry%3A%20%5Btrades%2Fsmall%20business%2Fother%5D%0A-%20Team%20size%3A%20%5Bnumber%5D%0A-%20Current%20tools%3A%20%5Bwhat%20you%20use%20now%5D%0A%0ATools%20I%27m%20interested%20in%20testing%3A%0A%5B%5D%20Invoice%20%26%20Receipt%20Scanner%0A%5B%5D%20AI%20Learning%20System%0A%5B%5D%20PDF%20Measurement%20Tool%0A%5B%5D%20Job%20Scheduling%20%28when%20it%20resumes%29%0A%0AWhat%20I%20can%20contribute%3A%0A-%20%5BReal%20documents%2Ffeedback%2Fbug%20reports%2Fuse%20case%20testing%5D%0A%0AAvailability%3A%0A-%20Time%20commitment%3A%20%5Bhours%20per%20week%5D%0A-%20Start%20date%3A%20%5Bwhen%20you%20could%20start%5D%0A%0AContact%20info%3A%0AName%3A%20%0AEmail%3A%20%0APhone%3A%20%0ACompany%3A%20%0A%0AThanks%20for%20building%20useful%20tools%21" id="btn-pilot">Volunteer for pilot</a>
         </div>
       </div>
     </section>
@@ -968,7 +968,8 @@
         <textarea id="mail-body" placeholder="Your message here..."></textarea>
         <input type="text" id="mail-website" name="website" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0" tabindex="-1" aria-hidden="true" />
         <div class="actions" style="margin-top:12px">
-          <button class="btn primary" type="submit">Open email</button>
+          <button class="btn primary" type="submit">Send</button>
+          <button class="btn ghost" type="button" id="mail-open-email">Open in email app</button>
           <button class="btn ghost" type="button" id="mail-cancel">Cancel</button>
         </div>
         <div id="mail-status" class="muted" style="display:none; margin-top:8px"></div>
@@ -1143,8 +1144,8 @@
       const honeypot = document.getElementById('mail-website');
       const closeBtn = modal.querySelector('.modal-close');
       const cancelBtn = document.getElementById('mail-cancel');
+      const openEmailBtn = document.getElementById('mail-open-email');
       const contactBtn = document.getElementById('contact-btn');
-      const pilotBtn = document.getElementById('btn-pilot');
       const webBtn = document.getElementById('web-quote-float');
       const statusEl = document.getElementById('mail-status');
       let lastFocus = null;
@@ -1175,9 +1176,21 @@
       modal.addEventListener('click', (e)=>{ if(e.target===modal) close(); });
       closeBtn?.addEventListener('click', close);
       cancelBtn?.addEventListener('click', close);
+      
+      // "Open in email app" button - skip form, go straight to mailto
+      openEmailBtn?.addEventListener('click', (e)=>{
+        e.preventDefault();
+        const from = fromEl.value.trim();
+        const subj = subjectEl.value.trim() || 'Inquiry from website';
+        const body = bodyEl.value.trim() || 'Your message here...';
+        const name = nameEl.value.trim();
+        const toAddr = targetKind==='web' ? 'web@frozenriversoftware.com' : 'info@frozenriversoftware.com';
+        const mailto = `mailto:${toAddr}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body + (from? '\n\nFrom: ' + from : '') + (name? '\nName: ' + name : ''))}`;
+        window.location.href = mailto;
+        close();
+      });
 
       contactBtn?.addEventListener('click', (e)=>{ e.preventDefault(); open('Inquiry from website', 'info'); });
-      pilotBtn?.addEventListener('click', (e)=>{ e.preventDefault(); open('Volunteer for pilot testing', 'info'); });
       webBtn?.addEventListener('click', (e)=>{ e.preventDefault(); open('Website project inquiry', 'web'); });
 
       form.addEventListener('submit', async (e)=>{
