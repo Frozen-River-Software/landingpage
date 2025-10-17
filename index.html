@@ -107,9 +107,12 @@
     .titem::before{content:""; position:absolute; left:-28px; top:6px; width:12px; height:12px; border-radius:50%; background:var(--brand)}
     
     /* Project roadmap cards */
-    .project-roadmap{display:grid; gap:16px; margin-top:20px}
-    @media(min-width:768px){ .project-roadmap{grid-template-columns:1fr 1fr} }
-    .project-card{background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:20px; position:relative; overflow:hidden}
+    .project-roadmap{display:flex; gap:16px; margin-top:20px; overflow-x:auto; padding-bottom:10px; scroll-snap-type:x mandatory}
+    .project-roadmap::-webkit-scrollbar{height:8px}
+    .project-roadmap::-webkit-scrollbar-track{background:var(--surface-1); border-radius:999px}
+    .project-roadmap::-webkit-scrollbar-thumb{background:var(--border); border-radius:999px}
+    .project-roadmap::-webkit-scrollbar-thumb:hover{background:var(--brand)}
+    .project-card{background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:20px; position:relative; overflow:hidden; min-width:320px; max-width:350px; scroll-snap-align:start; flex-shrink:0}
     .project-card::before{content:""; position:absolute; top:0; left:0; right:0; height:3px; background:var(--brand); opacity:0.5}
     .project-card.paused::before{background:var(--dim); opacity:0.3}
     .project-header{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px}
@@ -126,6 +129,8 @@
     .progress-label{display:flex; align-items:center; justify-content:space-between; font-size:.85rem; color:var(--muted); margin-bottom:8px}
     .project-next{color:var(--muted); font-size:.95rem; margin:8px 0 0; display:flex; align-items:flex-start; gap:6px}
     .project-next::before{content:"→"; color:var(--brand); font-weight:bold; flex-shrink:0}
+    .project-desc{color:var(--muted); font-size:.9rem; line-height:1.5; margin:8px 0 12px}
+    .project-action{margin-top:16px; padding-top:16px; border-top:1px solid var(--border)}
     .muted{color:var(--dim)}
     .card-title{font-family:Manrope, system-ui, sans-serif; font-weight:800; font-size:20px; margin:0 0 8px}
     .actions{margin-top:12px; display:flex; gap:10px; flex-wrap:wrap}
@@ -415,9 +420,9 @@
         setText('contact-title', c.contact.title);
         setText('contact-copy', c.contact.copy);
         setText('contact-btn', c.contact.btn);
-        setAttr('contact-btn', 'href', `mailto:${c.contact.email}`);
+        setAttr('contact-btn', 'href', `mailto:${c.contact.email}?subject=Inquiry%20from%20website&body=Hi%2C%0A%0A%5BYour%20message%20here%5D%0A%0AContact%20info%3A%0AName%3A%0AEmail%3A`);
         setText('contact-onepager', c.contact.onePager);
-        setAttr('web-quote', 'href', `mailto:${c.contact.webEmail}`);
+        setAttr('web-quote', 'href', `mailto:${c.contact.webEmail}?subject=Website%20Project%20Inquiry&body=Hi%2C%0A%0AI'm%20interested%20in%20discussing%20a%20website%20project.%0A%0AProject%20details%3A%0A%5BDescribe%20what%20you%20need%5D%0A%0ABudget%2FTimeline%3A%0A%5BYour%20budget%20and%20timeline%5D%0A%0AContact%20info%3A%0AName%3A%0AEmail%3A%0APhone%3A`);
         const mf = document.getElementById('mail-form');
         if(mf){
           if(c.contact.formEndpoint) mf.dataset.endpoint = c.contact.formEndpoint;
@@ -729,16 +734,20 @@
             <div class="project-header">
               <span class="project-icon">📄</span>
               <h3 class="project-title">Invoice & Receipt Scanner</h3>
-              <span class="project-status alpha">Alpha</span>
+              <span class="project-status alpha">Pre-Alpha</span>
             </div>
+            <p class="project-desc">AI-powered document capture and organization. Depends heavily on the learning system to extract and categorize data intelligently.</p>
             <div class="progress-label">
               <span>Development Progress</span>
-              <span>75%</span>
+              <span>35%</span>
             </div>
             <div class="progress-bar-wrap">
-              <div class="progress-bar" style="width:75%"></div>
+              <div class="progress-bar" style="width:35%"></div>
             </div>
-            <p class="project-next">Mobile app, polish UX, then accounting integrations</p>
+            <p class="project-next">Waiting on learning system, then mobile app and UX polish</p>
+            <div class="project-action">
+              <a class="btn ghost" style="width:100%; justify-content:center" href="mailto:info@frozenriversoftware.com?subject=Early%20Access%3A%20Invoice%20Scanner&body=Hi%2C%0A%0AI'm%20interested%20in%20early%20access%20to%20the%20Invoice%20%26%20Receipt%20Scanner.%0A%0AAbout%20my%20use%20case%3A%0A%5BTell%20us%20what%20you'd%20use%20it%20for%5D%0A%0AContact%20info%3A%0AName%3A%0AEmail%3A%0ABusiness%20type%3A">Request early access</a>
+            </div>
           </div>
 
           <!-- Learning System -->
@@ -748,6 +757,7 @@
               <h3 class="project-title">Aggregated Learning System</h3>
               <span class="project-status dev">In Development</span>
             </div>
+            <p class="project-desc">Core AI engine that learns your business patterns, vendor formats, and data structures. Foundation for intelligent document processing.</p>
             <div class="progress-label">
               <span>Development Progress</span>
               <span>60%</span>
@@ -755,7 +765,10 @@
             <div class="progress-bar-wrap">
               <div class="progress-bar" style="width:60%"></div>
             </div>
-            <p class="project-next">Training algorithms on real document patterns</p>
+            <p class="project-next">Training on real-world documents, refining accuracy and pattern recognition</p>
+            <div class="project-action">
+              <a class="btn ghost" style="width:100%; justify-content:center" href="mailto:info@frozenriversoftware.com?subject=Early%20Access%3A%20Learning%20System&body=Hi%2C%0A%0AI'm%20interested%20in%20helping%20test%20the%20AI%20learning%20system.%0A%0AI%20work%20with%20these%20types%20of%20documents%3A%0A%5BDescribe%20your%20invoices%2C%20receipts%2C%20vendors%5D%0A%0AContact%20info%3A%0AName%3A%0AEmail%3A">Help test the AI</a>
+            </div>
           </div>
 
           <!-- PDF Tool -->
@@ -763,16 +776,20 @@
             <div class="project-header">
               <span class="project-icon">📐</span>
               <h3 class="project-title">PDF Measurement Tool</h3>
-              <span class="project-status planned">Planned</span>
+              <span class="project-status dev">Working Beta</span>
             </div>
+            <p class="project-desc">Desktop app for measuring scaled drawings. Core functionality works but needs UI polish and integration with other tools to add value.</p>
             <div class="progress-label">
               <span>Development Progress</span>
-              <span>20%</span>
+              <span>65%</span>
             </div>
             <div class="progress-bar-wrap">
-              <div class="progress-bar" style="width:20%"></div>
+              <div class="progress-bar" style="width:65%"></div>
             </div>
-            <p class="project-next">R&D phase, spec'ing features for takeoffs and estimates</p>
+            <p class="project-next">UI redesign, then integrate with takeoff and estimation workflows</p>
+            <div class="project-action">
+              <a class="btn ghost" style="width:100%; justify-content:center" href="mailto:info@frozenriversoftware.com?subject=Beta%20Testing%3A%20PDF%20Measurement%20Tool&body=Hi%2C%0A%0AI'd%20like%20to%20beta%20test%20the%20PDF%20measurement%20tool.%0A%0AI%20would%20use%20it%20for%3A%0A%5BTakeoffs%2C%20estimates%2C%20planning%2C%20etc%5D%0A%0AContact%20info%3A%0AName%3A%0AEmail%3A%0AOS%3A%20%5BWindows%2FMac%2FLinux%5D">Join beta testing</a>
+            </div>
           </div>
 
           <!-- Job Scheduling -->
@@ -782,6 +799,7 @@
               <h3 class="project-title">Job Scheduling App</h3>
               <span class="project-status paused">On Hold</span>
             </div>
+            <p class="project-desc">Comprehensive job management system with scheduling, dispatch, and crew coordination. Paused to avoid burnout and ship focused tools first.</p>
             <div class="progress-label">
               <span>Development Progress</span>
               <span>40%</span>
@@ -789,7 +807,10 @@
             <div class="progress-bar-wrap">
               <div class="progress-bar paused" style="width:40%"></div>
             </div>
-            <p class="project-next">Resume after document tools launch with real feedback</p>
+            <p class="project-next">Resume after document tools launch with real user feedback and lessons learned</p>
+            <div class="project-action">
+              <a class="btn ghost" style="width:100%; justify-content:center" href="mailto:info@frozenriversoftware.com?subject=Interest%3A%20Job%20Scheduling%20App&body=Hi%2C%0A%0AI'm%20interested%20in%20the%20job%20scheduling%20app%20when%20it%20resumes.%0A%0AMy%20business%20needs%3A%0A%5BDescribe%20scheduling%20pain%20points%5D%0A%0ANotify%20me%20when%20development%20resumes.%0A%0AContact%20info%3A%0AName%3A%0AEmail%3A">Stay notified</a>
+            </div>
           </div>
         </div>
 
@@ -937,14 +958,14 @@
       <button class="modal-close" type="button" aria-label="Close">×</button>
       <h3 id="mail-title" class="card-title">Send a message</h3>
       <form id="mail-form" data-endpoint="">
-        <label for="mail-name">Your name</label>
-        <input id="mail-name" type="text" placeholder="Jane Doe" />
+        <label for="mail-name">Your name (optional)</label>
+        <input id="mail-name" type="text" placeholder="" />
         <label for="mail-from">Your email</label>
         <input id="mail-from" type="email" placeholder="you@example.com" />
         <label for="mail-subject">Subject</label>
         <input id="mail-subject" type="text" placeholder="General inquiry" />
         <label for="mail-body">Message</label>
-        <textarea id="mail-body" placeholder="Hi Frozen River Software,\n\n[Write your message here]\n\nThanks,\n[Your name]"></textarea>
+        <textarea id="mail-body" placeholder="Hi,\n\n[Write your message here]\n\nThanks"></textarea>
         <input type="text" id="mail-website" name="website" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0" tabindex="-1" aria-hidden="true" />
         <div class="actions" style="margin-top:12px">
           <button class="btn primary" type="submit">Open email</button>
@@ -1103,18 +1124,19 @@
       let lastFocus = null;
       let targetKind = 'info'; // 'info' or 'web'
 
-      function open(subject='General inquiry', kind='info'){
+      function open(subject='General inquiry', kind='info', bodyText=''){
         lastFocus = document.activeElement;
         modal.classList.add('show');
         modal.setAttribute('aria-hidden','false');
         // reset fields each open
-        (nameEl.value = ''), (fromEl.value = ''), (bodyEl.value = '');
+        (nameEl.value = ''), (fromEl.value = '');
         subjectEl.value = subject;
+        bodyEl.value = bodyText || '';
         targetKind = kind;
         // update title per kind
         const title = document.getElementById('mail-title');
         if(title){ title.textContent = kind==='web' ? 'Website project inquiry' : 'Send a message'; }
-        setTimeout(()=> subjectEl.focus(), 0);
+        setTimeout(()=> (bodyText ? bodyEl.focus() : subjectEl.focus()), 0);
         document.addEventListener('keydown', onKey);
       }
       function close(){
@@ -1128,15 +1150,15 @@
       closeBtn?.addEventListener('click', close);
       cancelBtn?.addEventListener('click', close);
 
-      contactBtn?.addEventListener('click', (e)=>{ e.preventDefault(); open('Inquiry from website', 'info'); });
-      pilotBtn?.addEventListener('click', (e)=>{ e.preventDefault(); open('Volunteer for pilot', 'info'); });
-      webBtn?.addEventListener('click', (e)=>{ e.preventDefault(); open('Website project — intro', 'web'); });
+      contactBtn?.addEventListener('click', (e)=>{ e.preventDefault(); open('Inquiry from website', 'info', 'Hi,\n\n[Your message here]\n\nContact info:\nName:\nEmail:'); });
+      pilotBtn?.addEventListener('click', (e)=>{ e.preventDefault(); open('Volunteer for pilot testing', 'info', 'Hi,\n\nI\'d like to volunteer for pilot testing.\n\nMy business:\n[Describe your business/use case]\n\nWhat I\'d test:\n[Which tools interest you]\n\nContact info:\nName:\nEmail:\nPhone (optional):'); });
+      webBtn?.addEventListener('click', (e)=>{ e.preventDefault(); open('Website project inquiry', 'web', 'Hi,\n\nI\'m interested in discussing a website project.\n\nProject details:\n[What you need]\n\nBudget/Timeline:\n[Your budget and timeline]\n\nContact info:\nName:\nEmail:\nPhone:'); });
 
       form.addEventListener('submit', async (e)=>{
         e.preventDefault();
         if(honeypot && honeypot.value){ return; }
         const subj = subjectEl.value.trim() || 'Inquiry from website';
-        const body = bodyEl.value.trim() || 'Hi,\n\n[Write your message here]\n\nThanks,';
+        const body = bodyEl.value.trim() || 'Hi,\n\n[Your message here]\n\nThanks';
         const name = nameEl.value.trim();
         const from = fromEl.value.trim();
         const endpoint = targetKind==='web' ? (form.dataset.endpointWeb||'') : (form.dataset.endpoint||'');
