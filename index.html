@@ -622,31 +622,58 @@
         </div>
         <aside class="reveal">
           <div class="card">
-            <h3 class="h2" style="font-size:20px">🧰 Experience & Stack</h3>
-            <ul id="exp-list" style="margin:10px 0 14px; padding-left:18px">
-              <li>15+ years in the trades — residential & commercial installation and service</li>
-              <li>Worked with homeowners, corporations, and government institutions</li>
-            </ul>
-            <div class="grid cols-2">
-              <div>
-                <div class="muted" style="font-weight:600; margin-bottom:6px">Frontend</div>
-                <div id="stack-frontend">React, Next.js, Expo</div>
+            <div style="display:flex; gap:8px; margin-bottom:16px; border-bottom:1px solid var(--border)">
+              <button class="exp-tab active" data-tab="background" style="flex:1; padding:10px; border:none; background:transparent; color:var(--text); font-weight:600; cursor:pointer; border-bottom:2px solid transparent; transition:all .2s">
+                Background
+              </button>
+              <button class="exp-tab" data-tab="stack" style="flex:1; padding:10px; border:none; background:transparent; color:var(--muted); font-weight:600; cursor:pointer; border-bottom:2px solid transparent; transition:all .2s">
+                Tech Stack
+              </button>
+            </div>
+            
+            <!-- Background Tab -->
+            <div id="exp-background" class="exp-panel">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px">
+                <span style="font-size:28px">🧰</span>
+                <h3 style="margin:0; font-weight:700; font-size:1.1rem">Real-world Experience</h3>
               </div>
-              <div>
-                <div class="muted" style="font-weight:600; margin-bottom:6px">Backend</div>
-                <div id="stack-backend">NestJS, Node, TypeScript</div>
+              <ul id="exp-list" style="margin:0 0 16px; padding-left:18px; color:var(--muted)">
+                <li>15+ years in the trades — residential & commercial installation and service</li>
+                <li>Worked with homeowners, corporations, and government institutions</li>
+              </ul>
+              <div style="padding:12px; background:var(--surface-2); border:1px solid var(--border); border-radius:8px">
+                <div style="font-size:.9rem; font-weight:600; margin-bottom:6px; color:var(--text)">Why this matters</div>
+                <p style="margin:0; font-size:.95rem; color:var(--muted); line-height:1.6">I build tools for problems I've actually faced. Not guessing what tradespeople need — I've been there, done the paperwork, felt the frustration.</p>
               </div>
-              <div>
-                <div class="muted" style="font-weight:600; margin-bottom:6px">Database</div>
-                <div id="stack-db">PostgreSQL / SQLite (Drizzle)</div>
+            </div>
+            
+            <!-- Stack Tab -->
+            <div id="exp-stack" class="exp-panel" style="display:none">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px">
+                <span style="font-size:28px">⚡</span>
+                <h3 style="margin:0; font-weight:700; font-size:1.1rem">Tech Stack</h3>
               </div>
-              <div>
-                <div class="muted" style="font-weight:600; margin-bottom:6px">Infra</div>
-                <div id="stack-infra">Vercel, Cloudflare, GitHub Actions</div>
-              </div>
-              <div>
-                <div class="muted" style="font-weight:600; margin-bottom:6px">AI & Image Tools</div>
-                <div id="stack-ai">OpenAI API, local OCR, and image restoration pipelines</div>
+              <div class="grid cols-2" style="gap:12px">
+                <div>
+                  <div class="muted" style="font-weight:600; margin-bottom:6px; font-size:.85rem; text-transform:uppercase; letter-spacing:.05em">Frontend</div>
+                  <div id="stack-frontend" style="font-size:.95rem">React, Next.js, Expo</div>
+                </div>
+                <div>
+                  <div class="muted" style="font-weight:600; margin-bottom:6px; font-size:.85rem; text-transform:uppercase; letter-spacing:.05em">Backend</div>
+                  <div id="stack-backend" style="font-size:.95rem">NestJS, Node, TypeScript</div>
+                </div>
+                <div>
+                  <div class="muted" style="font-weight:600; margin-bottom:6px; font-size:.85rem; text-transform:uppercase; letter-spacing:.05em">Database</div>
+                  <div id="stack-db" style="font-size:.95rem">PostgreSQL / SQLite (Drizzle)</div>
+                </div>
+                <div>
+                  <div class="muted" style="font-weight:600; margin-bottom:6px; font-size:.85rem; text-transform:uppercase; letter-spacing:.05em">Infrastructure</div>
+                  <div id="stack-infra" style="font-size:.95rem">Vercel, Cloudflare, GitHub Actions</div>
+                </div>
+                <div style="grid-column:1/-1">
+                  <div class="muted" style="font-weight:600; margin-bottom:6px; font-size:.85rem; text-transform:uppercase; letter-spacing:.05em">AI & Document Processing</div>
+                  <div id="stack-ai" style="font-size:.95rem">OpenAI API, local OCR, and image restoration pipelines</div>
+                </div>
               </div>
             </div>
           </div>
@@ -1048,6 +1075,27 @@
           }
         });
       }
+    })();
+
+    // Experience & Stack tabs
+    (function(){
+      const tabs = document.querySelectorAll('.exp-tab');
+      const panels = document.querySelectorAll('.exp-panel');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', ()=>{
+          const target = tab.dataset.tab;
+          // Update tabs
+          tabs.forEach(t => {
+            const isActive = t.dataset.tab === target;
+            t.classList.toggle('active', isActive);
+            t.style.color = isActive ? 'var(--text)' : 'var(--muted)';
+            t.style.borderBottomColor = isActive ? 'var(--brand)' : 'transparent';
+          });
+          // Update panels
+          document.getElementById('exp-background').style.display = target==='background' ? 'block' : 'none';
+          document.getElementById('exp-stack').style.display = target==='stack' ? 'block' : 'none';
+        });
+      });
     })();
 
     // Drag to scroll for project roadmap
