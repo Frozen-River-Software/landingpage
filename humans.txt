@@ -15,12 +15,12 @@ the real-world problems our tools need to solve.
 
 Last update: 2025-10-15
 Standards: HTML5, CSS3, ES6+
-Components: React, Next.js, Expo
-Backend: NestJS, Node, TypeScript
-Database: PostgreSQL, SQLite (Drizzle ORM)
-Infrastructure: Vercel, Cloudflare, GitHub Actions
-AI & ML: OpenAI API, OCR, Document Intelligence
-Tools: VS Code, Cursor, Git, Figma
+Frontend: React, Next.js, Expo, TailwindCSS
+Backend: NestJS, Node.js, TypeScript, REST APIs
+Database: PostgreSQL, SQLite, Drizzle ORM, Prisma
+Infrastructure: Vercel, Cloudflare, GitHub Actions, Docker
+AI & ML: OpenAI API, aggregated learning systems, OCR, document classification, image restoration
+Tools: VS Code, Cursor AI, Git/GitHub, Figma, Postman
 Fonts: Manrope, Work Sans, Ubuntu
 Analytics: Vercel Analytics (privacy-friendly, no cookies)
 
