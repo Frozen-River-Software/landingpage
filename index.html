@@ -268,17 +268,17 @@
     }
     
     /* Hero background animation */
-    .hero-bg{position:absolute; inset:0; overflow:hidden; opacity:.06; pointer-events:none}
-    .hero-bg::before{content:""; position:absolute; width:600px; height:600px; background:radial-gradient(circle, var(--brand), transparent 70%); top:-200px; right:-100px; animation:heroFloat 20s ease-in-out infinite}
-    .hero-bg::after{content:""; position:absolute; width:400px; height:400px; background:radial-gradient(circle, var(--brand-hover), transparent 70%); bottom:-100px; left:-50px; animation:heroFloat 25s ease-in-out infinite reverse}
+    .hero-bg{position:absolute; inset:0; overflow:hidden; opacity:.12; pointer-events:none}
+    .hero-bg::before{content:""; position:absolute; width:500px; height:500px; background:radial-gradient(circle, var(--brand), transparent 60%); top:-150px; right:-100px; animation:heroFloat 12s ease-in-out infinite}
+    .hero-bg::after{content:""; position:absolute; width:400px; height:400px; background:radial-gradient(circle, var(--brand-hover), transparent 60%); bottom:-100px; left:-50px; animation:heroFloat 15s ease-in-out infinite reverse}
     @keyframes heroFloat{
       0%, 100%{ transform:translate(0, 0) scale(1); }
-      50%{ transform:translate(30px, -30px) scale(1.1); }
+      50%{ transform:translate(50px, -40px) scale(1.15); }
     }
     
     /* Feature icon pulse */
     .feature-icon-box{transition:transform .3s ease, box-shadow .3s ease}
-    .feature-icon-box:hover{transform:scale(1.05); box-shadow:0 0 20px rgba(1,145,145,.3)}
+    .feature-icon-box:hover{transform:scale(1.1); box-shadow:0 0 25px rgba(1,145,145,.5)}
     
     /* Section title accents */
     .section-title-accent{position:relative; display:inline-block}
