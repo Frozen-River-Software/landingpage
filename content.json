@@ -40,10 +40,10 @@
     "placeholder": "you@example.com",
     "cta": "Join the list"
   },
-  "changelogDate": "Oct 15, 2025",
-  "changelog": "Website essentials update: Added professional pages (FAQ, blog, 404), security files, enhanced SEO, newsletter feedback, and polished UI components.",
-  "changelogPrevDate": "Oct 10, 2025",
-  "changelogPrev": "Major pivot: Shifting focus to invoice & receipt scanning with AI-powered document intelligence. Building smart tools that learn your business patterns. Job scheduling app on hold to avoid burnout and ship something useful faster.",
-  "changelogPrevDate2": "Oct 5, 2025",
-  "changelogPrev2": "Website launched 🍻"
+  "changelogDate": "Oct 18, 2025",
+  "changelog": "Major visual refresh: Animated hero background, interactive roadmap with drag-to-scroll project cards, pre-filled email templates, enhanced updates section, RSS feed, and performance optimizations. Site feels more polished and professional.",
+  "changelogPrevDate": "Oct 15, 2025",
+  "changelogPrev": "Website essentials update: Added professional pages (FAQ, blog, 404), security files, enhanced SEO, newsletter feedback, and polished UI components.",
+  "changelogPrevDate2": "Oct 10, 2025",
+  "changelogPrev2": "Major pivot: Shifting focus to invoice & receipt scanning with AI-powered document intelligence. Building smart tools that learn your business patterns. Job scheduling app on hold to avoid burnout and ship something useful faster."
 }
