@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/load-calculator",
+      "destination": "/load-calculator/",
+      "permanent": true
+    }
+  ]
+}
