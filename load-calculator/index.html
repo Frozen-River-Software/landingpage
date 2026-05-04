@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CEC Residential Load Calculator</title>
+    <link rel="stylesheet" href="styles.css?v=20260504-22">
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">CSA C22.1:24 Section 8</p>
+        <h1>Residential Load Calculator</h1>
+        <p class="status-note">
+          Work in progress. Use as a planning aid only; verify results against actual CEC calculations, equipment ratings, and local authority requirements before relying on them.
+        </p>
+      </div>
+    </header>
+
+    <main class="app-shell">
+      <section class="toolbar" aria-label="Calculator mode">
+        <div class="segmented" role="tablist" aria-label="Dwelling type">
+          <button class="is-active" type="button" role="tab" aria-selected="true" data-mode="single">
+            Single dwelling
+          </button>
+          <button type="button" role="tab" aria-selected="false" data-mode="multi">
+            Multi-family
+          </button>
+        </div>
+        <label class="field compact">
+          <span>Area units</span>
+          <select id="unit-system">
+            <option value="ft2">ft2</option>
+            <option value="m2">m2</option>
+          </select>
+        </label>
+        <label class="field compact">
+          <span>Main breaker</span>
+          <select id="main-breaker-amps">
+            <option value="60">60 A</option>
+            <option value="100" selected>100 A</option>
+            <option value="125">125 A</option>
+            <option value="150">150 A</option>
+            <option value="200">200 A</option>
+            <option value="225">225 A</option>
+            <option value="400">400 A</option>
+          </select>
+        </label>
+        <button id="reset-calculator" class="secondary-action reset-action" type="button">Reset</button>
+      </section>
+
+      <section id="single-panel" class="calculator-panel">
+        <form id="single-form" class="input-grid">
+          <fieldset>
+            <legend>Living Area</legend>
+            <div class="three-col living-area-grid">
+              <label class="field">
+                <span>Ground floor</span>
+                <input id="single-ground" type="number" min="0" step="0.1" value="960">
+              </label>
+              <label class="field">
+                <span>Basement over 1.8 m</span>
+                <input id="single-basement" type="number" min="0" step="0.1" value="960">
+              </label>
+              <label class="field">
+                <span>Upper floors above ground floor</span>
+                <input id="single-above" type="number" min="0" step="0.1" value="0">
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Existing Loads</legend>
+            <div class="three-col">
+              <label class="field" data-single-range-field>
+                <span>Range breaker, A</span>
+                <input id="single-range-amps" type="number" min="0" step="1" value="40">
+              </label>
+              <label class="field" data-single-range-field>
+                <span>Known range rating, kW</span>
+                <input id="single-range-kw" type="number" min="0" step="0.1" value="0">
+              </label>
+            </div>
+            <div class="three-col">
+              <label class="field">
+                <span>Dryer breaker, A</span>
+                <input id="single-dryer-amps" type="number" min="0" step="1" value="30">
+              </label>
+              <label class="field">
+                <span>Known dryer rating, kW</span>
+                <input id="single-dryer-kw" type="number" min="0" step="0.1" value="0">
+              </label>
+            </div>
+            <div class="three-col">
+              <label class="field">
+                <span>AC breaker, A</span>
+                <input id="single-ac-amps" type="number" min="0" step="1" value="0">
+              </label>
+              <label class="field">
+                <span>Known AC rating, kW</span>
+                <input id="single-ac-kw" type="number" min="0" step="0.1" value="0">
+              </label>
+            </div>
+            <div class="three-col">
+              <label class="field">
+                <span>Tankless / pool / spa water heat, kW</span>
+                <input id="single-water" type="number" min="0" step="0.1" value="0">
+              </label>
+              <label class="field">
+                <span>Electric heat connected, kW</span>
+                <input id="single-heat" type="number" min="0" step="0.1" value="0">
+              </label>
+            </div>
+            <div class="three-col">
+              <label class="field conditional-field hidden" data-single-heat-method-field>
+                <span>Heat demand method</span>
+                <select id="single-heat-method">
+                  <option value="residential-zoned">Room thermostats: first 10 kW plus 75%</option>
+                  <option value="full">100% connected heat</option>
+                </select>
+              </label>
+              <div class="checkbox-stack">
+                <label class="check-field">
+                  <input id="single-hvac-interlock" type="checkbox">
+                  <span>Heating and AC are interlocked</span>
+                </label>
+                <label class="check-field">
+                  <input id="single-gas-range" type="checkbox">
+                  <span>Gas range / no electric range</span>
+                </label>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>EVSE</legend>
+            <div class="three-col">
+              <label class="field">
+                <span>EVSE breaker, A</span>
+                <input id="single-ev-amps" type="number" min="0" step="1" value="0">
+              </label>
+              <label class="field">
+                <span>Known EVSE rating, kW</span>
+                <input id="single-ev-kw" type="number" min="0" step="0.1" value="0">
+              </label>
+            </div>
+            <div class="three-col">
+              <label class="field">
+                <span>EVSE demand mode</span>
+                <select id="single-ev-mode">
+                  <option value="full">100% demand</option>
+                  <option value="managed">EVEMS maximum</option>
+                  <option value="omitted">Omit under 8-106(11)</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>EVEMS max, kW</span>
+                <input id="single-ev-managed" type="number" min="0" step="0.1" value="0">
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Additional Loads</legend>
+            <p class="help-text">
+              Optional loads not already entered above. Breaker presets estimate connected load when the equipment nameplate rating is unknown.
+            </p>
+            <div class="preset-bar" aria-label="Common additional load presets">
+              <div class="preset-row">
+                <button data-preset-load="ac-20" class="secondary-action" type="button">AC 20 A</button>
+                <button data-preset-load="ac-30" class="secondary-action" type="button">AC 30 A</button>
+                <button data-preset-load="ac-40" class="secondary-action" type="button">AC 40 A</button>
+              </div>
+              <div class="preset-row">
+                <button data-preset-load="range-40" class="secondary-action" type="button">Range 40 A</button>
+                <button data-preset-load="range-50" class="secondary-action" type="button">Range 50 A</button>
+                <button data-preset-load="range-60" class="secondary-action" type="button">Range 60 A</button>
+              </div>
+              <div class="preset-row">
+                <button data-preset-load="dryer-30" class="secondary-action" type="button">Dryer 30 A</button>
+                <button data-preset-load="hot-tub-50" class="secondary-action" type="button">Hot tub 50 A</button>
+                <button data-preset-load="hot-tub-60" class="secondary-action" type="button">Hot tub 60 A</button>
+              </div>
+              <div class="preset-row">
+                <button data-preset-load="tankless-40" class="secondary-action" type="button">Tankless 40 A</button>
+                <button data-preset-load="tankless-50" class="secondary-action" type="button">Tankless 50 A</button>
+                <button data-preset-load="tankless-60" class="secondary-action" type="button">Tankless 60 A</button>
+              </div>
+              <div class="preset-row">
+                <button data-preset-load="steam-30" class="secondary-action" type="button">Steam 30 A</button>
+                <button data-preset-load="steam-40" class="secondary-action" type="button">Steam 40 A</button>
+                <button data-preset-load="wall-oven-30" class="secondary-action" type="button">Wall oven 30 A</button>
+              </div>
+              <div class="preset-row">
+                <button data-preset-load="evse-50" class="secondary-action" type="button">EVSE 50 A</button>
+                <button data-preset-load="evse-60" class="secondary-action" type="button">EVSE 60 A</button>
+              </div>
+            </div>
+            <div id="single-other-loads" class="load-list"></div>
+            <button id="add-single-load" class="secondary-action" type="button">Add custom load</button>
+          </fieldset>
+        </form>
+      </section>
+
+      <section id="multi-panel" class="calculator-panel hidden">
+        <form id="multi-form" class="input-grid">
+          <fieldset>
+            <legend>Building Type</legend>
+            <div class="three-col">
+              <label class="field">
+                <span>Multi-family calculation path</span>
+                <select id="multi-building-type" required>
+                  <option value="row-housing">Duplex / row housing</option>
+                  <option value="apartment">Apartment / similar building</option>
+                </select>
+              </label>
+            </div>
+            <p class="help-text">
+              One unit of a duplex is a single dwelling. Use this tab for one service or feeder supplying both duplex units, row housing, or apartment/similar buildings.
+            </p>
+          </fieldset>
+
+          <fieldset>
+            <legend>Dwelling Unit Groups</legend>
+            <div class="three-col">
+              <div class="checkbox-stack">
+                <label class="check-field">
+                  <input id="multi-hvac-interlock" type="checkbox">
+                  <span>Unit heating and AC are interlocked</span>
+                </label>
+              </div>
+            </div>
+            <div id="unit-groups" class="unit-groups"></div>
+            <button id="add-unit-group" class="secondary-action" type="button">Add unit group</button>
+          </fieldset>
+
+          <fieldset>
+            <legend>Building Loads Outside Dwelling Units</legend>
+            <div class="three-col">
+              <label class="field">
+                <span>Common lighting / power, kW</span>
+                <input id="multi-common" type="number" min="0" step="0.1" value="0">
+              </label>
+              <label class="field">
+                <span>Common EVSE, kW</span>
+                <input id="multi-common-ev" type="number" min="0" step="0.1" value="0">
+              </label>
+            </div>
+            <div class="three-col">
+              <label class="field">
+                <span>Common EVSE demand mode</span>
+                <select id="multi-common-ev-mode">
+                  <option value="full">100% demand</option>
+                  <option value="managed">EVEMS maximum</option>
+                  <option value="omitted">Omit under 8-106(11)</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Common EVEMS max, kW</span>
+                <input id="multi-common-ev-managed" type="number" min="0" step="0.1" value="0">
+              </label>
+            </div>
+            <p class="help-text">
+              Presets add to common building loads. EVSE presets add to common EVSE.
+            </p>
+            <div class="preset-bar" aria-label="Common multi-family load presets">
+              <div class="preset-row">
+                <button data-multi-preset-load="ac-20" class="secondary-action" type="button">AC 20 A</button>
+                <button data-multi-preset-load="ac-30" class="secondary-action" type="button">AC 30 A</button>
+                <button data-multi-preset-load="ac-40" class="secondary-action" type="button">AC 40 A</button>
+              </div>
+              <div class="preset-row">
+                <button data-multi-preset-load="range-40" class="secondary-action" type="button">Range 40 A</button>
+                <button data-multi-preset-load="range-50" class="secondary-action" type="button">Range 50 A</button>
+                <button data-multi-preset-load="range-60" class="secondary-action" type="button">Range 60 A</button>
+              </div>
+              <div class="preset-row">
+                <button data-multi-preset-load="dryer-30" class="secondary-action" type="button">Dryer 30 A</button>
+                <button data-multi-preset-load="hot-tub-50" class="secondary-action" type="button">Hot tub 50 A</button>
+                <button data-multi-preset-load="hot-tub-60" class="secondary-action" type="button">Hot tub 60 A</button>
+              </div>
+              <div class="preset-row">
+                <button data-multi-preset-load="tankless-40" class="secondary-action" type="button">Tankless 40 A</button>
+                <button data-multi-preset-load="tankless-50" class="secondary-action" type="button">Tankless 50 A</button>
+                <button data-multi-preset-load="tankless-60" class="secondary-action" type="button">Tankless 60 A</button>
+              </div>
+              <div class="preset-row">
+                <button data-multi-preset-load="steam-30" class="secondary-action" type="button">Steam 30 A</button>
+                <button data-multi-preset-load="steam-40" class="secondary-action" type="button">Steam 40 A</button>
+                <button data-multi-preset-load="wall-oven-30" class="secondary-action" type="button">Wall oven 30 A</button>
+              </div>
+              <div class="preset-row">
+                <button data-multi-preset-load="evse-50" class="secondary-action" type="button">EVSE 50 A</button>
+                <button data-multi-preset-load="evse-60" class="secondary-action" type="button">EVSE 60 A</button>
+              </div>
+            </div>
+          </fieldset>
+        </form>
+      </section>
+
+      <aside class="result-panel" aria-live="polite">
+        <section class="summary">
+          <div>
+            <p class="eyebrow">Governing calculated load</p>
+            <strong id="result-kw">0.0 kW</strong>
+          </div>
+          <label class="field compact">
+            <span>Amps basis</span>
+            <select id="supply-mode">
+              <option value="single-240">120/240 V split-phase house</option>
+              <option value="three-208">120/208 V 3-phase wye</option>
+              <option value="three-240">240 V 3-phase delta</option>
+            </select>
+          </label>
+          <div class="amps">
+            <span id="result-amps">0 A</span>
+            <small id="amps-label">at 240 V</small>
+          </div>
+          <div id="rule-comparison" class="rule-comparison hidden" aria-label="Calculation summary"></div>
+          <div id="panel-warning" class="panel-warning hidden"></div>
+        </section>
+
+        <section class="breakdown">
+          <h2>Breakdown</h2>
+          <div id="breakdown-list"></div>
+        </section>
+
+        <section class="notes">
+          <h2>Notes</h2>
+          <ul id="note-list"></ul>
+        </section>
+      </aside>
+    </main>
+
+    <template id="load-row-template">
+      <div class="load-row">
+        <label class="field">
+          <span>Name</span>
+          <input data-load-name type="text" value="Load">
+        </label>
+        <label class="field">
+          <span>Qty</span>
+          <input data-load-qty type="number" min="1" step="1" value="1">
+        </label>
+        <label class="field">
+          <span>Breaker, A</span>
+          <input data-load-amps type="number" min="0" step="1" value="30">
+        </label>
+        <label class="field">
+          <span>Volts</span>
+          <select data-load-volts>
+            <option value="240">240 V</option>
+            <option value="208">208 V</option>
+            <option value="120">120 V</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Demand bucket</span>
+          <select data-load-bucket>
+            <option value="other">Dryer / other over 1500 W</option>
+            <option value="water">Tankless / pool / spa water heat</option>
+            <option value="evse">EVSE</option>
+            <option value="ac">Air conditioning</option>
+            <option value="heat">Electric space heat</option>
+          </select>
+        </label>
+        <button data-remove-load class="icon-action" type="button" aria-label="Remove load">x</button>
+      </div>
+    </template>
+
+    <template id="unit-group-template">
+      <div class="unit-group">
+        <div class="unit-group-head">
+          <strong>Unit group</strong>
+          <button data-remove-group class="icon-action" type="button" aria-label="Remove unit group">x</button>
+        </div>
+        <div class="three-col unit-entry-grid">
+          <label class="field">
+            <span>Quantity</span>
+            <input data-unit-qty type="number" min="1" step="1" value="1">
+          </label>
+          <label class="field">
+            <span>Living area per unit</span>
+            <input data-unit-area type="number" min="0" step="0.1" value="650">
+          </label>
+          <label class="field">
+            <span>Non-basement area per unit</span>
+            <input data-unit-non-basement-area type="number" min="0" step="0.1" value="650">
+          </label>
+        </div>
+        <strong class="unit-subhead">Existing loads per unit</strong>
+        <div class="three-col unit-entry-grid">
+          <label class="field">
+            <span>Range breaker per unit, A</span>
+            <input data-unit-range-amps type="number" min="0" step="1" value="40">
+          </label>
+          <label class="field">
+            <span>Known range rating, kW</span>
+            <input data-unit-range-kw type="number" min="0" step="0.1" value="0">
+          </label>
+        </div>
+        <div class="three-col unit-entry-grid">
+          <label class="field">
+            <span>Dryer / other breaker, A</span>
+            <input data-unit-other-amps type="number" min="0" step="1" value="30">
+          </label>
+          <label class="field">
+            <span>Other breaker quantity</span>
+            <input data-unit-other-qty type="number" min="0" step="1" value="1">
+          </label>
+          <label class="field">
+            <span>Known dryer / other rating, kW</span>
+            <input data-unit-other-kw type="number" min="0" step="0.1" value="0">
+          </label>
+        </div>
+        <div class="three-col unit-entry-grid">
+          <label class="field">
+            <span>AC breaker per unit, A</span>
+            <input data-unit-ac-amps type="number" min="0" step="1" value="0">
+          </label>
+          <label class="field">
+            <span>Known AC rating, kW</span>
+            <input data-unit-ac-kw type="number" min="0" step="0.1" value="0">
+          </label>
+        </div>
+        <div class="three-col unit-entry-grid">
+          <label class="field">
+            <span>EVSE breaker per unit, A</span>
+            <input data-unit-ev-amps type="number" min="0" step="1" value="0">
+          </label>
+          <label class="field">
+            <span>Known EVSE rating, kW</span>
+            <input data-unit-ev-kw type="number" min="0" step="0.1" value="0">
+          </label>
+        </div>
+        <div class="three-col unit-entry-grid">
+          <label class="field">
+            <span>Unit EVSE demand mode</span>
+            <select data-unit-ev-mode>
+              <option value="full">100% demand</option>
+              <option value="managed">EVEMS maximum</option>
+              <option value="omitted">Omit under 8-106(11)</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Unit EVEMS max, kW</span>
+            <input data-unit-ev-managed type="number" min="0" step="0.1" value="0">
+          </label>
+        </div>
+        <div class="three-col unit-entry-grid">
+          <label class="field">
+            <span>Tankless / pool / spa water heat, kW</span>
+            <input data-unit-water type="number" min="0" step="0.1" value="0">
+          </label>
+          <label class="field">
+            <span>Electric heat per unit, kW</span>
+            <input data-unit-heat type="number" min="0" step="0.1" value="0">
+          </label>
+        </div>
+        <div class="three-col unit-entry-grid">
+          <label class="field conditional-field hidden" data-unit-heat-method-field>
+            <span>Heat demand method</span>
+            <select data-unit-heat-method>
+              <option value="residential-zoned">Room thermostats: first 10 kW plus 75%</option>
+              <option value="full">100% connected heat</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </template>
+
+    <script src="app.js?v=20260504-22"></script>
+  </body>
+</html>
