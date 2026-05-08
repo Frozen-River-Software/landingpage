@@ -481,8 +481,15 @@ if (typeof document !== "undefined") {
     mainBreakerAmps: $("#main-breaker-amps"),
     supplyMode: $("#supply-mode"),
     resetButton: $("#reset-calculator"),
+    exportButton: $("#export-pdf"),
     singleForm: $("#single-form"),
     multiForm: $("#multi-form"),
+    reportProject: $("#report-project"),
+    reportAddress: $("#report-address"),
+    reportCustomer: $("#report-customer"),
+    reportPreparedBy: $("#report-prepared-by"),
+    reportDate: $("#report-date"),
+    printReport: $("#print-report"),
     singlePanel: $("#single-panel"),
     multiPanel: $("#multi-panel"),
     summary: $(".summary"),
@@ -490,10 +497,16 @@ if (typeof document !== "undefined") {
     resultAmps: $("#result-amps"),
     ampsLabel: $("#amps-label"),
     ruleComparison: $("#rule-comparison"),
+    panelCheck: $("#panel-check"),
     panelWarning: $("#panel-warning"),
     breakdown: $("#breakdown-list"),
     notes: $("#note-list"),
     singleLoads: $("#single-other-loads"),
+    proposedLoadName: $("#proposed-load-name"),
+    proposedLoadAmps: $("#proposed-load-amps"),
+    proposedLoadVolts: $("#proposed-load-volts"),
+    proposedLoadKw: $("#proposed-load-kw"),
+    proposedLoadBucket: $("#proposed-load-bucket"),
     multiBuildingType: $("#multi-building-type"),
     unitGroups: $("#unit-groups"),
     loadTemplate: $("#load-row-template"),
@@ -501,6 +514,9 @@ if (typeof document !== "undefined") {
   };
 
   let activeMode = "single";
+  let latestResult = null;
+  let latestAmpResult = null;
+  const PANEL_LOAD_LIMIT_FACTOR = 0.8;
   const presetLoads = {
     "ac-20": { name: "Air conditioner", qty: 1, amps: 20, volts: 240, bucket: "ac" },
     "ac-30": { name: "Air conditioner", qty: 1, amps: 30, volts: 240, bucket: "ac" },
@@ -571,6 +587,23 @@ if (typeof document !== "undefined") {
     els.singleLoads.append(node);
   }
 
+  function proposedLoad() {
+    const knownKw = positiveNumber(els.proposedLoadKw.value);
+    const load = {
+      name: fieldText(els.proposedLoadName, "Proposed load"),
+      qty: 1,
+      amps: els.proposedLoadAmps.value,
+      volts: els.proposedLoadVolts.value,
+      bucket: els.proposedLoadBucket.value,
+    };
+    if (knownKw > 0) load.watts = knownKw * 1000;
+    return load;
+  }
+
+  function hasProposedLoad() {
+    return positiveNumber(els.proposedLoadKw.value) > 0 || positiveNumber(els.proposedLoadAmps.value) > 0;
+  }
+
   function addUnitGroup(values = {}) {
     const node = els.groupTemplate.content.firstElementChild.cloneNode(true);
       const defaults = {
@@ -621,7 +654,17 @@ if (typeof document !== "undefined") {
     els.unitGroups.append(node);
   }
 
-  function singleInput() {
+  function singleInput(options = {}) {
+    const includeProposed = options.includeProposed !== false;
+    const quoteLoads = $$(".load-row", els.singleLoads).map((row) => ({
+      name: $("[data-load-name]", row).value,
+      qty: $("[data-load-qty]", row).value,
+      amps: $("[data-load-amps]", row).value,
+      volts: $("[data-load-volts]", row).value,
+      bucket: $("[data-load-bucket]", row).value,
+    }));
+    if (includeProposed && hasProposedLoad()) quoteLoads.push(proposedLoad());
+
     return {
       unitSystem: els.unitSystem.value,
       area: {
@@ -646,13 +689,7 @@ if (typeof document !== "undefined") {
       evKw: readValue("#single-ev-kw"),
       evMode: readValue("#single-ev-mode"),
       evManagedKw: readValue("#single-ev-managed"),
-      quoteLoads: $$(".load-row", els.singleLoads).map((row) => ({
-        name: $("[data-load-name]", row).value,
-        qty: $("[data-load-qty]", row).value,
-        amps: $("[data-load-amps]", row).value,
-        volts: $("[data-load-volts]", row).value,
-        bucket: $("[data-load-bucket]", row).value,
-      })),
+      quoteLoads,
     };
   }
 
@@ -707,6 +744,64 @@ if (typeof document !== "undefined") {
     return `${Math.ceil(value).toLocaleString()} A`;
   }
 
+  function formatAmpsOneDecimal(value) {
+    return `${value.toLocaleString(undefined, { maximumFractionDigits: 1 })} A`;
+  }
+
+  function itemBMinimumGoverns(result) {
+    return Number.isFinite(result?.itemA) && Number.isFinite(result?.itemB) && result.itemB >= result.itemA;
+  }
+
+  function panelLimitFactor(result) {
+    return itemBMinimumGoverns(result) ? 1 : PANEL_LOAD_LIMIT_FACTOR;
+  }
+
+  function panelLimitAmps(breakerAmps, result) {
+    return breakerAmps * panelLimitFactor(result);
+  }
+
+  function panelLimitBasis(result) {
+    return itemBMinimumGoverns(result)
+      ? "8-200(1)(b) minimum governs; compare to selected main with no 80% reduction"
+      : "8-200(1)(a) entered-load subtotal governs; Calgary 80% maximum applies";
+  }
+
+  function panelLimitLabel(breakerAmps, result) {
+    if (itemBMinimumGoverns(result)) {
+      return `${formatAmps(breakerAmps)} (selected main; no 80% reduction under 8-200(1)(b))`;
+    }
+    return `${formatAmps(panelLimitAmps(breakerAmps, result))} (80% of ${formatAmps(breakerAmps)})`;
+  }
+
+  function panelLimitShortLabel(result) {
+    return itemBMinimumGoverns(result) ? "selected main" : "80% limit";
+  }
+
+  function panelMarginText(amps, limitAmps, result) {
+    const margin = Math.abs(limitAmps - amps);
+    if (margin < 0.05) return `at ${panelLimitShortLabel(result)}`;
+    return amps < limitAmps
+      ? `${formatAmpsOneDecimal(margin)} below ${panelLimitShortLabel(result)}`
+      : `${formatAmpsOneDecimal(margin)} over ${panelLimitShortLabel(result)}`;
+  }
+
+  function formatReportDate(value) {
+    if (!value) return "Not provided";
+    const date = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }
+
+  function todayInputValue() {
+    const today = new Date();
+    const offset = today.getTimezoneOffset() * 60000;
+    return new Date(today.getTime() - offset).toISOString().slice(0, 10);
+  }
+
   function displayedLoadWatts(result) {
     return result.totalW;
   }
@@ -716,6 +811,324 @@ if (typeof document !== "undefined") {
     if (unit === "m2") return [label, formatArea(value)];
     if (unit === "count") return [label, String(value)];
     return [label, formatWatts(value)];
+  }
+
+  function selectedText(select) {
+    return select.options[select.selectedIndex]?.textContent || select.value;
+  }
+
+  function fieldText(input, fallback = "Not provided") {
+    const value = String(input?.value || "").trim();
+    return value || fallback;
+  }
+
+  function valueWithUnit(value, unit) {
+    const text = String(value || "").trim();
+    return text ? `${text} ${unit}` : `0 ${unit}`;
+  }
+
+  function yesNo(value) {
+    return value ? "Yes" : "No";
+  }
+
+  function createEl(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function appendTable(parent, headings, rows, options = {}) {
+    const table = createEl("table", options.className || "print-table");
+    if (options.showHead !== false) {
+      const thead = document.createElement("thead");
+      const headerRow = document.createElement("tr");
+      headings.forEach((heading) => headerRow.append(createEl("th", "", heading)));
+      thead.append(headerRow);
+      table.append(thead);
+    }
+
+    const tbody = document.createElement("tbody");
+    rows.forEach((row) => {
+      const tr = document.createElement("tr");
+      row.forEach((cell) => tr.append(createEl("td", "", cell)));
+      tbody.append(tr);
+    });
+    table.append(tbody);
+    parent.append(table);
+  }
+
+  function appendPanelStatusCards(parent, beforeResult, afterResult) {
+    const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
+    if (activeMode !== "single" || breakerAmps <= 0) return;
+    const list = createEl("div", "print-status-list");
+    [
+      panelCheckStatus(beforeResult, "Before proposed load"),
+      panelCheckStatus(afterResult, "After proposed load"),
+    ].forEach((check) => {
+      const card = createEl("div", `print-status-card ${check.passes ? "is-pass" : "is-fail"}`);
+      const heading = createEl("div", "print-status-heading");
+      heading.append(createEl("span", "", check.label));
+      heading.append(createEl("strong", "print-status-badge", check.text.toUpperCase()));
+      card.append(heading);
+
+      const metrics = createEl("dl", "print-status-metrics");
+      [
+        ["Calculated load", formatWatts(displayedLoadWatts(check.result))],
+        ["Calculated amps", formatAmps(check.ampResult.amps)],
+        ["Selected main", formatAmps(breakerAmps)],
+        ["Required max", check.limitLabel],
+        ["Rule basis", check.basis],
+        ["Margin", panelMarginText(check.ampResult.amps, check.limitAmps, check.result)],
+      ].forEach(([label, value]) => {
+        metrics.append(createEl("dt", "", label));
+        metrics.append(createEl("dd", "", value));
+      });
+      card.append(metrics);
+      list.append(card);
+    });
+    parent.append(list);
+  }
+
+  function panelDecision(beforeResult, afterResult) {
+    const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
+    const before = panelCheckStatus(beforeResult, "Before proposed load");
+    const after = panelCheckStatus(afterResult, "After proposed load");
+    if (after.passes) {
+      return {
+        passes: true,
+        title: "PASS AFTER PROPOSED LOAD",
+        detail: `Calculated load after the proposed load is ${formatAmps(after.ampResult.amps)}, which is ${panelMarginText(after.ampResult.amps, after.limitAmps, after.result)} against ${after.limitLabel}. ${after.basis}.`,
+      };
+    }
+    if (!before.passes) {
+      return {
+        passes: false,
+        title: "FAIL BEFORE PROPOSED LOAD",
+        detail: `Existing calculated load is ${formatAmps(before.ampResult.amps)}, which is already ${panelMarginText(before.ampResult.amps, before.limitAmps, before.result)} before the proposed load is included. ${before.basis}.`,
+      };
+    }
+    return {
+      passes: false,
+      title: "FAIL AFTER PROPOSED LOAD",
+      detail: `Proposed load pushes the calculated load to ${formatAmps(after.ampResult.amps)}, which is ${panelMarginText(after.ampResult.amps, after.limitAmps, after.result)} against ${after.limitLabel}. ${after.basis}.`,
+    };
+  }
+
+  function appendProposedLoadDecision(parent, beforeResult, afterResult) {
+    const decision = panelDecision(beforeResult, afterResult);
+    const banner = createEl("div", `print-decision-banner ${decision.passes ? "is-pass" : "is-fail"}`);
+    banner.append(createEl("strong", "", decision.title));
+    banner.append(createEl("p", "", decision.detail));
+    parent.append(banner);
+
+    appendTable(parent, ["Item", "Value"], proposedLoadDetailRows(), {
+      className: "print-table print-proposed-table",
+      showHead: false,
+    });
+    appendPanelStatusCards(parent, beforeResult, afterResult);
+  }
+
+  function splitCodeReference(label) {
+    const match = String(label).match(/^((?:\d+-\d+(?:\([^)]+\))*|62-\d+)(?:,\s*(?:\d+-\d+(?:\([^)]+\))*|62-\d+))*)\s+(.+)$/);
+    if (!match) return ["General", label];
+    return [match[1], match[2]];
+  }
+
+  function appendCalculationList(parent, rows) {
+    const list = createEl("div", "print-calculation-list");
+    rows.forEach(([label, value]) => {
+      const [reference, description] = splitCodeReference(label);
+      const item = createEl("div", "print-calculation-row");
+      const text = createEl("div", "print-calculation-text");
+      text.append(createEl("span", "print-code-tag", reference));
+      text.append(createEl("strong", "", description));
+      item.append(text, createEl("span", "print-calculation-value", value));
+      list.append(item);
+    });
+    parent.append(list);
+  }
+
+  function appendSection(parent, title) {
+    const section = createEl("section", "print-section");
+    section.append(createEl("h2", "", title));
+    parent.append(section);
+    return section;
+  }
+
+  function reportMetadataRows() {
+    return [
+      ["Project", fieldText(els.reportProject)],
+      ["Address", fieldText(els.reportAddress)],
+      ["Customer", fieldText(els.reportCustomer)],
+      ["Prepared by", fieldText(els.reportPreparedBy)],
+      ["Report date", formatReportDate(els.reportDate.value)],
+    ];
+  }
+
+  function reportContextRows(result, ampResult) {
+    const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
+    const dwelling = activeMode === "single"
+      ? "Single dwelling"
+      : selectedText(els.multiBuildingType);
+    const panelLimit = activeMode === "single" && breakerAmps > 0
+      ? panelLimitLabel(breakerAmps, result)
+      : "Not evaluated";
+    const panelBasis = activeMode === "single" && breakerAmps > 0
+      ? panelLimitBasis(result)
+      : "Not evaluated";
+    return [
+      ["Dwelling type", dwelling],
+      ["Selected main breaker", selectedText(els.mainBreakerAmps)],
+      ["Panel check basis", panelBasis],
+      ["Required maximum", panelLimit],
+      ["Amps basis", selectedText(els.supplyMode)],
+      ["Calculated amps", `${formatAmps(ampResult.amps)} ${ampResult.label}`],
+      ["Governing load", formatWatts(displayedLoadWatts(result))],
+    ];
+  }
+
+  function proposedLoadRows() {
+    if (!hasProposedLoad()) return [["Proposed load", "None entered"]];
+    const load = proposedLoad();
+    const knownKw = positiveNumber(els.proposedLoadKw.value);
+    const estimatedW = knownKw > 0 ? knownKw * 1000 : app.breakerWatts(load.amps, load.volts, 1);
+    return [
+      ["Load name", load.name],
+      ["Connected load", formatWatts(estimatedW)],
+      ["Breaker estimate", `${valueWithUnit(load.amps, "A")} at ${selectedText(els.proposedLoadVolts)}`],
+      ["Known rating", knownKw > 0 ? valueWithUnit(els.proposedLoadKw.value, "kW") : "Not provided"],
+      ["Demand bucket", selectedText(els.proposedLoadBucket)],
+    ];
+  }
+
+  function panelCheckRows(beforeResult, afterResult) {
+    if (activeMode !== "single") return [];
+    const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
+    if (breakerAmps <= 0) return [];
+    return [
+      panelCheckStatus(beforeResult, "Before proposed load"),
+      panelCheckStatus(afterResult, "After proposed load"),
+    ].map((check) => [
+      check.label,
+      `${check.text}: ${formatWatts(displayedLoadWatts(check.result))} / ${formatAmps(check.ampResult.amps)} against ${check.limitLabel}. ${check.basis}`,
+    ]);
+  }
+
+  function proposedLoadDetailRows() {
+    return proposedLoadRows().filter(([label]) => label !== "Proposed load");
+  }
+
+  function singleInputRows(input) {
+    return [
+      ["Ground floor", valueWithUnit(input.area.ground, input.unitSystem)],
+      ["Basement over 1.8 m", valueWithUnit(input.area.basement, input.unitSystem)],
+      ["Upper floors above ground floor", valueWithUnit(input.area.above, input.unitSystem)],
+      ["Gas range / no electric range", yesNo(input.gasRange)],
+      ["Range", input.gasRange ? "Not included" : `${valueWithUnit(input.rangeAmps, "A")} breaker / ${valueWithUnit(input.rangeKw, "kW")} known rating`],
+      ["Dryer", `${valueWithUnit(input.dryerAmps, "A")} breaker / ${valueWithUnit(input.dryerKw, "kW")} known rating`],
+      ["Air conditioning", `${valueWithUnit(input.acAmps, "A")} breaker / ${valueWithUnit(input.acKw, "kW")} known rating`],
+      ["Tankless / pool / spa water heat", valueWithUnit(input.waterKw, "kW")],
+      ["Electric heat", `${valueWithUnit(input.heatKw, "kW")} / ${selectedText($("#single-heat-method"))}`],
+      ["Heating and AC interlocked", yesNo(input.hvacInterlocked)],
+      ["EVSE", `${valueWithUnit(input.evAmps, "A")} breaker / ${valueWithUnit(input.evKw, "kW")} known rating / ${selectedText($("#single-ev-mode"))}`],
+      ["EVEMS maximum", valueWithUnit(input.evManagedKw, "kW")],
+      ["Additional load rows", String(input.quoteLoads.length)],
+    ];
+  }
+
+  function multiInputRows(input, result) {
+    return [
+      ["Calculation path", selectedText(els.multiBuildingType)],
+      ["Unit groups", String(input.groups.length)],
+      ["Dwelling units included", String(result.unitCount || 0)],
+      ["Unit heating and AC interlocked", yesNo(input.hvacInterlocked)],
+      ["Common lighting / power", valueWithUnit(input.commonKw, "kW")],
+      ["Common EVSE", `${valueWithUnit(input.commonEvKw, "kW")} / ${selectedText($("#multi-common-ev-mode"))}`],
+      ["Common EVEMS maximum", valueWithUnit(input.commonEvManagedKw, "kW")],
+    ];
+  }
+
+  function comparisonRowsForReport(result, supplyMode) {
+    if (Array.isArray(result.comparisonRows) && result.comparisonRows.length) {
+      return result.comparisonRows.map((row) => [row[0], comparisonValue(row, supplyMode)]);
+    }
+    if (Number.isFinite(result.itemA) && Number.isFinite(result.itemB)) {
+      return [
+        ["Option A: 8-200(1)(a) entered-load subtotal", comparisonValue(["", result.itemA, "W"], supplyMode)],
+        ["Option B: 8-200(1)(b) minimum comparison", comparisonValue(["", result.itemB, "W"], supplyMode)],
+      ];
+    }
+    return [];
+  }
+
+  function renderPrintReport(result, ampResult) {
+    const report = els.printReport;
+    const input = activeMode === "single" ? singleInput({ includeProposed: false }) : multiInput();
+    const beforeResult = activeMode === "single"
+      ? app.calculateSingle(singleInput({ includeProposed: false }))
+      : result;
+    const generatedAt = new Date().toLocaleString();
+    report.innerHTML = "";
+
+    const header = createEl("header", "print-header");
+    header.append(createEl("p", "print-eyebrow", "CSA C22.1:24 Section 8"));
+    header.append(createEl("h1", "", "CEC Residential Load Calculation"));
+    header.append(createEl("p", "print-subtitle", "Residential service and feeder calculated load report for customer and authority review."));
+    report.append(header);
+
+    const meta = appendSection(report, "Project Information");
+    appendTable(meta, ["Field", "Value"], [
+      ...reportMetadataRows(),
+      ["Generated", generatedAt],
+    ], { className: "print-table print-meta-table", showHead: false });
+
+    if (activeMode === "single") {
+      const proposed = appendSection(report, "Proposed Load Decision");
+      appendProposedLoadDecision(proposed, beforeResult, result);
+    }
+
+    const summary = createEl("section", "print-summary");
+    [
+      ["Governing load", formatWatts(displayedLoadWatts(result))],
+      ["Calculated amps", formatAmps(ampResult.amps)],
+      ["Supply basis", ampResult.label],
+      ["Main breaker status", els.panelWarning.textContent || "Not evaluated"],
+    ].forEach(([label, value]) => {
+      const card = createEl("div", "print-summary-card");
+      card.append(createEl("span", "", label));
+      card.append(createEl("strong", "", value));
+      summary.append(card);
+    });
+    report.append(summary);
+
+    const context = appendSection(report, "Calculation Context");
+    appendTable(context, ["Item", "Value"], reportContextRows(result, ampResult));
+
+    const inputs = appendSection(report, "Entered Inputs");
+    appendTable(inputs, ["Input", "Value"], activeMode === "single"
+      ? singleInputRows(input)
+      : multiInputRows(input, result));
+
+    const comparison = appendSection(report, "Code Comparison");
+    appendCalculationList(comparison, comparisonRowsForReport(result, els.supplyMode.value));
+    if (result.comparisonNote) comparison.append(createEl("p", "print-note", result.comparisonNote));
+
+    const breakdown = appendSection(report, "Detailed Breakdown");
+    appendCalculationList(breakdown, result.breakdown.map((row) => breakdownValue(row)));
+
+    const notes = appendSection(report, "Notes");
+    const noteList = createEl("ul", "print-notes");
+    [
+      ...result.notes,
+      "This report cites calculation rule references only and does not reproduce CSA C22.1 text.",
+      "This report is a planning aid. Confirm final service, feeder, conductor, and overcurrent sizing with the authority having jurisdiction.",
+    ].forEach((note) => noteList.append(createEl("li", "", note)));
+    notes.append(noteList);
+
+    const footer = createEl("footer", "print-footer");
+    footer.textContent = "CSA C22.1:24 Section 8 planning aid. Verify with the authority having jurisdiction before construction or permit submission.";
+    report.append(footer);
   }
 
   function renderBreakdown(rows) {
@@ -779,17 +1192,17 @@ if (typeof document !== "undefined") {
       return;
     }
 
-    const itemAGoverns = result.itemA >= result.itemB;
+    const itemAGoverns = result.itemA > result.itemB;
     renderComparisonRows([
       ["Option A: 8-200(1)(a) entered-load subtotal", result.itemA, "W"],
       ["Option B: 8-200(1)(b) minimum comparison", result.itemB, "W"],
     ], itemAGoverns
       ? "Governing: Option A is larger than the service minimum."
-      : "Governing: Option B service minimum is larger than entered loads.",
+      : "Governing: Option B service minimum is equal to or larger than entered loads.",
     supplyMode);
   }
 
-  function renderPanelWarning(result, calculatedAmps) {
+  function renderPanelWarning(result, calculatedAmps, beforeResult = result) {
     const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
     if (breakerAmps <= 0 || !Number.isFinite(calculatedAmps)) {
       els.summary.classList.remove("is-over-main-80", "is-over-main-100");
@@ -798,21 +1211,66 @@ if (typeof document !== "undefined") {
       return;
     }
 
-    const percent = calculatedAmps / breakerAmps;
-    const optionAGoverns = Number.isFinite(result.itemA) && Number.isFinite(result.itemB) && result.itemA > result.itemB;
-    const showCaution = optionAGoverns && percent >= 0.8 && percent <= 1;
+    const check = panelCheckStatus(result, "Current calculated load");
+    const beforeCheck = panelCheckStatus(beforeResult, "Before proposed load");
+    const failedBefore = !beforeCheck.passes;
+    const showCaution = !itemBMinimumGoverns(result) && check.passes && calculatedAmps >= check.limitAmps * 0.9;
     els.summary.classList.toggle("is-over-main-80", showCaution);
-    els.summary.classList.toggle("is-over-main-100", percent > 1);
-    if (percent > 1) {
+    els.summary.classList.toggle("is-over-main-100", !check.passes);
+    if (!check.passes) {
       els.panelWarning.className = "panel-warning is-danger";
-      els.panelWarning.textContent = `Warning: governing calculated load exceeds selected ${breakerAmps} A main.`;
+      els.panelWarning.textContent = failedBefore
+        ? `Fail before proposed load: existing calculated load is ${formatAmps(beforeCheck.ampResult.amps)} against ${beforeCheck.limitLabel}. ${beforeCheck.basis}.`
+        : `Fail after proposed load: proposed load pushes the calculation to ${formatAmps(check.ampResult.amps)} against ${check.limitLabel}. ${check.basis}.`;
     } else if (showCaution) {
       els.panelWarning.className = "panel-warning is-caution";
-      els.panelWarning.textContent = `Caution: Option A governs and is over 80% of selected ${breakerAmps} A main.`;
+      els.panelWarning.textContent = `Caution: calculated load is close to ${check.limitLabel}. ${check.basis}.`;
     } else {
       els.panelWarning.className = "panel-warning is-ok";
-      els.panelWarning.textContent = `OK: selected ${breakerAmps} A main meets the governing calculated load.`;
+      els.panelWarning.textContent = `OK: calculated load passes against ${check.limitLabel}. ${check.basis}.`;
     }
+  }
+
+  function panelCheckStatus(result, label) {
+    const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
+    const ampResult = app.ampsForWatts(displayedLoadWatts(result), els.supplyMode.value);
+    const limitAmps = panelLimitAmps(breakerAmps, result);
+    const usesSelectedMain = itemBMinimumGoverns(result);
+    const passes = breakerAmps > 0 && (usesSelectedMain ? ampResult.amps <= limitAmps : ampResult.amps < limitAmps);
+    return {
+      label,
+      result,
+      ampResult,
+      breakerAmps,
+      limitAmps,
+      limitLabel: panelLimitLabel(breakerAmps, result),
+      basis: panelLimitBasis(result),
+      passes,
+      text: passes ? "Pass" : "Fail",
+    };
+  }
+
+  function renderPanelCheck(beforeResult, afterResult) {
+    const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
+    if (activeMode !== "single" || breakerAmps <= 0) {
+      els.panelCheck.className = "panel-check hidden";
+      els.panelCheck.innerHTML = "";
+      return;
+    }
+
+    const checks = [
+      panelCheckStatus(beforeResult, "Before proposed load"),
+      panelCheckStatus(afterResult, "After proposed load"),
+    ];
+    els.panelCheck.innerHTML = "";
+    checks.forEach((check) => {
+      const card = createEl("div", `panel-check-card ${check.passes ? "is-pass" : "is-fail"}`);
+      card.append(createEl("span", "panel-check-label", check.label));
+      card.append(createEl("strong", "", check.text));
+      card.append(createEl("small", "", `${formatWatts(displayedLoadWatts(check.result))} / ${formatAmps(check.ampResult.amps)} against ${check.limitLabel}`));
+      els.panelCheck.append(card);
+    });
+    els.panelCheck.className = "panel-check";
   }
 
   function updateConditionalFields() {
@@ -843,18 +1301,31 @@ if (typeof document !== "undefined") {
 
   function render() {
     updateConditionalFields();
+    const beforeResult = activeMode === "single"
+      ? app.calculateSingle(singleInput({ includeProposed: false }))
+      : null;
     const result = activeMode === "single"
-      ? app.calculateSingle(singleInput())
+      ? app.calculateSingle(singleInput({ includeProposed: true }))
       : app.calculateMulti(multiInput());
     const displayW = displayedLoadWatts(result);
     const ampResult = app.ampsForWatts(displayW, els.supplyMode.value);
+    latestResult = result;
+    latestAmpResult = ampResult;
     els.resultKw.textContent = formatWatts(displayW);
     els.resultAmps.textContent = formatAmps(ampResult.amps);
     els.ampsLabel.textContent = ampResult.label;
     renderRuleComparison(result, els.supplyMode.value);
-    renderPanelWarning(result, ampResult.amps);
+    if (beforeResult) renderPanelCheck(beforeResult, result);
+    else renderPanelCheck(result, result);
+    renderPanelWarning(result, ampResult.amps, beforeResult || result);
     renderBreakdown(result.breakdown);
     renderNotes(result.notes);
+  }
+
+  function exportPdf() {
+    render();
+    renderPrintReport(latestResult, latestAmpResult);
+    window.print();
   }
 
   function switchMode(mode) {
@@ -873,6 +1344,12 @@ if (typeof document !== "undefined") {
     els.unitSystem.value = "ft2";
     els.mainBreakerAmps.value = "100";
     els.supplyMode.value = "single-240";
+    els.reportDate.value = todayInputValue();
+    els.proposedLoadName.value = "Load to add";
+    els.proposedLoadAmps.value = "0";
+    els.proposedLoadVolts.value = "240";
+    els.proposedLoadKw.value = "0";
+    els.proposedLoadBucket.value = "other";
     els.singleForm.reset();
     els.multiForm.reset();
     els.singleLoads.innerHTML = "";
@@ -885,6 +1362,7 @@ if (typeof document !== "undefined") {
     button.addEventListener("click", () => switchMode(button.dataset.mode));
   });
   els.resetButton.addEventListener("click", resetCalculator);
+  els.exportButton.addEventListener("click", exportPdf);
 
   $("#add-single-load").addEventListener("click", () => {
     addSingleLoad();
@@ -918,6 +1396,12 @@ if (typeof document !== "undefined") {
     }
   });
   document.addEventListener("change", render);
+
+  els.reportDate.value = todayInputValue();
+  window.addEventListener("beforeprint", () => {
+    render();
+    renderPrintReport(latestResult, latestAmpResult);
+  });
 
   addUnitGroup();
   render();

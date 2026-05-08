@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CEC Residential Load Calculator</title>
-    <link rel="stylesheet" href="styles.css?v=20260504-22">
+    <link rel="stylesheet" href="styles.css?v=20260504-29">
   </head>
   <body>
     <header class="app-header">
@@ -17,39 +17,67 @@
       </div>
     </header>
 
-    <main class="app-shell">
-      <section class="toolbar" aria-label="Calculator mode">
-        <div class="segmented" role="tablist" aria-label="Dwelling type">
-          <button class="is-active" type="button" role="tab" aria-selected="true" data-mode="single">
-            Single dwelling
-          </button>
-          <button type="button" role="tab" aria-selected="false" data-mode="multi">
-            Multi-family
-          </button>
-        </div>
-        <label class="field compact">
-          <span>Area units</span>
-          <select id="unit-system">
-            <option value="ft2">ft2</option>
-            <option value="m2">m2</option>
-          </select>
+    <section class="report-details" aria-label="PDF report details">
+      <h2>Report Details</h2>
+      <div class="report-details-grid">
+        <label class="field">
+          <span>Project name</span>
+          <input id="report-project" type="text" autocomplete="organization">
         </label>
-        <label class="field compact">
-          <span>Main breaker</span>
-          <select id="main-breaker-amps">
-            <option value="60">60 A</option>
-            <option value="100" selected>100 A</option>
-            <option value="125">125 A</option>
-            <option value="150">150 A</option>
-            <option value="200">200 A</option>
-            <option value="225">225 A</option>
-            <option value="400">400 A</option>
-          </select>
+        <label class="field">
+          <span>Address</span>
+          <input id="report-address" type="text" autocomplete="street-address">
         </label>
-        <button id="reset-calculator" class="secondary-action reset-action" type="button">Reset</button>
-      </section>
+        <label class="field">
+          <span>Customer</span>
+          <input id="report-customer" type="text" autocomplete="name">
+        </label>
+        <label class="field">
+          <span>Prepared by</span>
+          <input id="report-prepared-by" type="text" autocomplete="name">
+        </label>
+        <label class="field">
+          <span>Date</span>
+          <input id="report-date" type="date">
+        </label>
+      </div>
+    </section>
 
-      <section id="single-panel" class="calculator-panel">
+    <main class="app-shell">
+      <div class="input-column">
+        <section class="toolbar" aria-label="Calculator mode">
+          <div class="segmented" role="tablist" aria-label="Dwelling type">
+            <button class="is-active" type="button" role="tab" aria-selected="true" data-mode="single">
+              Single dwelling
+            </button>
+            <button type="button" role="tab" aria-selected="false" data-mode="multi">
+              Multi-family
+            </button>
+          </div>
+          <label class="field compact">
+            <span>Area units</span>
+            <select id="unit-system">
+              <option value="ft2">ft2</option>
+              <option value="m2">m2</option>
+            </select>
+          </label>
+          <label class="field compact">
+            <span>Main breaker</span>
+            <select id="main-breaker-amps">
+              <option value="60">60 A</option>
+              <option value="100" selected>100 A</option>
+              <option value="125">125 A</option>
+              <option value="150">150 A</option>
+              <option value="200">200 A</option>
+              <option value="225">225 A</option>
+              <option value="400">400 A</option>
+            </select>
+          </label>
+          <button id="export-pdf" class="secondary-action export-action" type="button">Export PDF</button>
+          <button id="reset-calculator" class="secondary-action reset-action" type="button">Reset</button>
+        </section>
+
+        <section id="single-panel" class="calculator-panel">
         <form id="single-form" class="input-grid">
           <fieldset>
             <legend>Living Area</legend>
@@ -103,14 +131,17 @@
             </div>
             <div class="three-col">
               <label class="field">
-                <span>Tankless / pool / spa water heat, kW</span>
+                <span>Known tankless / pool / spa water heat, kW</span>
                 <input id="single-water" type="number" min="0" step="0.1" value="0">
               </label>
               <label class="field">
-                <span>Electric heat connected, kW</span>
+                <span>Electric space heat connected, kW</span>
                 <input id="single-heat" type="number" min="0" step="0.1" value="0">
               </label>
             </div>
+            <p class="help-text">
+              Enter fixed electric garage heaters, baseboards, and similar room heaters as electric space heat. Enter tankless, pool, spa, or hot tub kW here only when the equipment rating is known.
+            </p>
             <div class="three-col">
               <label class="field conditional-field hidden" data-single-heat-method-field>
                 <span>Heat demand method</span>
@@ -163,7 +194,7 @@
           <fieldset>
             <legend>Additional Loads</legend>
             <p class="help-text">
-              Optional loads not already entered above. Breaker presets estimate connected load when the equipment nameplate rating is unknown.
+              Existing or already-planned loads not entered above. Use hot tub / spa presets when the rating plate is unavailable; breaker presets estimate connected load as breaker amps times volts and place the load in the correct demand bucket.
             </p>
             <div class="preset-bar" aria-label="Common additional load presets">
               <div class="preset-row">
@@ -199,10 +230,49 @@
             <div id="single-other-loads" class="load-list"></div>
             <button id="add-single-load" class="secondary-action" type="button">Add custom load</button>
           </fieldset>
-        </form>
-      </section>
 
-      <section id="multi-panel" class="calculator-panel hidden">
+          <fieldset>
+            <legend>Proposed Load To Add</legend>
+            <p class="help-text">
+              Use this for the specific new load being checked against the selected main breaker. The panel check compares the dwelling before and after this proposed load.
+            </p>
+            <div class="load-row proposed-load-row">
+              <label class="field">
+                <span>Load name</span>
+                <input id="proposed-load-name" type="text" value="Load to add">
+              </label>
+              <label class="field">
+                <span>Breaker, A</span>
+                <input id="proposed-load-amps" type="number" min="0" step="1" value="0">
+              </label>
+              <label class="field">
+                <span>Volts</span>
+                <select id="proposed-load-volts">
+                  <option value="240">240 V</option>
+                  <option value="208">208 V</option>
+                  <option value="120">120 V</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Known rating, kW</span>
+                <input id="proposed-load-kw" type="number" min="0" step="0.1" value="0">
+              </label>
+              <label class="field">
+                <span>Demand bucket</span>
+                <select id="proposed-load-bucket">
+                  <option value="other">Dryer / other over 1500 W</option>
+                  <option value="water">Tankless / pool / spa water heat</option>
+                  <option value="evse">EVSE</option>
+                  <option value="ac">Air conditioning</option>
+                  <option value="heat">Electric space heat</option>
+                </select>
+              </label>
+            </div>
+          </fieldset>
+        </form>
+        </section>
+
+        <section id="multi-panel" class="calculator-panel hidden">
         <form id="multi-form" class="input-grid">
           <fieldset>
             <legend>Building Type</legend>
@@ -296,40 +366,46 @@
             </div>
           </fieldset>
         </form>
-      </section>
-
-      <aside class="result-panel" aria-live="polite">
-        <section class="summary">
-          <div>
-            <p class="eyebrow">Governing calculated load</p>
-            <strong id="result-kw">0.0 kW</strong>
-          </div>
-          <label class="field compact">
-            <span>Amps basis</span>
-            <select id="supply-mode">
-              <option value="single-240">120/240 V split-phase house</option>
-              <option value="three-208">120/208 V 3-phase wye</option>
-              <option value="three-240">240 V 3-phase delta</option>
-            </select>
-          </label>
-          <div class="amps">
-            <span id="result-amps">0 A</span>
-            <small id="amps-label">at 240 V</small>
-          </div>
-          <div id="rule-comparison" class="rule-comparison hidden" aria-label="Calculation summary"></div>
-          <div id="panel-warning" class="panel-warning hidden"></div>
         </section>
+      </div>
 
-        <section class="breakdown">
-          <h2>Breakdown</h2>
-          <div id="breakdown-list"></div>
-        </section>
+      <div class="side-rail">
+        <aside class="result-panel" aria-live="polite">
+          <section class="summary">
+            <div>
+              <p class="eyebrow">Governing calculated load</p>
+              <strong id="result-kw">0.0 kW</strong>
+            </div>
+            <label class="field compact">
+              <span>Amps basis</span>
+              <select id="supply-mode">
+                <option value="single-240">120/240 V split-phase house</option>
+                <option value="three-208">120/208 V 3-phase wye</option>
+                <option value="three-240">240 V 3-phase delta</option>
+              </select>
+            </label>
+            <div class="amps">
+              <span id="result-amps">0 A</span>
+              <small id="amps-label">at 240 V</small>
+            </div>
+            <div id="rule-comparison" class="rule-comparison hidden" aria-label="Calculation summary"></div>
+            <div id="panel-check" class="panel-check hidden" aria-label="Panel pass fail check"></div>
+            <div id="panel-warning" class="panel-warning hidden"></div>
+          </section>
+        </aside>
 
-        <section class="notes">
-          <h2>Notes</h2>
-          <ul id="note-list"></ul>
-        </section>
-      </aside>
+        <aside class="details-panel">
+          <section class="breakdown">
+            <h2>Breakdown</h2>
+            <div id="breakdown-list"></div>
+          </section>
+
+          <section class="notes">
+            <h2>Notes</h2>
+            <ul id="note-list"></ul>
+          </section>
+        </aside>
+      </div>
     </main>
 
     <template id="load-row-template">
@@ -469,6 +545,8 @@
       </div>
     </template>
 
-    <script src="app.js?v=20260504-22"></script>
+    <section id="print-report" class="print-report" aria-hidden="true"></section>
+
+    <script src="app.js?v=20260504-29"></script>
   </body>
 </html>
