@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CEC Residential Load Calculator</title>
-    <link rel="stylesheet" href="styles.css?v=20260504-29">
+    <link rel="stylesheet" href="styles.css?v=20260508-30">
   </head>
   <body>
     <header class="app-header">
@@ -232,42 +232,12 @@
           </fieldset>
 
           <fieldset>
-            <legend>Proposed Load To Add</legend>
+            <legend>Proposed Loads To Add</legend>
             <p class="help-text">
-              Use this for the specific new load being checked against the selected main breaker. The panel check compares the dwelling before and after this proposed load.
+              Use this for the new load package being checked against the selected main breaker. The panel check compares the dwelling before and after all proposed loads are added.
             </p>
-            <div class="load-row proposed-load-row">
-              <label class="field">
-                <span>Load name</span>
-                <input id="proposed-load-name" type="text" value="Load to add">
-              </label>
-              <label class="field">
-                <span>Breaker, A</span>
-                <input id="proposed-load-amps" type="number" min="0" step="1" value="0">
-              </label>
-              <label class="field">
-                <span>Volts</span>
-                <select id="proposed-load-volts">
-                  <option value="240">240 V</option>
-                  <option value="208">208 V</option>
-                  <option value="120">120 V</option>
-                </select>
-              </label>
-              <label class="field">
-                <span>Known rating, kW</span>
-                <input id="proposed-load-kw" type="number" min="0" step="0.1" value="0">
-              </label>
-              <label class="field">
-                <span>Demand bucket</span>
-                <select id="proposed-load-bucket">
-                  <option value="other">Dryer / other over 1500 W</option>
-                  <option value="water">Tankless / pool / spa water heat</option>
-                  <option value="evse">EVSE</option>
-                  <option value="ac">Air conditioning</option>
-                  <option value="heat">Electric space heat</option>
-                </select>
-              </label>
-            </div>
+            <div id="proposed-loads" class="load-list proposed-load-list"></div>
+            <button id="add-proposed-load" class="secondary-action" type="button">Add proposed load</button>
           </fieldset>
         </form>
         </section>
@@ -331,14 +301,9 @@
               </label>
             </div>
             <p class="help-text">
-              Presets add to common building loads. EVSE presets add to common EVSE.
+              Non-EVSE presets add to common building loads at 75%. EVSE presets add to common EVSE demand handling.
             </p>
             <div class="preset-bar" aria-label="Common multi-family load presets">
-              <div class="preset-row">
-                <button data-multi-preset-load="ac-20" class="secondary-action" type="button">AC 20 A</button>
-                <button data-multi-preset-load="ac-30" class="secondary-action" type="button">AC 30 A</button>
-                <button data-multi-preset-load="ac-40" class="secondary-action" type="button">AC 40 A</button>
-              </div>
               <div class="preset-row">
                 <button data-multi-preset-load="range-40" class="secondary-action" type="button">Range 40 A</button>
                 <button data-multi-preset-load="range-50" class="secondary-action" type="button">Range 50 A</button>
@@ -441,6 +406,46 @@
           </select>
         </label>
         <button data-remove-load class="icon-action" type="button" aria-label="Remove load">x</button>
+      </div>
+    </template>
+
+    <template id="proposed-load-row-template">
+      <div class="load-row proposed-load-row">
+        <label class="field">
+          <span>Name</span>
+          <input data-proposed-load-name type="text" value="Load to add">
+        </label>
+        <label class="field">
+          <span>Qty</span>
+          <input data-proposed-load-qty type="number" min="1" step="1" value="1">
+        </label>
+        <label class="field">
+          <span>Breaker, A</span>
+          <input data-proposed-load-amps type="number" min="0" step="1" value="0">
+        </label>
+        <label class="field">
+          <span>Volts</span>
+          <select data-proposed-load-volts>
+            <option value="240">240 V</option>
+            <option value="208">208 V</option>
+            <option value="120">120 V</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Known rating, kW</span>
+          <input data-proposed-load-kw type="number" min="0" step="0.1" value="0">
+        </label>
+        <label class="field">
+          <span>Demand bucket</span>
+          <select data-proposed-load-bucket>
+            <option value="other">Dryer / other over 1500 W</option>
+            <option value="water">Tankless / pool / spa water heat</option>
+            <option value="evse">EVSE</option>
+            <option value="ac">Air conditioning</option>
+            <option value="heat">Electric space heat</option>
+          </select>
+        </label>
+        <button data-remove-proposed-load class="icon-action" type="button" aria-label="Remove proposed load">x</button>
       </div>
     </template>
 
@@ -547,6 +552,6 @@
 
     <section id="print-report" class="print-report" aria-hidden="true"></section>
 
-    <script src="app.js?v=20260504-29"></script>
+    <script src="app.js?v=20260508-30"></script>
   </body>
 </html>

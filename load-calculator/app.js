@@ -502,14 +502,12 @@ if (typeof document !== "undefined") {
     breakdown: $("#breakdown-list"),
     notes: $("#note-list"),
     singleLoads: $("#single-other-loads"),
-    proposedLoadName: $("#proposed-load-name"),
-    proposedLoadAmps: $("#proposed-load-amps"),
-    proposedLoadVolts: $("#proposed-load-volts"),
-    proposedLoadKw: $("#proposed-load-kw"),
-    proposedLoadBucket: $("#proposed-load-bucket"),
+    proposedLoads: $("#proposed-loads"),
+    addProposedLoadButton: $("#add-proposed-load"),
     multiBuildingType: $("#multi-building-type"),
     unitGroups: $("#unit-groups"),
     loadTemplate: $("#load-row-template"),
+    proposedLoadTemplate: $("#proposed-load-row-template"),
     groupTemplate: $("#unit-group-template"),
   };
 
@@ -556,7 +554,7 @@ if (typeof document !== "undefined") {
   }
 
   function addMultiPresetLoad(preset) {
-    const watts = breakerWatts(preset.amps, preset.volts, preset.qty);
+    const watts = app.breakerWatts(preset.amps, preset.volts, preset.qty);
     if (preset.bucket === "evse") {
       addKwToInput("#multi-common-ev", watts);
     } else {
@@ -587,21 +585,73 @@ if (typeof document !== "undefined") {
     els.singleLoads.append(node);
   }
 
-  function proposedLoad() {
-    const knownKw = positiveNumber(els.proposedLoadKw.value);
-    const load = {
-      name: fieldText(els.proposedLoadName, "Proposed load"),
+  function loadQty(value) {
+    return Math.max(1, Math.floor(positiveNumber(value) || 1));
+  }
+
+  function addProposedLoad(values = {}) {
+    const node = els.proposedLoadTemplate.content.firstElementChild.cloneNode(true);
+    const defaults = {
+      name: "Load to add",
       qty: 1,
-      amps: els.proposedLoadAmps.value,
-      volts: els.proposedLoadVolts.value,
-      bucket: els.proposedLoadBucket.value,
+      amps: 0,
+      volts: 240,
+      kw: 0,
+      bucket: "other",
     };
-    if (knownKw > 0) load.watts = knownKw * 1000;
-    return load;
+    const next = { ...defaults, ...values };
+    $("[data-proposed-load-name]", node).value = next.name;
+    $("[data-proposed-load-qty]", node).value = next.qty;
+    $("[data-proposed-load-amps]", node).value = next.amps;
+    $("[data-proposed-load-volts]", node).value = next.volts;
+    $("[data-proposed-load-kw]", node).value = next.kw;
+    $("[data-proposed-load-bucket]", node).value = next.bucket;
+    $("[data-remove-proposed-load]", node).addEventListener("click", () => {
+      node.remove();
+      render();
+    });
+    node.addEventListener("input", render);
+    els.proposedLoads.append(node);
+  }
+
+  function proposedLoadDetail(row) {
+    const qty = loadQty($("[data-proposed-load-qty]", row).value);
+    const amps = $("[data-proposed-load-amps]", row).value;
+    const volts = $("[data-proposed-load-volts]", row).value;
+    const knownKw = positiveNumber($("[data-proposed-load-kw]", row).value);
+    const breakerW = app.breakerWatts(amps, volts, qty);
+    const connectedW = knownKw > 0 ? knownKw * 1000 * qty : breakerW;
+    const load = {
+      name: fieldText($("[data-proposed-load-name]", row), "Proposed load"),
+      qty,
+      amps,
+      volts,
+      bucket: $("[data-proposed-load-bucket]", row).value,
+    };
+    if (knownKw > 0) load.watts = connectedW;
+    return {
+      load,
+      qty,
+      knownKw,
+      breakerW,
+      connectedW,
+      voltsText: selectedText($("[data-proposed-load-volts]", row)),
+      bucketText: selectedText($("[data-proposed-load-bucket]", row)),
+    };
+  }
+
+  function proposedLoadDetails() {
+    return $$(".proposed-load-row", els.proposedLoads)
+      .map((row) => proposedLoadDetail(row))
+      .filter((detail) => detail.connectedW > 0);
+  }
+
+  function proposedLoads() {
+    return proposedLoadDetails().map((detail) => detail.load);
   }
 
   function hasProposedLoad() {
-    return positiveNumber(els.proposedLoadKw.value) > 0 || positiveNumber(els.proposedLoadAmps.value) > 0;
+    return proposedLoadDetails().length > 0;
   }
 
   function addUnitGroup(values = {}) {
@@ -663,7 +713,7 @@ if (typeof document !== "undefined") {
       volts: $("[data-load-volts]", row).value,
       bucket: $("[data-load-bucket]", row).value,
     }));
-    if (includeProposed && hasProposedLoad()) quoteLoads.push(proposedLoad());
+    if (includeProposed) quoteLoads.push(...proposedLoads());
 
     return {
       unitSystem: els.unitSystem.value,
@@ -863,8 +913,8 @@ if (typeof document !== "undefined") {
     if (activeMode !== "single" || breakerAmps <= 0) return;
     const list = createEl("div", "print-status-list");
     [
-      panelCheckStatus(beforeResult, "Before proposed load"),
-      panelCheckStatus(afterResult, "After proposed load"),
+      panelCheckStatus(beforeResult, "Before proposed loads"),
+      panelCheckStatus(afterResult, "After proposed loads"),
     ].forEach((check) => {
       const card = createEl("div", `print-status-card ${check.passes ? "is-pass" : "is-fail"}`);
       const heading = createEl("div", "print-status-heading");
@@ -892,26 +942,26 @@ if (typeof document !== "undefined") {
 
   function panelDecision(beforeResult, afterResult) {
     const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
-    const before = panelCheckStatus(beforeResult, "Before proposed load");
-    const after = panelCheckStatus(afterResult, "After proposed load");
+    const before = panelCheckStatus(beforeResult, "Before proposed loads");
+    const after = panelCheckStatus(afterResult, "After proposed loads");
     if (after.passes) {
       return {
         passes: true,
-        title: "PASS AFTER PROPOSED LOAD",
-        detail: `Calculated load after the proposed load is ${formatAmps(after.ampResult.amps)}, which is ${panelMarginText(after.ampResult.amps, after.limitAmps, after.result)} against ${after.limitLabel}. ${after.basis}.`,
+        title: "PASS AFTER PROPOSED LOADS",
+        detail: `The proposed loads can be added based on the selected main breaker check. Calculated load after the proposed loads is ${formatAmps(after.ampResult.amps)}, which is ${panelMarginText(after.ampResult.amps, after.limitAmps, after.result)} against ${after.limitLabel}. ${after.basis}.`,
       };
     }
     if (!before.passes) {
       return {
         passes: false,
-        title: "FAIL BEFORE PROPOSED LOAD",
-        detail: `Existing calculated load is ${formatAmps(before.ampResult.amps)}, which is already ${panelMarginText(before.ampResult.amps, before.limitAmps, before.result)} before the proposed load is included. ${before.basis}.`,
+        title: "FAIL BEFORE PROPOSED LOADS",
+        detail: `Existing calculated load is ${formatAmps(before.ampResult.amps)}, which is already ${panelMarginText(before.ampResult.amps, before.limitAmps, before.result)} before the proposed loads are included. ${before.basis}.`,
       };
     }
     return {
       passes: false,
-      title: "FAIL AFTER PROPOSED LOAD",
-      detail: `Proposed load pushes the calculated load to ${formatAmps(after.ampResult.amps)}, which is ${panelMarginText(after.ampResult.amps, after.limitAmps, after.result)} against ${after.limitLabel}. ${after.basis}.`,
+      title: "LOAD MANAGEMENT REQUIRED",
+      detail: `Load management is required to add the proposed load(s). The proposed loads push the calculated load to ${formatAmps(after.ampResult.amps)}, which is ${panelMarginText(after.ampResult.amps, after.limitAmps, after.result)} against ${after.limitLabel}. ${after.basis}.`,
     };
   }
 
@@ -922,14 +972,15 @@ if (typeof document !== "undefined") {
     banner.append(createEl("p", "", decision.detail));
     parent.append(banner);
 
-    appendTable(parent, ["Item", "Value"], proposedLoadDetailRows(), {
+    appendTable(parent, ["Proposed load", "Qty", "Connected load", "Input basis", "Demand bucket"], proposedLoadDetailRows(), {
       className: "print-table print-proposed-table",
-      showHead: false,
     });
     appendPanelStatusCards(parent, beforeResult, afterResult);
   }
 
   function splitCodeReference(label) {
+    const optionMatch = String(label).match(/^(Option [A-Z]:)\s+((?:\d+-\d+(?:\([^)]+\))*|62-\d+)(?:,\s*(?:\d+-\d+(?:\([^)]+\))*|62-\d+))*)\s+(.+)$/);
+    if (optionMatch) return [optionMatch[2], `${optionMatch[1]} ${optionMatch[3]}`];
     const match = String(label).match(/^((?:\d+-\d+(?:\([^)]+\))*|62-\d+)(?:,\s*(?:\d+-\d+(?:\([^)]+\))*|62-\d+))*)\s+(.+)$/);
     if (!match) return ["General", label];
     return [match[1], match[2]];
@@ -989,16 +1040,11 @@ if (typeof document !== "undefined") {
   }
 
   function proposedLoadRows() {
-    if (!hasProposedLoad()) return [["Proposed load", "None entered"]];
-    const load = proposedLoad();
-    const knownKw = positiveNumber(els.proposedLoadKw.value);
-    const estimatedW = knownKw > 0 ? knownKw * 1000 : app.breakerWatts(load.amps, load.volts, 1);
+    const details = proposedLoadDetails();
+    if (!details.length) return [["Proposed loads", "None entered"]];
     return [
-      ["Load name", load.name],
-      ["Connected load", formatWatts(estimatedW)],
-      ["Breaker estimate", `${valueWithUnit(load.amps, "A")} at ${selectedText(els.proposedLoadVolts)}`],
-      ["Known rating", knownKw > 0 ? valueWithUnit(els.proposedLoadKw.value, "kW") : "Not provided"],
-      ["Demand bucket", selectedText(els.proposedLoadBucket)],
+      ["Proposed load count", String(details.length)],
+      ["Combined proposed load", formatWatts(details.reduce((sum, detail) => sum + detail.connectedW, 0))],
     ];
   }
 
@@ -1007,8 +1053,8 @@ if (typeof document !== "undefined") {
     const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
     if (breakerAmps <= 0) return [];
     return [
-      panelCheckStatus(beforeResult, "Before proposed load"),
-      panelCheckStatus(afterResult, "After proposed load"),
+      panelCheckStatus(beforeResult, "Before proposed loads"),
+      panelCheckStatus(afterResult, "After proposed loads"),
     ].map((check) => [
       check.label,
       `${check.text}: ${formatWatts(displayedLoadWatts(check.result))} / ${formatAmps(check.ampResult.amps)} against ${check.limitLabel}. ${check.basis}`,
@@ -1016,7 +1062,26 @@ if (typeof document !== "undefined") {
   }
 
   function proposedLoadDetailRows() {
-    return proposedLoadRows().filter(([label]) => label !== "Proposed load");
+    const details = proposedLoadDetails();
+    if (!details.length) return [["None entered", "-", "-", "-", "-"]];
+    return [
+      ...details.map((detail) => [
+        detail.load.name,
+        String(detail.qty),
+        formatWatts(detail.connectedW),
+        detail.knownKw > 0
+          ? `${valueWithUnit(detail.knownKw, "kW")} known rating`
+          : `${valueWithUnit(detail.load.amps, "A")} at ${detail.voltsText}`,
+        detail.bucketText,
+      ]),
+      [
+        "Combined proposed load",
+        "-",
+        formatWatts(details.reduce((sum, detail) => sum + detail.connectedW, 0)),
+        "Total connected load package",
+        "-",
+      ],
+    ];
   }
 
   function singleInputRows(input) {
@@ -1083,7 +1148,7 @@ if (typeof document !== "undefined") {
       ["Generated", generatedAt],
     ], { className: "print-table print-meta-table", showHead: false });
 
-    if (activeMode === "single") {
+    if (activeMode === "single" && hasProposedLoad()) {
       const proposed = appendSection(report, "Proposed Load Decision");
       appendProposedLoadDecision(proposed, beforeResult, result);
     }
@@ -1212,7 +1277,7 @@ if (typeof document !== "undefined") {
     }
 
     const check = panelCheckStatus(result, "Current calculated load");
-    const beforeCheck = panelCheckStatus(beforeResult, "Before proposed load");
+    const beforeCheck = panelCheckStatus(beforeResult, "Before proposed loads");
     const failedBefore = !beforeCheck.passes;
     const showCaution = !itemBMinimumGoverns(result) && check.passes && calculatedAmps >= check.limitAmps * 0.9;
     els.summary.classList.toggle("is-over-main-80", showCaution);
@@ -1220,8 +1285,8 @@ if (typeof document !== "undefined") {
     if (!check.passes) {
       els.panelWarning.className = "panel-warning is-danger";
       els.panelWarning.textContent = failedBefore
-        ? `Fail before proposed load: existing calculated load is ${formatAmps(beforeCheck.ampResult.amps)} against ${beforeCheck.limitLabel}. ${beforeCheck.basis}.`
-        : `Fail after proposed load: proposed load pushes the calculation to ${formatAmps(check.ampResult.amps)} against ${check.limitLabel}. ${check.basis}.`;
+        ? `Fail before proposed loads: existing calculated load is ${formatAmps(beforeCheck.ampResult.amps)} against ${beforeCheck.limitLabel}. ${beforeCheck.basis}.`
+        : `Load management is required to add the proposed load(s): proposed loads push the calculation to ${formatAmps(check.ampResult.amps)} against ${check.limitLabel}. ${check.basis}.`;
     } else if (showCaution) {
       els.panelWarning.className = "panel-warning is-caution";
       els.panelWarning.textContent = `Caution: calculated load is close to ${check.limitLabel}. ${check.basis}.`;
@@ -1236,7 +1301,7 @@ if (typeof document !== "undefined") {
     const ampResult = app.ampsForWatts(displayedLoadWatts(result), els.supplyMode.value);
     const limitAmps = panelLimitAmps(breakerAmps, result);
     const usesSelectedMain = itemBMinimumGoverns(result);
-    const passes = breakerAmps > 0 && (usesSelectedMain ? ampResult.amps <= limitAmps : ampResult.amps < limitAmps);
+    const passes = breakerAmps > 0 && (usesSelectedMain ? ampResult.amps <= limitAmps : ampResult.amps <= limitAmps);
     return {
       label,
       result,
@@ -1259,8 +1324,8 @@ if (typeof document !== "undefined") {
     }
 
     const checks = [
-      panelCheckStatus(beforeResult, "Before proposed load"),
-      panelCheckStatus(afterResult, "After proposed load"),
+      panelCheckStatus(beforeResult, "Before proposed loads"),
+      panelCheckStatus(afterResult, "After proposed loads"),
     ];
     els.panelCheck.innerHTML = "";
     checks.forEach((check) => {
@@ -1345,15 +1410,12 @@ if (typeof document !== "undefined") {
     els.mainBreakerAmps.value = "100";
     els.supplyMode.value = "single-240";
     els.reportDate.value = todayInputValue();
-    els.proposedLoadName.value = "Load to add";
-    els.proposedLoadAmps.value = "0";
-    els.proposedLoadVolts.value = "240";
-    els.proposedLoadKw.value = "0";
-    els.proposedLoadBucket.value = "other";
     els.singleForm.reset();
     els.multiForm.reset();
     els.singleLoads.innerHTML = "";
+    els.proposedLoads.innerHTML = "";
     els.unitGroups.innerHTML = "";
+    addProposedLoad();
     addUnitGroup();
     switchMode("single");
   }
@@ -1366,6 +1428,10 @@ if (typeof document !== "undefined") {
 
   $("#add-single-load").addEventListener("click", () => {
     addSingleLoad();
+    render();
+  });
+  els.addProposedLoadButton.addEventListener("click", () => {
+    addProposedLoad();
     render();
   });
   $$("[data-preset-load]").forEach((button) => {
@@ -1404,5 +1470,6 @@ if (typeof document !== "undefined") {
   });
 
   addUnitGroup();
+  addProposedLoad();
   render();
 }

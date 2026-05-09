@@ -25,7 +25,6 @@ body {
   min-height: 100vh;
   color: var(--ink);
   background: var(--wash);
-  overflow-x: hidden;
 }
 
 button,
@@ -48,6 +47,10 @@ button {
   padding: 2rem 0 1rem;
 }
 
+.app-header > div {
+  min-width: 0;
+}
+
 h1,
 h2,
 p {
@@ -58,6 +61,7 @@ h1 {
   font-size: clamp(1.85rem, 4vw, 3.25rem);
   line-height: 1;
   letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 
 h2 {
@@ -80,6 +84,7 @@ h2 {
   font-size: 0.9rem;
   font-weight: 650;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .app-shell {
@@ -349,6 +354,10 @@ button:focus-visible {
   align-items: end;
 }
 
+.proposed-load-row {
+  grid-template-columns: minmax(9rem, 1.2fr) 4.5rem 6.5rem 7rem 8rem minmax(11rem, 1fr) 42px;
+}
+
 .unit-group {
   display: grid;
   gap: 0.8rem;
@@ -426,6 +435,7 @@ button:focus-visible {
   font-size: clamp(2.1rem, 5vw, 3.5rem);
   line-height: 1;
   letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 
 .summary.is-over-main-80 #result-kw,
@@ -485,6 +495,7 @@ button:focus-visible {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
@@ -495,6 +506,7 @@ button:focus-visible {
 
 .amps small {
   color: rgba(255, 250, 240, 0.74);
+  overflow-wrap: anywhere;
 }
 
 .rule-comparison {
@@ -702,6 +714,7 @@ button:focus-visible {
   .segmented button {
     padding: 0 0.45rem;
     white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .toolbar .field {
@@ -750,7 +763,6 @@ button:focus-visible {
     width: 100%;
     max-width: 100%;
     min-width: 0;
-    overflow: hidden;
   }
 
   .summary *,
