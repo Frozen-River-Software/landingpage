@@ -1146,12 +1146,12 @@ if (typeof document !== "undefined") {
     if (!check) return [];
     return [
       ["Existing aggregate calculated amps", formatAmps(check.beforeAmps)],
-      ["Expected existing service/feed protection", formatAmps(check.expectedProtectionA)],
+      ["Estimated existing upstream protection", formatAmps(check.expectedProtectionA)],
       ["After-proposed aggregate calculated amps", formatAmps(check.afterAmps)],
       ["Supply basis", check.supplyLabel],
       ["Status", check.exceedsExpected
-        ? "After-proposed load exceeds the expected existing feeder/protection size. Physically verify the service feeder conductors and overcurrent protection before relying on the add."
-        : "After-proposed load is within the expected existing feeder/protection size. Physically verify actual equipment and conductor sizes before relying on it."],
+        ? "After-proposed load is above the estimated existing upstream protection size. Confirm actual service equipment, feeder conductors, and overcurrent protection before approval."
+        : "After-proposed load is within the estimated existing upstream protection size. Confirm actual service equipment, feeder conductors, and overcurrent protection where required for approval."],
     ];
   }
 
@@ -1285,6 +1285,11 @@ if (typeof document !== "undefined") {
     appendTable(parent, ["Proposed load", "Scope", "Qty", "Connected load", "Input basis", "Demand bucket"], proposedLoadDetailRows(), {
       className: "print-table print-proposed-table",
     });
+    parent.append(createEl(
+      "p",
+      "print-note",
+      "Load management note: where the proposed load is controlled by an approved load management system, use the managed maximum demand for the proposed load. If the approved control prevents the proposed load from adding demand to the service calculation, it is treated as not added while under that control."
+    ));
     appendPanelStatusCards(parent, beforeResult, afterResult, checkMode);
   }
 
@@ -1669,12 +1674,12 @@ if (typeof document !== "undefined") {
 
     const feederCheck = serviceFeederCheck(beforeResult, result);
     if (feederCheck) {
-      const feeder = appendSection(report, "Expected Upstream Service / Feeder Check");
+      const feeder = appendSection(report, "Estimated Upstream Service / Feeder Reference");
       appendTable(feeder, ["Item", "Value"], serviceFeederCheckRows(feederCheck), {
         className: "print-table print-assumptions-table",
       });
       if (feederCheck.exceedsExpected) {
-        feeder.append(createEl("p", "print-note", "Warning: the proposed load exceeds the expected existing service/feed protection size. Physically verify feeder conductor sizes, overcurrent protection, service equipment, and utility/service details before relying on the added load."));
+        feeder.append(createEl("p", "print-note", "Advisory: the proposed load is above the estimated existing upstream protection size. Confirm the actual service equipment, feeder conductor sizes, overcurrent protection, and utility/service details before approval."));
       }
     }
 
@@ -1885,7 +1890,7 @@ if (typeof document !== "undefined") {
 
     els.serviceFeederCheck.className = `service-feeder-check ${check.exceedsExpected ? "is-danger" : "is-caution"}`;
     els.serviceFeederCheck.innerHTML = "";
-    els.serviceFeederCheck.append(createEl("strong", "", `Expected existing service/feed protection: ${formatAmps(check.expectedProtectionA)}`));
+    els.serviceFeederCheck.append(createEl("strong", "", `Estimated existing upstream protection: ${formatAmps(check.expectedProtectionA)}`));
     els.serviceFeederCheck.append(createEl(
       "span",
       "",
@@ -1895,8 +1900,8 @@ if (typeof document !== "undefined") {
       "span",
       "",
       check.exceedsExpected
-        ? "Warning: proposed load exceeds the expected upstream feeder/protection size. Physically verify feeder conductors and overcurrent protection before relying on this add."
-        : "Verify the actual upstream feeder conductors and overcurrent protection before relying on this expected size."
+        ? "Advisory: proposed load is above the estimated upstream protection size. Confirm actual service equipment, feeder conductors, and overcurrent protection before approval."
+        : "Confirm actual service equipment, feeder conductors, and overcurrent protection where required for approval."
     ));
   }
 
