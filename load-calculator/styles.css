@@ -928,7 +928,7 @@ button:focus-visible {
 
   .print-section {
     margin-top: 0.18in;
-    break-inside: avoid;
+    break-inside: auto;
   }
 
   .print-section h2 {
@@ -936,6 +936,7 @@ button:focus-visible {
     color: #1f4f59;
     font-size: 12pt;
     line-height: 1.2;
+    break-after: avoid;
   }
 
   .print-summary {
@@ -1052,6 +1053,17 @@ button:focus-visible {
 
   .print-proposed-table td:first-child {
     width: 1.35in;
+    color: #526164;
+    background: #f3f7f7;
+    font-weight: 850;
+  }
+
+  .print-unit-comparison-table {
+    margin: 0.1in 0;
+  }
+
+  .print-unit-comparison-table td:first-child {
+    width: 1.4in;
     color: #526164;
     background: #f3f7f7;
     font-weight: 850;

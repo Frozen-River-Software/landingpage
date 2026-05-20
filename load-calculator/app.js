@@ -1317,6 +1317,33 @@ if (typeof document !== "undefined") {
     parent.append(list);
   }
 
+  function selectedUnitComparisonRows(beforeResult, afterResult) {
+    if (activeMode !== "multi") return [];
+    return [
+      ["Before proposed loads", formatWatts(beforeResult.itemA), formatWatts(beforeResult.itemB), formatWatts(displayedLoadWatts(beforeResult))],
+      ["After proposed loads", formatWatts(afterResult.itemA), formatWatts(afterResult.itemB), formatWatts(displayedLoadWatts(afterResult))],
+    ];
+  }
+
+  function appendSelectedUnitComparison(parent, beforeResult, afterResult) {
+    const rows = selectedUnitComparisonRows(beforeResult, afterResult);
+    if (!rows.length) return;
+    appendTable(parent, [
+      "Selected unit check",
+      "8-200(1)(a) entered-load subtotal",
+      "8-200(1)(b) minimum",
+      "Governing selected-unit load",
+    ], rows, { className: "print-table print-unit-comparison-table" });
+
+    if (afterResult.itemB >= afterResult.itemA && displayedLoadWatts(beforeResult) === displayedLoadWatts(afterResult)) {
+      parent.append(createEl(
+        "p",
+        "print-note",
+        `The proposed load increases the selected unit 8-200(1)(a) subtotal from ${formatWatts(beforeResult.itemA)} to ${formatWatts(afterResult.itemA)}, but the selected-unit calculated load remains ${formatWatts(afterResult.itemB)} because 8-200(1)(b) is still the larger value.`
+      ));
+    }
+  }
+
   function panelDecision(beforeResult, afterResult, checkMode = activeMode) {
     const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
     const before = panelCheckStatus(beforeResult, beforeResult.panelLabel || "Before proposed loads", checkMode);
@@ -1358,6 +1385,7 @@ if (typeof document !== "undefined") {
       "print-note",
       "Load management note: where the proposed load is controlled by an approved load management system, use the managed maximum demand for the proposed load. If the approved control prevents the proposed load from adding demand to the service calculation, it is treated as not added while under that control."
     ));
+    appendSelectedUnitComparison(parent, beforeResult, afterResult);
     appendPanelStatusCards(parent, beforeResult, afterResult, checkMode);
   }
 
@@ -1730,7 +1758,6 @@ if (typeof document !== "undefined") {
       ? app.calculateSingle(singleInput({ includeProposed: false }))
       : app.calculateMulti(multiInput({ includeProposed: false }));
     const panelEval = panelEvaluationResults(beforeResult, result);
-    const generatedAt = new Date().toLocaleString();
     report.innerHTML = "";
 
     const header = createEl("header", "print-header");
@@ -1742,7 +1769,6 @@ if (typeof document !== "undefined") {
     const meta = appendSection(report, "Project Information");
     appendTable(meta, ["Field", "Value"], [
       ...reportMetadataRows(),
-      ["Generated", generatedAt],
     ], { className: "print-table print-meta-table", showHead: false });
 
     if (hasProposedLoad()) {
