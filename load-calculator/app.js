@@ -138,6 +138,12 @@
   }
 
   function ampsForWatts(watts, supplyMode) {
+    if (supplyMode === "single-208") {
+      return {
+        amps: watts / 208,
+        label: "at 208 V line-line, single-phase",
+      };
+    }
     if (supplyMode === "three-208") {
       return {
         amps: watts / (Math.sqrt(3) * 208),
@@ -581,6 +587,9 @@ if (typeof document !== "undefined") {
     mainBreakerAmps: $("#main-breaker-amps"),
     mainBreakerLabel: $("#main-breaker-label"),
     supplyMode: $("#supply-mode"),
+    supplyModeLabel: $("#supply-mode-label"),
+    panelSupplyField: $("#panel-supply-field"),
+    panelSupplyMode: $("#panel-supply-mode"),
     resetButton: $("#reset-calculator"),
     exportButton: $("#export-pdf"),
     singleForm: $("#single-form"),
@@ -1150,9 +1159,54 @@ if (typeof document !== "undefined") {
       ["After-proposed aggregate calculated amps", formatAmps(check.afterAmps)],
       ["Supply basis", check.supplyLabel],
       ["Status", check.exceedsExpected
-        ? "After-proposed load is above the estimated existing upstream protection size. Confirm actual service equipment, feeder conductors, and overcurrent protection before approval."
-        : "After-proposed load is within the estimated existing upstream protection size. Confirm actual service equipment, feeder conductors, and overcurrent protection where required for approval."],
+        ? "After-proposed load is above the estimated existing upstream protection size. Use approved load management or confirm the actual upstream rating before relying on this reference."
+        : "After-proposed load is within the estimated existing upstream protection size. Confirm the actual upstream rating where required for approval."],
     ];
+  }
+
+  function appendServiceFeederStatusCards(parent, check) {
+    if (!check) return;
+    const list = createEl("div", "print-status-list print-status-list--upstream");
+    [
+      {
+        label: "Existing aggregate",
+        text: "Reference",
+        passes: true,
+        rows: [
+          ["Calculated amps", formatAmps(check.beforeAmps)],
+          ["Estimated protection", formatAmps(check.expectedProtectionA)],
+          ["Main feed type", check.supplyLabel],
+        ],
+      },
+      {
+        label: "After proposed aggregate",
+        text: check.exceedsExpected ? "Review" : "Within",
+        passes: !check.exceedsExpected,
+        rows: [
+          ["Calculated amps", formatAmps(check.afterAmps)],
+          ["Estimated protection", formatAmps(check.expectedProtectionA)],
+          ["Main feed type", check.supplyLabel],
+          ["Margin", check.exceedsExpected
+            ? `${formatAmpsOneDecimal(check.afterAmps - check.expectedProtectionA)} over estimate`
+            : `${formatAmpsOneDecimal(check.expectedProtectionA - check.afterAmps)} below estimate`],
+        ],
+      },
+    ].forEach((checkCard) => {
+      const card = createEl("div", `print-status-card ${checkCard.passes ? "is-pass" : "is-fail"}`);
+      const heading = createEl("div", "print-status-heading");
+      heading.append(createEl("span", "", checkCard.label));
+      heading.append(createEl("strong", "print-status-badge", checkCard.text.toUpperCase()));
+      card.append(heading);
+
+      const metrics = createEl("dl", "print-status-metrics");
+      checkCard.rows.forEach(([label, value]) => {
+        metrics.append(createEl("dt", "", label));
+        metrics.append(createEl("dd", "", value));
+      });
+      card.append(metrics);
+      list.append(card);
+    });
+    parent.append(list);
   }
 
   function breakdownValue(row) {
@@ -1175,6 +1229,18 @@ if (typeof document !== "undefined") {
 
   function selectedText(select) {
     return select.options[select.selectedIndex]?.textContent || select.value;
+  }
+
+  function panelSupplyMode() {
+    return activeMode === "single"
+      ? els.supplyMode.value
+      : els.panelSupplyMode?.value || "single-240";
+  }
+
+  function panelSupplyText() {
+    return activeMode === "single"
+      ? selectedText(els.supplyMode)
+      : selectedText(els.panelSupplyMode);
   }
 
   function fieldText(input, fallback = "Not provided") {
@@ -1236,8 +1302,9 @@ if (typeof document !== "undefined") {
       [
         ["Calculated load", formatWatts(displayedLoadWatts(check.result))],
         ["Calculated amps", formatAmps(check.ampResult.amps)],
-        ["Selected main", formatAmps(breakerAmps)],
+        [activeMode === "multi" ? "Selected unit panel" : "Selected main", formatAmps(breakerAmps)],
         ["Required max", check.limitLabel],
+        [activeMode === "multi" ? "Panel type" : "Amps basis", check.supplyLabel],
         ["Rule basis", check.basis],
         ["Margin", panelMarginText(check.ampResult.amps, check.limitAmps, check.result, check.checkMode)],
       ].forEach(([label, value]) => {
@@ -1254,11 +1321,12 @@ if (typeof document !== "undefined") {
     const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
     const before = panelCheckStatus(beforeResult, beforeResult.panelLabel || "Before proposed loads", checkMode);
     const after = panelCheckStatus(afterResult, afterResult.panelLabel || "After proposed loads", checkMode);
+    const checkLabel = activeMode === "multi" ? "selected unit panel check" : "selected main breaker check";
     if (after.passes) {
       return {
         passes: true,
         title: "PASS AFTER PROPOSED LOADS",
-        detail: `The proposed loads can be added based on the selected main breaker check. Calculated load after the proposed loads is ${formatAmps(after.ampResult.amps)}, which is ${panelMarginText(after.ampResult.amps, after.limitAmps, after.result, after.checkMode)} against ${after.limitLabel}. ${after.basis}.`,
+        detail: `The proposed loads can be added based on the ${checkLabel}. Calculated load after the proposed loads is ${formatAmps(after.ampResult.amps)}, which is ${panelMarginText(after.ampResult.amps, after.limitAmps, after.result, after.checkMode)} against ${after.limitLabel}. ${after.basis}.`,
       };
     }
     if (!before.passes) {
@@ -1363,15 +1431,25 @@ if (typeof document !== "undefined") {
     const panelBasis = breakerAmps > 0
       ? panelLimitBasis(result, contextMode)
       : "Not evaluated";
-    return [
+    const rows = [
       ["Dwelling type", dwelling],
       [activeMode === "multi" ? "Selected unit panel" : "Selected main breaker", selectedText(els.mainBreakerAmps)],
       ["Panel check basis", panelBasis],
       ["Required maximum", panelLimit],
-      ["Amps basis", selectedText(els.supplyMode)],
-      ["Calculated amps", `${formatAmps(ampResult.amps)} ${ampResult.label}`],
-      ["Governing load", formatWatts(displayedLoadWatts(result))],
     ];
+    if (activeMode === "multi") {
+      rows.push(
+        ["Panel type", panelSupplyText()],
+        ["Main feed type", selectedText(els.supplyMode)]
+      );
+    } else {
+      rows.push(["Amps basis", selectedText(els.supplyMode)]);
+    }
+    rows.push(
+      ["Calculated amps", `${formatAmps(ampResult.amps)} ${ampResult.label}`],
+      ["Governing load", formatWatts(displayedLoadWatts(result))]
+    );
+    return rows;
   }
 
   function proposedLoadRows() {
@@ -1675,11 +1753,12 @@ if (typeof document !== "undefined") {
     const feederCheck = serviceFeederCheck(beforeResult, result);
     if (feederCheck) {
       const feeder = appendSection(report, "Estimated Upstream Service / Feeder Reference");
+      appendServiceFeederStatusCards(feeder, feederCheck);
       appendTable(feeder, ["Item", "Value"], serviceFeederCheckRows(feederCheck), {
         className: "print-table print-assumptions-table",
       });
       if (feederCheck.exceedsExpected) {
-        feeder.append(createEl("p", "print-note", "Advisory: the proposed load is above the estimated existing upstream protection size. Confirm the actual service equipment, feeder conductor sizes, overcurrent protection, and utility/service details before approval."));
+        feeder.append(createEl("p", "print-note", "Advisory: the proposed load is above this estimated upstream protection size. If approved load management limits or removes the proposed demand, rerun the check using the managed maximum. Otherwise, confirm the actual upstream rating before relying on this reference."));
       }
     }
 
@@ -1687,8 +1766,8 @@ if (typeof document !== "undefined") {
     [
       ["Governing load", formatWatts(displayedLoadWatts(result))],
       ["Calculated amps", formatAmps(ampResult.amps)],
-      ["Supply basis", ampResult.label],
-      ["Main breaker status", els.panelWarning.textContent || "Not evaluated"],
+      [activeMode === "multi" ? "Main feed type" : "Amps basis", ampResult.label],
+      [activeMode === "multi" ? "Unit panel status" : "Main breaker status", els.panelWarning.textContent || "Not evaluated"],
     ].forEach(([label, value]) => {
       const card = createEl("div", "print-summary-card");
       card.append(createEl("span", "", label));
@@ -1700,7 +1779,7 @@ if (typeof document !== "undefined") {
     const context = appendSection(report, "Calculation Context");
     appendTable(context, ["Item", "Value"], reportContextRows(
       panelEval.after,
-      app.ampsForWatts(displayedLoadWatts(panelEval.after), els.supplyMode.value)
+      app.ampsForWatts(displayedLoadWatts(panelEval.after), panelSupplyMode())
     ));
 
     const inputs = appendSection(report, "Entered Inputs");
@@ -1839,7 +1918,7 @@ if (typeof document !== "undefined") {
 
   function panelCheckStatus(result, label, checkMode = activeMode) {
     const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
-    const ampResult = app.ampsForWatts(displayedLoadWatts(result), els.supplyMode.value);
+    const ampResult = app.ampsForWatts(displayedLoadWatts(result), panelSupplyMode());
     const limitAmps = panelLimitAmps(breakerAmps, result, checkMode);
     const usesSelectedMain = checkMode === "single" && itemBMinimumGoverns(result);
     const passes = breakerAmps > 0 && (usesSelectedMain ? ampResult.amps <= limitAmps : ampResult.amps <= limitAmps);
@@ -1851,6 +1930,7 @@ if (typeof document !== "undefined") {
       limitAmps,
       limitLabel: panelLimitLabel(breakerAmps, result, checkMode),
       basis: panelLimitBasis(result, checkMode),
+      supplyLabel: panelSupplyText(),
       checkMode,
       passes,
       text: passes ? "Pass" : "Fail",
@@ -1888,7 +1968,7 @@ if (typeof document !== "undefined") {
       return;
     }
 
-    els.serviceFeederCheck.className = `service-feeder-check ${check.exceedsExpected ? "is-danger" : "is-caution"}`;
+    els.serviceFeederCheck.className = `service-feeder-check ${check.exceedsExpected ? "is-danger" : "is-ok"}`;
     els.serviceFeederCheck.innerHTML = "";
     els.serviceFeederCheck.append(createEl("strong", "", `Estimated existing upstream protection: ${formatAmps(check.expectedProtectionA)}`));
     els.serviceFeederCheck.append(createEl(
@@ -1900,14 +1980,17 @@ if (typeof document !== "undefined") {
       "span",
       "",
       check.exceedsExpected
-        ? "Advisory: proposed load is above the estimated upstream protection size. Confirm actual service equipment, feeder conductors, and overcurrent protection before approval."
-        : "Confirm actual service equipment, feeder conductors, and overcurrent protection where required for approval."
+        ? "Advisory: proposed load is above this estimated upstream protection size. Use approved load management or confirm the actual upstream rating before relying on this reference."
+        : "Reference only: confirm the actual upstream rating where required for approval."
     ));
   }
 
   function updateProposedLoadControls() {
     const multiMode = activeMode === "multi";
     els.mainBreakerLabel.textContent = multiMode ? "Unit panel" : "Main breaker";
+    els.supplyModeLabel.textContent = multiMode ? "Main feed type" : "Amps basis";
+    els.panelSupplyField.classList.toggle("hidden", !multiMode);
+    els.panelSupplyField.hidden = !multiMode;
     els.multiProposedTarget.classList.toggle("hidden", !multiMode);
     els.multiProposedTarget.hidden = !multiMode;
     els.proposedLoadHelp.textContent = multiMode
@@ -1970,7 +2053,7 @@ if (typeof document !== "undefined") {
     const displayW = displayedLoadWatts(result);
     const ampResult = app.ampsForWatts(displayW, els.supplyMode.value);
     const panelEval = panelEvaluationResults(beforeResult, result);
-    const panelAmpResult = app.ampsForWatts(displayedLoadWatts(panelEval.after), els.supplyMode.value);
+    const panelAmpResult = app.ampsForWatts(displayedLoadWatts(panelEval.after), panelSupplyMode());
     latestResult = result;
     latestAmpResult = ampResult;
     els.resultKw.textContent = formatWatts(displayW);
@@ -2013,6 +2096,7 @@ if (typeof document !== "undefined") {
     els.unitSystem.value = "ft2";
     els.mainBreakerAmps.value = "100";
     els.supplyMode.value = "single-240";
+    els.panelSupplyMode.value = "single-240";
     els.reportDate.value = todayInputValue();
     els.singleForm.reset();
     els.multiForm.reset();
@@ -2055,6 +2139,7 @@ if (typeof document !== "undefined") {
       || event.target === els.unitSystem
       || event.target === els.mainBreakerAmps
       || event.target === els.supplyMode
+      || event.target === els.panelSupplyMode
     ) {
       render();
     }

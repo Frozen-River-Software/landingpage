@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CEC Residential Load Calculator</title>
-    <link rel="stylesheet" href="styles.css?v=20260519-17">
+    <link rel="stylesheet" href="styles.css?v=20260519-19">
   </head>
   <body>
     <header class="app-header">
@@ -344,11 +344,18 @@
               <strong id="result-kw">0.0 kW</strong>
             </div>
             <label class="field compact">
-              <span>Amps basis</span>
+              <span id="supply-mode-label">Amps basis</span>
               <select id="supply-mode">
-                <option value="single-240">120/240 V split-phase house</option>
+                <option value="single-240">120/240 V split-phase system</option>
                 <option value="three-208">120/208 V 3-phase wye</option>
                 <option value="three-240">240 V 3-phase delta</option>
+              </select>
+            </label>
+            <label id="panel-supply-field" class="field compact hidden">
+              <span>Panel type</span>
+              <select id="panel-supply-mode">
+                <option value="single-240">120/240 V split-phase panel</option>
+                <option value="single-208">120/208 V single-phase panel</option>
               </select>
             </label>
             <div class="amps">
@@ -606,6 +613,6 @@
 
     <section id="print-report" class="print-report" aria-hidden="true"></section>
 
-    <script src="app.js?v=20260519-17"></script>
+    <script src="app.js?v=20260519-19"></script>
   </body>
 </html>

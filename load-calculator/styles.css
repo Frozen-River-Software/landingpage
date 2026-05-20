@@ -534,6 +534,11 @@ button:focus-visible {
   background: rgba(112, 76, 25, 0.62);
 }
 
+.service-feeder-check.is-ok {
+  border-color: rgba(114, 210, 148, 0.65);
+  background: rgba(31, 90, 59, 0.46);
+}
+
 .service-feeder-check.is-danger {
   border-color: rgba(255, 160, 160, 0.85);
   background: rgba(111, 38, 35, 0.72);
@@ -1096,7 +1101,7 @@ button:focus-visible {
 
   .print-status-list {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.1in;
     margin-top: 0.12in;
     break-inside: avoid;
@@ -1161,7 +1166,7 @@ button:focus-visible {
 
   .print-status-metrics {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: 1.45in minmax(0, 1fr);
     gap: 0.035in 0.08in;
     margin: 0;
     font-size: 8pt;
@@ -1177,7 +1182,8 @@ button:focus-visible {
     margin: 0;
     color: #111;
     font-weight: 850;
-    text-align: right;
+    text-align: left;
+    overflow-wrap: anywhere;
   }
 
   .print-calculation-list {
