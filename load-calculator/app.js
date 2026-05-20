@@ -253,13 +253,23 @@
     };
   }
 
+  function unitLivingAreaM2(group, unitSystem) {
+    if (group.area && typeof group.area === "object") {
+      return livingAreaM2(group.area, unitSystem);
+    }
+    const total = toSquareMetres(group.area, unitSystem);
+    const aboveBasement = toSquareMetres(group.nonBasementArea || group.area, unitSystem);
+    return { total, aboveBasement };
+  }
+
   function expandApartmentUnitLoads(groups, unitSystem) {
     const units = [];
     const summaries = [];
 
     groups.forEach((group, index) => {
       const qty = Math.max(0, Math.floor(number(group.qty)));
-      const areaM2 = toSquareMetres(group.area, unitSystem);
+      const area = unitLivingAreaM2(group, unitSystem);
+      const areaM2 = area.total;
       const basicW = apartmentBasicLoad(areaM2);
       const rangeConnectedW = unitRangeConnectedWatts(group);
       const hasRange = rangeConnectedW > 0;
@@ -295,8 +305,9 @@
   }
 
   function rowHousingUnitBaseLoad(group, unitSystem) {
-    const areaM2 = toSquareMetres(group.area, unitSystem);
-    const nonBasementAreaM2 = toSquareMetres(group.nonBasementArea || group.area, unitSystem);
+    const area = unitLivingAreaM2(group, unitSystem);
+    const areaM2 = area.total;
+    const nonBasementAreaM2 = area.aboveBasement;
     const basicW = singleBasicLoad(areaM2);
     const rangeConnectedW = unitRangeConnectedWatts(group);
     const hasRange = rangeConnectedW > 0;
@@ -704,11 +715,14 @@ if (typeof document !== "undefined") {
   }
 
   function addUnitGroup(values = {}) {
-    const node = els.groupTemplate.content.firstElementChild.cloneNode(true);
+      const node = els.groupTemplate.content.firstElementChild.cloneNode(true);
       const defaults = {
         qty: 4,
-        area: 650,
-        nonBasementArea: 650,
+        area: {
+          ground: 650,
+          basement: 0,
+          above: 0,
+        },
         rangeAmps: 40,
       rangeVolts: 240,
       rangeKw: 0,
@@ -728,9 +742,13 @@ if (typeof document !== "undefined") {
       acKw: 0,
     };
     const next = { ...defaults, ...values };
+    const area = typeof next.area === "object"
+      ? { ...defaults.area, ...next.area }
+      : { ground: next.area, basement: 0, above: 0 };
     $("[data-unit-qty]", node).value = next.qty;
-    $("[data-unit-area]", node).value = next.area;
-    $("[data-unit-non-basement-area]", node).value = next.nonBasementArea;
+    $("[data-unit-ground]", node).value = area.ground;
+    $("[data-unit-basement]", node).value = area.basement;
+    $("[data-unit-above]", node).value = area.above;
     $("[data-unit-range-amps]", node).value = next.rangeAmps;
     $("[data-unit-range-kw]", node).value = next.rangeKw;
     $("[data-unit-other-amps]", node).value = next.otherAmps;
@@ -803,8 +821,11 @@ if (typeof document !== "undefined") {
       buildingType: els.multiBuildingType.value,
       groups: $$(".unit-group", els.unitGroups).map((row) => ({
         qty: $("[data-unit-qty]", row).value,
-        area: $("[data-unit-area]", row).value,
-        nonBasementArea: $("[data-unit-non-basement-area]", row).value,
+        area: {
+          ground: $("[data-unit-ground]", row).value,
+          basement: $("[data-unit-basement]", row).value,
+          above: $("[data-unit-above]", row).value,
+        },
         rangeAmps: $("[data-unit-range-amps]", row).value,
         rangeVolts: 240,
         rangeKw: $("[data-unit-range-kw]", row).value,

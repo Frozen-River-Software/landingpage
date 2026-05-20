@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CEC Residential Load Calculator</title>
-    <link rel="stylesheet" href="styles.css?v=20260519-9">
+    <link rel="stylesheet" href="styles.css?v=20260519-11">
   </head>
   <body>
     <header class="app-header">
@@ -473,18 +473,22 @@
           <strong>Unit group</strong>
           <button data-remove-group class="icon-action" type="button" aria-label="Remove unit group">x</button>
         </div>
-        <div class="three-col unit-entry-grid">
+        <div class="three-col unit-entry-grid unit-area-entry-grid">
           <label class="field">
             <span>Quantity</span>
             <input data-unit-qty type="number" min="1" step="1" value="1">
           </label>
           <label class="field">
-            <span>Living area per unit</span>
-            <input data-unit-area type="number" min="0" step="0.1" value="650">
+            <span>Ground floor per unit</span>
+            <input data-unit-ground type="number" min="0" step="0.1" value="650">
           </label>
           <label class="field">
-            <span>Non-basement area per unit</span>
-            <input data-unit-non-basement-area type="number" min="0" step="0.1" value="650">
+            <span>Basement over 1.8 m per unit</span>
+            <input data-unit-basement type="number" min="0" step="0.1" value="0">
+          </label>
+          <label class="field">
+            <span>Upper floors per unit</span>
+            <input data-unit-above type="number" min="0" step="0.1" value="0">
           </label>
         </div>
         <strong class="unit-subhead">Existing loads per unit</strong>
@@ -576,6 +580,6 @@
 
     <section id="print-report" class="print-report" aria-hidden="true"></section>
 
-    <script src="app.js?v=20260519-9"></script>
+    <script src="app.js?v=20260519-11"></script>
   </body>
 </html>

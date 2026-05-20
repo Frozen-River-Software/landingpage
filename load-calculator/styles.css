@@ -230,6 +230,11 @@ legend {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.unit-entry-grid.unit-area-entry-grid {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 32rem;
+}
+
 .three-col + .three-col {
   margin-top: 0.8rem;
 }
