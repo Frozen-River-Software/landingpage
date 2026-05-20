@@ -120,7 +120,7 @@ h2 {
 
 .report-details-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.8rem;
 }
 
@@ -232,6 +232,10 @@ legend {
 
 .three-col + .three-col {
   margin-top: 0.8rem;
+}
+
+.unit-groups + .three-col {
+  margin: 0.8rem 0;
 }
 
 .unit-subhead {
@@ -633,6 +637,7 @@ button:focus-visible {
       "toolbar"
       "result"
       "calc"
+      "proposed"
       "details";
   }
 
@@ -644,8 +649,12 @@ button:focus-visible {
     grid-area: toolbar;
   }
 
-  .calculator-panel {
+  .calculator-panel:not(#proposed-panel) {
     grid-area: calc;
+  }
+
+  #proposed-panel {
+    grid-area: proposed;
   }
 
   .side-rail {
@@ -997,6 +1006,48 @@ button:focus-visible {
     color: #526164;
     background: #f3f7f7;
     font-weight: 850;
+  }
+
+  .print-unit-table {
+    font-size: 7.1pt;
+    line-height: 1.22;
+  }
+
+  .print-unit-table th,
+  .print-unit-table td {
+    padding: 0.045in 0.045in;
+  }
+
+  .print-assumptions-table td:first-child {
+    width: 1.55in;
+    color: #526164;
+    background: #f3f7f7;
+    font-weight: 850;
+  }
+
+  .print-signature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.22in 0.28in;
+    margin-top: 0.42in;
+    break-inside: avoid;
+  }
+
+  .print-signature-field {
+    display: grid;
+    gap: 0.055in;
+  }
+
+  .print-signature-line {
+    height: 0.34in;
+    border-bottom: 1.5pt solid #171717;
+  }
+
+  .print-signature-field span {
+    color: #526164;
+    font-size: 8pt;
+    font-weight: 850;
+    text-transform: uppercase;
   }
 
   .print-status-list {

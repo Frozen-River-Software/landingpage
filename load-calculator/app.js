@@ -22,6 +22,10 @@
     return number(amps) * number(volts) * Math.max(0, Math.floor(number(qty) || 0));
   }
 
+  function connectedWatts(knownKw, amps, volts = 240, qty = 1) {
+    return number(knownKw) > 0 ? kwToW(knownKw) * Math.max(0, Math.floor(number(qty) || 1)) : breakerWatts(amps, volts, qty);
+  }
+
   function toSquareMetres(value, unitSystem) {
     const area = number(value);
     return unitSystem === "ft2" ? area * SQFT_TO_SQM : area;
@@ -166,8 +170,9 @@
     const dryerConnectedW = number(input.dryerKw) > 0
       ? kwToW(input.dryerKw)
       : breakerWatts(input.dryerAmps, 240, 1);
-    const waterW = kwToW(input.waterKw) + sumLoads(quoteLoads.water);
-    const heatConnectedW = kwToW(input.heatKw) + sumLoads(quoteLoads.heat);
+    const waterConnectedW = connectedWatts(input.waterKw, input.waterAmps, 240, 1);
+    const waterW = waterConnectedW + sumLoads(quoteLoads.water);
+    const heatConnectedW = connectedWatts(input.heatKw, input.heatAmps, 240, 1) + sumLoads(quoteLoads.heat);
     const heatW = heatingDemandFromWatts(heatConnectedW, input.heatMethod);
     const acConnectedW = number(input.acKw) > 0
       ? kwToW(input.acKw)
@@ -198,6 +203,7 @@
         ["Estimated connected dryer load", dryerConnectedW, "W"],
         ["8-200(1)(a)(iii), 62-118 heating/AC", hvacW, "W"],
         ["8-200(1)(a)(iv) range", rangeW, "W"],
+        ["Estimated connected tankless / pool / spa water heat", waterConnectedW, "W"],
         ["8-200(1)(a)(v) tankless / pool / spa water heat", waterW, "W"],
         ["8-200(1)(a)(vi), 8-106 EVSE", evW, "W"],
         ["8-200(1)(a)(vii) other loads", other.demand, "W"],
@@ -222,7 +228,15 @@
   function unitOtherConnectedWatts(group) {
     return number(group.otherKw) > 0
       ? kwToW(group.otherKw)
-      : breakerWatts(group.otherAmps, 240, group.otherQty || 0);
+      : breakerWatts(group.otherAmps, 240, 1);
+  }
+
+  function unitWaterConnectedWatts(group) {
+    return connectedWatts(group.waterKw, group.waterAmps, 240, 1);
+  }
+
+  function unitHeatConnectedWatts(group) {
+    return connectedWatts(group.heatKw, group.heatAmps, 240, 1);
   }
 
   function unitHeatAcEvLoads(group) {
@@ -233,7 +247,7 @@
       ? kwToW(group.evKw)
       : breakerWatts(group.evAmps, 240, 1);
     return {
-      heatW: heatingDemand(group.heatKw, group.heatMethod),
+      heatW: heatingDemandFromWatts(unitHeatConnectedWatts(group), group.heatMethod),
       acW: acConnectedW,
       evW: evseDemandFromWatts(evConnectedW, group.evMode, group.evManagedKw),
     };
@@ -250,7 +264,7 @@
       const rangeConnectedW = unitRangeConnectedWatts(group);
       const hasRange = rangeConnectedW > 0;
       const rangeW = rangeDemandFromWatts(rangeConnectedW);
-      const waterW = kwToW(group.waterKw);
+      const waterW = unitWaterConnectedWatts(group);
       const otherConnectedW = unitOtherConnectedWatts(group);
       const otherW = apartmentOtherDemandFromWatts(otherConnectedW, hasRange);
       const baseW = basicW + rangeW + waterW + otherW;
@@ -264,6 +278,10 @@
         index: index + 1,
         qty,
         areaM2,
+        basicW,
+        rangeW,
+        waterW,
+        otherW,
         baseW,
         heatW,
         acW,
@@ -283,7 +301,7 @@
     const rangeConnectedW = unitRangeConnectedWatts(group);
     const hasRange = rangeConnectedW > 0;
     const rangeW = rangeDemandFromWatts(rangeConnectedW);
-    const waterW = kwToW(group.waterKw);
+    const waterW = unitWaterConnectedWatts(group);
     const otherConnectedW = unitOtherConnectedWatts(group);
     const otherLoads = otherConnectedW > 0
       ? [{ name: "Other unit loads", watts: otherConnectedW }]
@@ -296,6 +314,10 @@
       areaM2,
       nonBasementAreaM2,
       baseW: Math.max(itemA, itemB),
+      basicW,
+      rangeW,
+      waterW,
+      otherW: other.demand,
       itemA,
       itemB,
       rangeConnectedW,
@@ -322,6 +344,10 @@
         areaM2: base.areaM2,
         nonBasementAreaM2: base.nonBasementAreaM2,
         baseW: base.baseW,
+        basicW: base.basicW,
+        rangeW: base.rangeW,
+        waterW: base.waterW,
+        otherW: base.otherW,
         itemA: base.itemA,
         itemB: base.itemB,
         heatW,
@@ -358,10 +384,26 @@
     return total;
   }
 
-  function multiCommonLoads(input) {
+  function multiProposedLoadTotals(input) {
+    const quoteLoads = splitQuoteLoads(input.proposedLoads || []);
     return {
-      commonEvW: evseDemand(input.commonEvKw, input.commonEvMode, input.commonEvManagedKw),
-      commonLoadsW: kwToW(input.commonKw) * 0.75,
+      commonProposedW: sumLoads([
+        ...quoteLoads.other,
+        ...quoteLoads.water,
+        ...quoteLoads.ac,
+        ...quoteLoads.heat,
+      ]),
+      evProposedW: sumLoads(quoteLoads.evse),
+    };
+  }
+
+  function multiCommonLoads(input) {
+    const { commonProposedW, evProposedW } = multiProposedLoadTotals(input);
+    return {
+      commonEvW: evseDemand(input.commonEvKw, input.commonEvMode, input.commonEvManagedKw) + evProposedW,
+      commonLoadsW: (kwToW(input.commonKw) + commonProposedW) * 0.75,
+      commonProposedW,
+      evProposedW,
     };
   }
 
@@ -370,9 +412,9 @@
     const acW = expanded.units.reduce((sum, unit) => sum + unit.acW, 0);
     const hvacW = hvacDemand(heatW, acW, input.hvacInterlocked);
     const unitEvW = expanded.units.reduce((sum, unit) => sum + unit.evW, 0);
-    const { commonEvW, commonLoadsW } = multiCommonLoads(input);
+    const { commonEvW, commonLoadsW, commonProposedW, evProposedW } = multiCommonLoads(input);
 
-    return { hvacW, unitEvW, commonEvW, commonLoadsW };
+    return { hvacW, unitEvW, commonEvW, commonLoadsW, commonProposedW, evProposedW };
   }
 
   function calculateApartmentBuilding(input) {
@@ -380,7 +422,7 @@
     const baseLoads = expanded.units.map((unit) => unit.baseW);
     const totalUnitBaseW = baseLoads.reduce((sum, watts) => sum + watts, 0);
     const diversifiedUnitsW = diversifiedDwellingUnitLoad(baseLoads);
-    const { hvacW, unitEvW, commonEvW, commonLoadsW } = multiSeparateLoadTotals(expanded, input);
+    const { hvacW, unitEvW, commonEvW, commonLoadsW, commonProposedW, evProposedW } = multiSeparateLoadTotals(expanded, input);
     const separateLoadsW = hvacW + unitEvW + commonEvW + commonLoadsW;
     const totalW = diversifiedUnitsW + hvacW + unitEvW + commonEvW + commonLoadsW;
 
@@ -402,6 +444,8 @@
         ["8-202 unit EVSE at selected demand", unitEvW, "W"],
         ["8-202(3)(d), 8-106 common EVSE", commonEvW, "W"],
         ["8-202(3)(e) common loads at 75%", commonLoadsW, "W"],
+        ["Proposed non-EVSE common connected load", commonProposedW, "W"],
+        ["Proposed EVSE common connected load", evProposedW, "W"],
       ],
       notes: [
         "Apartment and similar dwelling-unit loads use the Rule 8-202(1)(a) unit-load path before Rule 8-202(3)(a) diversity.",
@@ -416,7 +460,7 @@
     const baseLoads = expanded.units.map((unit) => unit.baseW);
     const totalUnitBaseW = baseLoads.reduce((sum, watts) => sum + watts, 0);
     const diversifiedUnitsW = diversifiedDwellingUnitLoad(baseLoads);
-    const { hvacW, unitEvW, commonEvW, commonLoadsW } = multiSeparateLoadTotals(expanded, input);
+    const { hvacW, unitEvW, commonEvW, commonLoadsW, commonProposedW, evProposedW } = multiSeparateLoadTotals(expanded, input);
     const separateLoadsW = hvacW + unitEvW + commonEvW + commonLoadsW;
     const totalW = diversifiedUnitsW + hvacW + unitEvW + commonEvW + commonLoadsW;
 
@@ -438,6 +482,8 @@
         ["8-202 unit EVSE at selected demand", unitEvW, "W"],
         ["8-202(3)(d), 8-106 common EVSE", commonEvW, "W"],
         ["8-202(3)(e) common loads at 75%", commonLoadsW, "W"],
+        ["Proposed non-EVSE common connected load", commonProposedW, "W"],
+        ["Proposed EVSE common connected load", evProposedW, "W"],
       ],
       notes: [
         "Rule 8-200(2) starts with each dwelling unit calculated under Rule 8-200(1); unit EVSE, electric space heat, and AC are added after the diversified base.",
@@ -485,6 +531,7 @@ if (typeof document !== "undefined") {
     singleForm: $("#single-form"),
     multiForm: $("#multi-form"),
     reportProject: $("#report-project"),
+    reportPermit: $("#report-permit"),
     reportAddress: $("#report-address"),
     reportCustomer: $("#report-customer"),
     reportPreparedBy: $("#report-prepared-by"),
@@ -499,6 +546,7 @@ if (typeof document !== "undefined") {
     ruleComparison: $("#rule-comparison"),
     panelCheck: $("#panel-check"),
     panelWarning: $("#panel-warning"),
+    proposedLoadHelp: $("#proposed-load-help"),
     breakdown: $("#breakdown-list"),
     notes: $("#note-list"),
     singleLoads: $("#single-other-loads"),
@@ -514,6 +562,7 @@ if (typeof document !== "undefined") {
   let activeMode = "single";
   let latestResult = null;
   let latestAmpResult = null;
+  let printReportPrepared = false;
   const PANEL_LOAD_LIMIT_FACTOR = 0.8;
   const presetLoads = {
     "ac-20": { name: "Air conditioner", qty: 1, amps: 20, volts: 240, bucket: "ac" },
@@ -665,13 +714,14 @@ if (typeof document !== "undefined") {
       rangeKw: 0,
       otherAmps: 30,
       otherVolts: 240,
-      otherQty: 1,
       otherKw: 0,
+      waterAmps: 0,
       waterKw: 0,
       evAmps: 0,
       evKw: 0,
       evMode: "full",
       evManagedKw: 0,
+      heatAmps: 0,
       heatKw: 0,
       heatMethod: "residential-zoned",
       acAmps: 0,
@@ -684,15 +734,16 @@ if (typeof document !== "undefined") {
     $("[data-unit-range-amps]", node).value = next.rangeAmps;
     $("[data-unit-range-kw]", node).value = next.rangeKw;
     $("[data-unit-other-amps]", node).value = next.otherAmps;
-    $("[data-unit-other-qty]", node).value = next.otherQty;
     $("[data-unit-other-kw]", node).value = next.otherKw;
     $("[data-unit-ac-amps]", node).value = next.acAmps;
     $("[data-unit-ac-kw]", node).value = next.acKw;
     $("[data-unit-ev-amps]", node).value = next.evAmps;
     $("[data-unit-ev-kw]", node).value = next.evKw;
+    $("[data-unit-water-amps]", node).value = next.waterAmps;
     $("[data-unit-water]", node).value = next.waterKw;
     $("[data-unit-ev-mode]", node).value = next.evMode;
     $("[data-unit-ev-managed]", node).value = next.evManagedKw;
+    $("[data-unit-heat-amps]", node).value = next.heatAmps;
     $("[data-unit-heat]", node).value = next.heatKw;
     $("[data-unit-heat-method]", node).value = next.heatMethod;
     $("[data-remove-group]", node).addEventListener("click", () => {
@@ -729,7 +780,9 @@ if (typeof document !== "undefined") {
       dryerAmps: readValue("#single-dryer-amps"),
       dryerKw: readValue("#single-dryer-kw"),
       dryerVolts: 240,
+      waterAmps: readValue("#single-water-amps"),
       waterKw: readValue("#single-water"),
+      heatAmps: readValue("#single-heat-amps"),
       heatKw: readValue("#single-heat"),
       heatMethod: readValue("#single-heat-method"),
       acAmps: readValue("#single-ac-amps"),
@@ -743,7 +796,8 @@ if (typeof document !== "undefined") {
     };
   }
 
-  function multiInput() {
+  function multiInput(options = {}) {
+    const includeProposed = options.includeProposed !== false;
     return {
       unitSystem: els.unitSystem.value,
       buildingType: els.multiBuildingType.value,
@@ -756,13 +810,14 @@ if (typeof document !== "undefined") {
         rangeKw: $("[data-unit-range-kw]", row).value,
         otherAmps: $("[data-unit-other-amps]", row).value,
         otherVolts: 240,
-        otherQty: $("[data-unit-other-qty]", row).value,
         otherKw: $("[data-unit-other-kw]", row).value,
+        waterAmps: $("[data-unit-water-amps]", row).value,
         waterKw: $("[data-unit-water]", row).value,
         evAmps: $("[data-unit-ev-amps]", row).value,
         evKw: $("[data-unit-ev-kw]", row).value,
         evMode: $("[data-unit-ev-mode]", row).value,
         evManagedKw: $("[data-unit-ev-managed]", row).value,
+        heatAmps: $("[data-unit-heat-amps]", row).value,
         heatKw: $("[data-unit-heat]", row).value,
         heatMethod: $("[data-unit-heat-method]", row).value,
         acAmps: $("[data-unit-ac-amps]", row).value,
@@ -773,6 +828,7 @@ if (typeof document !== "undefined") {
       commonEvMode: readValue("#multi-common-ev-mode"),
       commonEvManagedKw: readValue("#multi-common-ev-managed"),
       hvacInterlocked: readChecked("#multi-hvac-interlock"),
+      proposedLoads: includeProposed ? proposedLoads() : [],
     };
   }
 
@@ -803,6 +859,7 @@ if (typeof document !== "undefined") {
   }
 
   function panelLimitFactor(result) {
+    if (activeMode !== "single") return 1;
     return itemBMinimumGoverns(result) ? 1 : PANEL_LOAD_LIMIT_FACTOR;
   }
 
@@ -811,6 +868,9 @@ if (typeof document !== "undefined") {
   }
 
   function panelLimitBasis(result) {
+    if (activeMode !== "single") {
+      return "Multi-family calculated load compared directly to the selected main breaker";
+    }
     return itemBMinimumGoverns(result)
       ? "8-200(1)(b) minimum governs; compare to selected main with no 80% reduction"
       : "8-200(1)(a) entered-load subtotal governs; Calgary 80% maximum applies";
@@ -861,6 +921,17 @@ if (typeof document !== "undefined") {
     if (unit === "m2") return [label, formatArea(value)];
     if (unit === "count") return [label, String(value)];
     return [label, formatWatts(value)];
+  }
+
+  function isUsedBreakdownRow(row) {
+    const [, value, unit] = row;
+    if (unit === "count") return positiveNumber(value) > 0;
+    if (unit === "m2") return positiveNumber(value) > 0;
+    return positiveNumber(value) > 0;
+  }
+
+  function printBreakdownRows(result) {
+    return result.breakdown.filter(isUsedBreakdownRow).map((row) => breakdownValue(row));
   }
 
   function selectedText(select) {
@@ -987,6 +1058,7 @@ if (typeof document !== "undefined") {
   }
 
   function appendCalculationList(parent, rows) {
+    if (!rows.length) return;
     const list = createEl("div", "print-calculation-list");
     rows.forEach(([label, value]) => {
       const [reference, description] = splitCodeReference(label);
@@ -1009,12 +1081,30 @@ if (typeof document !== "undefined") {
 
   function reportMetadataRows() {
     return [
-      ["Project", fieldText(els.reportProject)],
-      ["Address", fieldText(els.reportAddress)],
-      ["Customer", fieldText(els.reportCustomer)],
-      ["Prepared by", fieldText(els.reportPreparedBy)],
-      ["Report date", formatReportDate(els.reportDate.value)],
-    ];
+      ["Project", els.reportProject.value],
+      ["Permit #", els.reportPermit.value],
+      ["Address", els.reportAddress.value],
+      ["Customer", els.reportCustomer.value],
+      ["Prepared by", els.reportPreparedBy.value],
+      ["Report date", els.reportDate.value ? formatReportDate(els.reportDate.value) : ""],
+    ].filter(([, value]) => String(value || "").trim());
+  }
+
+  function appendSignatureSection(parent) {
+    const section = appendSection(parent, "Review And Sign-Off");
+    const grid = createEl("div", "print-signature-grid");
+    [
+      "Signature",
+      "Printed name",
+      "Company",
+      "Date",
+    ].forEach((labelText) => {
+      const field = createEl("div", "print-signature-field");
+      field.append(createEl("div", "print-signature-line"));
+      field.append(createEl("span", "", labelText));
+      grid.append(field);
+    });
+    section.append(grid);
   }
 
   function reportContextRows(result, ampResult) {
@@ -1022,10 +1112,10 @@ if (typeof document !== "undefined") {
     const dwelling = activeMode === "single"
       ? "Single dwelling"
       : selectedText(els.multiBuildingType);
-    const panelLimit = activeMode === "single" && breakerAmps > 0
+    const panelLimit = breakerAmps > 0
       ? panelLimitLabel(breakerAmps, result)
       : "Not evaluated";
-    const panelBasis = activeMode === "single" && breakerAmps > 0
+    const panelBasis = breakerAmps > 0
       ? panelLimitBasis(result)
       : "Not evaluated";
     return [
@@ -1049,7 +1139,6 @@ if (typeof document !== "undefined") {
   }
 
   function panelCheckRows(beforeResult, afterResult) {
-    if (activeMode !== "single") return [];
     const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
     if (breakerAmps <= 0) return [];
     return [
@@ -1093,8 +1182,8 @@ if (typeof document !== "undefined") {
       ["Range", input.gasRange ? "Not included" : `${valueWithUnit(input.rangeAmps, "A")} breaker / ${valueWithUnit(input.rangeKw, "kW")} known rating`],
       ["Dryer", `${valueWithUnit(input.dryerAmps, "A")} breaker / ${valueWithUnit(input.dryerKw, "kW")} known rating`],
       ["Air conditioning", `${valueWithUnit(input.acAmps, "A")} breaker / ${valueWithUnit(input.acKw, "kW")} known rating`],
-      ["Tankless / pool / spa water heat", valueWithUnit(input.waterKw, "kW")],
-      ["Electric heat", `${valueWithUnit(input.heatKw, "kW")} / ${selectedText($("#single-heat-method"))}`],
+      ["Tankless / pool / spa water heat", `${valueWithUnit(input.waterAmps, "A")} breaker / ${valueWithUnit(input.waterKw, "kW")} known rating`],
+      ["Electric heat", `${valueWithUnit(input.heatAmps, "A")} breaker / ${valueWithUnit(input.heatKw, "kW")} known rating / ${selectedText($("#single-heat-method"))}`],
       ["Heating and AC interlocked", yesNo(input.hvacInterlocked)],
       ["EVSE", `${valueWithUnit(input.evAmps, "A")} breaker / ${valueWithUnit(input.evKw, "kW")} known rating / ${selectedText($("#single-ev-mode"))}`],
       ["EVEMS maximum", valueWithUnit(input.evManagedKw, "kW")],
@@ -1111,7 +1200,134 @@ if (typeof document !== "undefined") {
       ["Common lighting / power", valueWithUnit(input.commonKw, "kW")],
       ["Common EVSE", `${valueWithUnit(input.commonEvKw, "kW")} / ${selectedText($("#multi-common-ev-mode"))}`],
       ["Common EVEMS maximum", valueWithUnit(input.commonEvManagedKw, "kW")],
+      ["Proposed load rows", String(input.proposedLoads.length)],
     ];
+  }
+
+  function heatMethodLabel(value) {
+    return value === "full"
+      ? "100% connected heat"
+      : "Room thermostats: first 10 kW plus 75%";
+  }
+
+  function evModeLabel(value) {
+    if (value === "managed") return "EVEMS maximum";
+    if (value === "omitted") return "Omit under 8-106(11)";
+    return "100% demand";
+  }
+
+  function printTableColumns(headings, rows, required = []) {
+    const requiredIndexes = new Set(required);
+    const keepIndexes = headings
+      .map((_, index) => index)
+      .filter((index) => requiredIndexes.has(index) || rows.some((row) => {
+        const value = row[index];
+        return !String(value || "").match(/^(0(?:\.0+)? kW|0 m2|0|-)$/);
+      }));
+    return {
+      headings: keepIndexes.map((index) => headings[index]),
+      rows: rows.map((row) => keepIndexes.map((index) => row[index])),
+    };
+  }
+
+  function appendUnitGroupDetails(parent, input, result) {
+    if (activeMode !== "multi" || !Array.isArray(result.summaries) || !result.summaries.length) return;
+    const section = appendSection(parent, "Unit Group Calculation Details");
+    if (input.buildingType === "row-housing") {
+      const table = printTableColumns([
+        "Group",
+        "Qty",
+        "Area",
+        "Non-basement area",
+        "Basic",
+        "Range",
+        "Water heat",
+        "Dryer / other",
+        "8-200(1)(a)",
+        "8-200(1)(b)",
+        "Base before diversity",
+        "Heat",
+        "AC",
+        "EVSE",
+      ], result.summaries.map((summary) => [
+        String(summary.index),
+        String(summary.qty),
+        formatArea(summary.areaM2),
+        formatArea(summary.nonBasementAreaM2),
+        formatWatts(summary.basicW),
+        formatWatts(summary.rangeW),
+        formatWatts(summary.waterW),
+        formatWatts(summary.otherW),
+        formatWatts(summary.itemA),
+        formatWatts(summary.itemB),
+        formatWatts(summary.baseW),
+        formatWatts(summary.heatW),
+        formatWatts(summary.acW),
+        formatWatts(summary.evW),
+      ]), [0, 1, 2, 3, 8, 9, 10]);
+      appendTable(section, table.headings, table.rows, { className: "print-table print-unit-table" });
+    } else {
+      const table = printTableColumns([
+        "Group",
+        "Qty",
+        "Area",
+        "Basic",
+        "Range",
+        "Water heat",
+        "Dryer / other",
+        "Unit base before diversity",
+        "Heat",
+        "AC",
+        "EVSE",
+      ], result.summaries.map((summary) => [
+        String(summary.index),
+        String(summary.qty),
+        formatArea(summary.areaM2),
+        formatWatts(summary.basicW),
+        formatWatts(summary.rangeW),
+        formatWatts(summary.waterW),
+        formatWatts(summary.otherW),
+        formatWatts(summary.baseW),
+        formatWatts(summary.heatW),
+        formatWatts(summary.acW),
+        formatWatts(summary.evW),
+      ]), [0, 1, 2, 7]);
+      appendTable(section, table.headings, table.rows, { className: "print-table print-unit-table" });
+    }
+    appendCalculationList(section, comparisonRowsForReport(result, els.supplyMode.value));
+  }
+
+  function assumptionRows(input) {
+    const rows = [
+      ["Breaker-size entries", "Breaker entries estimate connected load as amps times volts. Use nameplate kW where known, especially for permit evidence."],
+    ];
+
+    if (activeMode === "single") {
+      rows.push(
+        ["Heat demand method", heatMethodLabel(input.heatMethod)],
+        ["Heating and AC interlock", yesNo(input.hvacInterlocked)],
+        ["EVSE demand mode", `${evModeLabel(input.evMode)}${input.evMode === "managed" ? ` / EVEMS max ${valueWithUnit(input.evManagedKw, "kW")}` : ""}`],
+        ["Proposed loads", "Proposed loads are added to the selected demand bucket and compared before/after against the selected main breaker."]
+      );
+      return rows;
+    }
+
+    rows.push(
+      ["Calculation path", selectedText(els.multiBuildingType)],
+      ["Unit heat demand methods", input.groups.map((group, index) => `Group ${index + 1}: ${heatMethodLabel(group.heatMethod)}`).join("; ") || "No unit groups"],
+      ["Unit heating and AC interlock", yesNo(input.hvacInterlocked)],
+      ["Unit EVSE demand modes", input.groups.map((group, index) => `Group ${index + 1}: ${evModeLabel(group.evMode)}${group.evMode === "managed" ? `, max ${valueWithUnit(group.evManagedKw, "kW")}` : ""}`).join("; ") || "No unit groups"],
+      ["Common EVSE demand mode", `${evModeLabel(input.commonEvMode)}${input.commonEvMode === "managed" ? ` / EVEMS max ${valueWithUnit(input.commonEvManagedKw, "kW")}` : ""}`],
+      ["Proposed loads", "In multi-family mode, proposed loads are treated as loads outside dwelling units only: common non-EVSE loads under 8-202(3)(e), or common EVSE under 8-202(3)(d) and 8-106. Unit-level changes must be entered in unit groups."]
+    );
+    return rows;
+  }
+
+  function appendAssumptionsSection(parent, input) {
+    const section = appendSection(parent, "Assumptions / Eligibility");
+    appendTable(section, ["Item", "Basis"], assumptionRows(input), {
+      className: "print-table print-assumptions-table",
+    });
   }
 
   function comparisonRowsForReport(result, supplyMode) {
@@ -1129,10 +1345,10 @@ if (typeof document !== "undefined") {
 
   function renderPrintReport(result, ampResult) {
     const report = els.printReport;
-    const input = activeMode === "single" ? singleInput({ includeProposed: false }) : multiInput();
+    const input = activeMode === "single" ? singleInput({ includeProposed: false }) : multiInput({ includeProposed: false });
     const beforeResult = activeMode === "single"
       ? app.calculateSingle(singleInput({ includeProposed: false }))
-      : result;
+      : app.calculateMulti(multiInput({ includeProposed: false }));
     const generatedAt = new Date().toLocaleString();
     report.innerHTML = "";
 
@@ -1148,7 +1364,7 @@ if (typeof document !== "undefined") {
       ["Generated", generatedAt],
     ], { className: "print-table print-meta-table", showHead: false });
 
-    if (activeMode === "single" && hasProposedLoad()) {
+    if (hasProposedLoad()) {
       const proposed = appendSection(report, "Proposed Load Decision");
       appendProposedLoadDecision(proposed, beforeResult, result);
     }
@@ -1175,12 +1391,18 @@ if (typeof document !== "undefined") {
       ? singleInputRows(input)
       : multiInputRows(input, result));
 
+    appendUnitGroupDetails(report, input, result);
+    appendAssumptionsSection(report, input);
+
     const comparison = appendSection(report, "Code Comparison");
     appendCalculationList(comparison, comparisonRowsForReport(result, els.supplyMode.value));
     if (result.comparisonNote) comparison.append(createEl("p", "print-note", result.comparisonNote));
 
-    const breakdown = appendSection(report, "Detailed Breakdown");
-    appendCalculationList(breakdown, result.breakdown.map((row) => breakdownValue(row)));
+    const breakdownRows = printBreakdownRows(result);
+    if (breakdownRows.length) {
+      const breakdown = appendSection(report, "Detailed Breakdown");
+      appendCalculationList(breakdown, breakdownRows);
+    }
 
     const notes = appendSection(report, "Notes");
     const noteList = createEl("ul", "print-notes");
@@ -1190,6 +1412,8 @@ if (typeof document !== "undefined") {
       "This report is a planning aid. Confirm final service, feeder, conductor, and overcurrent sizing with the authority having jurisdiction.",
     ].forEach((note) => noteList.append(createEl("li", "", note)));
     notes.append(noteList);
+
+    appendSignatureSection(report);
 
     const footer = createEl("footer", "print-footer");
     footer.textContent = "CSA C22.1:24 Section 8 planning aid. Verify with the authority having jurisdiction before construction or permit submission.";
@@ -1317,7 +1541,7 @@ if (typeof document !== "undefined") {
 
   function renderPanelCheck(beforeResult, afterResult) {
     const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
-    if (activeMode !== "single" || breakerAmps <= 0) {
+    if (breakerAmps <= 0) {
       els.panelCheck.className = "panel-check hidden";
       els.panelCheck.innerHTML = "";
       return;
@@ -1338,7 +1562,37 @@ if (typeof document !== "undefined") {
     els.panelCheck.className = "panel-check";
   }
 
+  function updateProposedLoadControls() {
+    const multiMode = activeMode === "multi";
+    els.proposedLoadHelp.textContent = multiMode
+      ? "Use this only for proposed loads outside dwelling units. Non-EVSE loads are common building loads added at 75% under 8-202(3)(e); EVSE is added as common EVSE under 8-202(3)(d) and 8-106. Enter unit-level changes in the unit groups."
+      : "Use this for the new load package being checked against the selected main breaker. The panel check compares the dwelling before and after all proposed loads are added.";
+
+    $("[data-proposed-load-bucket]", els.proposedLoadTemplate.content).querySelector('[value="other"]').textContent = multiMode
+      ? "Common building load outside units"
+      : "Dryer / other over 1500 W";
+    $("[data-proposed-load-bucket]", els.proposedLoadTemplate.content).querySelector('[value="evse"]').textContent = multiMode
+      ? "Common EVSE"
+      : "EVSE";
+
+    $$("[data-proposed-load-bucket]").forEach((select) => {
+      const other = select.querySelector('[value="other"]');
+      const evse = select.querySelector('[value="evse"]');
+      other.textContent = multiMode ? "Common building load outside units" : "Dryer / other over 1500 W";
+      evse.textContent = multiMode ? "Common EVSE" : "EVSE";
+
+      ["water", "ac", "heat"].forEach((value) => {
+        const option = select.querySelector(`[value="${value}"]`);
+        option.disabled = multiMode;
+      });
+      if (multiMode && ["water", "ac", "heat"].includes(select.value)) {
+        select.value = "other";
+      }
+    });
+  }
+
   function updateConditionalFields() {
+    updateProposedLoadControls();
     const gasRange = readChecked("#single-gas-range");
     $$("[data-single-range-field]").forEach((field) => {
       field.classList.toggle("is-disabled", gasRange);
@@ -1349,7 +1603,7 @@ if (typeof document !== "undefined") {
 
     const singleHeatMethod = $("[data-single-heat-method-field]");
     if (singleHeatMethod) {
-      const show = positiveNumber(readValue("#single-heat")) > 0;
+      const show = positiveNumber(readValue("#single-heat")) > 0 || positiveNumber(readValue("#single-heat-amps")) > 0;
       singleHeatMethod.classList.toggle("hidden", !show);
       singleHeatMethod.hidden = !show;
     }
@@ -1357,7 +1611,7 @@ if (typeof document !== "undefined") {
     $$(".unit-group", els.unitGroups).forEach((row) => {
       const heatMethod = $("[data-unit-heat-method-field]", row);
       if (heatMethod) {
-        const show = positiveNumber($("[data-unit-heat]", row).value) > 0;
+        const show = positiveNumber($("[data-unit-heat]", row).value) > 0 || positiveNumber($("[data-unit-heat-amps]", row).value) > 0;
         heatMethod.classList.toggle("hidden", !show);
         heatMethod.hidden = !show;
       }
@@ -1368,10 +1622,10 @@ if (typeof document !== "undefined") {
     updateConditionalFields();
     const beforeResult = activeMode === "single"
       ? app.calculateSingle(singleInput({ includeProposed: false }))
-      : null;
+      : app.calculateMulti(multiInput({ includeProposed: false }));
     const result = activeMode === "single"
       ? app.calculateSingle(singleInput({ includeProposed: true }))
-      : app.calculateMulti(multiInput());
+      : app.calculateMulti(multiInput({ includeProposed: true }));
     const displayW = displayedLoadWatts(result);
     const ampResult = app.ampsForWatts(displayW, els.supplyMode.value);
     latestResult = result;
@@ -1380,17 +1634,23 @@ if (typeof document !== "undefined") {
     els.resultAmps.textContent = formatAmps(ampResult.amps);
     els.ampsLabel.textContent = ampResult.label;
     renderRuleComparison(result, els.supplyMode.value);
-    if (beforeResult) renderPanelCheck(beforeResult, result);
-    else renderPanelCheck(result, result);
+    renderPanelCheck(beforeResult, result);
     renderPanelWarning(result, ampResult.amps, beforeResult || result);
     renderBreakdown(result.breakdown);
     renderNotes(result.notes);
   }
 
   function exportPdf() {
-    render();
-    renderPrintReport(latestResult, latestAmpResult);
-    window.print();
+    try {
+      render();
+      renderPrintReport(latestResult, latestAmpResult);
+      printReportPrepared = true;
+      window.print();
+    } catch (error) {
+      printReportPrepared = false;
+      console.error("PDF export failed", error);
+      window.alert(`PDF export failed: ${error.message}`);
+    }
   }
 
   function switchMode(mode) {
@@ -1465,8 +1725,13 @@ if (typeof document !== "undefined") {
 
   els.reportDate.value = todayInputValue();
   window.addEventListener("beforeprint", () => {
-    render();
-    renderPrintReport(latestResult, latestAmpResult);
+    if (!printReportPrepared) {
+      render();
+      renderPrintReport(latestResult, latestAmpResult);
+    }
+  });
+  window.addEventListener("afterprint", () => {
+    printReportPrepared = false;
   });
 
   addUnitGroup();
