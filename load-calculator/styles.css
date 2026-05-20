@@ -363,6 +363,18 @@ button:focus-visible {
   align-items: end;
 }
 
+.load-row .unit-count-field {
+  display: none;
+}
+
+.unit-load-list .load-row {
+  grid-template-columns: minmax(9rem, 1.2fr) 5rem 6.5rem 7rem minmax(11rem, 1fr) 7rem 42px;
+}
+
+.unit-load-list .load-row .unit-count-field {
+  display: grid;
+}
+
 .proposed-load-row {
   grid-template-columns: minmax(9rem, 1.2fr) 4.5rem 6.5rem 7rem 8rem minmax(11rem, 1fr) 42px;
 }
@@ -496,6 +508,33 @@ button:focus-visible {
 }
 
 .panel-warning.is-danger {
+  border-color: rgba(255, 160, 160, 0.85);
+  background: rgba(111, 38, 35, 0.72);
+}
+
+.service-feeder-check {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(127, 201, 219, 0.6);
+  border-radius: 6px;
+  color: rgba(255, 250, 240, 0.92);
+  background: rgba(20, 62, 75, 0.42);
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.service-feeder-check strong {
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+.service-feeder-check.is-caution {
+  border-color: rgba(255, 205, 89, 0.78);
+  background: rgba(112, 76, 25, 0.62);
+}
+
+.service-feeder-check.is-danger {
   border-color: rgba(255, 160, 160, 0.85);
   background: rgba(111, 38, 35, 0.72);
 }

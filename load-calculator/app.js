@@ -239,7 +239,7 @@
     return connectedWatts(group.heatKw, group.heatAmps, 240, 1);
   }
 
-  function unitHeatAcEvLoads(group) {
+  function unitHeatAcEvLoads(group, quoteLoads = splitQuoteLoads(group.quoteLoads || [])) {
     const acConnectedW = number(group.acKw) > 0
       ? kwToW(group.acKw)
       : breakerWatts(group.acAmps, 240, 1);
@@ -247,9 +247,9 @@
       ? kwToW(group.evKw)
       : breakerWatts(group.evAmps, 240, 1);
     return {
-      heatW: heatingDemandFromWatts(unitHeatConnectedWatts(group), group.heatMethod),
-      acW: acConnectedW,
-      evW: evseDemandFromWatts(evConnectedW, group.evMode, group.evManagedKw),
+      heatW: heatingDemandFromWatts(unitHeatConnectedWatts(group) + sumLoads(quoteLoads.heat), group.heatMethod),
+      acW: acConnectedW + sumLoads(quoteLoads.ac),
+      evW: evseDemandFromWatts(evConnectedW, group.evMode, group.evManagedKw) + sumLoads(quoteLoads.evse),
     };
   }
 
@@ -262,30 +262,71 @@
     return { total, aboveBasement };
   }
 
+  function loadUnitCount(load, groupQty) {
+    const raw = number(load.unitCount);
+    if (raw <= 0) return groupQty;
+    return Math.min(groupQty, Math.floor(raw));
+  }
+
+  function expandGroupsByPartialUnitLoads(groups) {
+    return groups.flatMap((group, groupIndex) => {
+      const qty = Math.max(0, Math.floor(number(group.qty)));
+      const loads = group.quoteLoads || [];
+      if (qty <= 0 || !loads.some((load) => number(load.unitCount) > 0 && number(load.unitCount) < qty)) {
+        return [{ ...group, sourceIndex: group.sourceIndex || groupIndex + 1 }];
+      }
+
+      const loadSets = Array.from({ length: qty }, () => []);
+      loads.forEach((load) => {
+        const count = loadUnitCount(load, qty);
+        for (let i = 0; i < count; i += 1) loadSets[i].push(load);
+      });
+
+      const grouped = new Map();
+      loadSets.forEach((set) => {
+        const key = set.map((load) => `${load.name}|${load.qty}|${load.amps}|${load.volts}|${load.bucket}`).join("||");
+        if (!grouped.has(key)) grouped.set(key, { qty: 0, quoteLoads: set });
+        grouped.get(key).qty += 1;
+      });
+
+      let splitIndex = 0;
+      return [...grouped.values()].map((entry) => {
+        splitIndex += 1;
+        return {
+          ...group,
+          qty: entry.qty,
+          quoteLoads: entry.quoteLoads,
+          sourceIndex: `${group.sourceIndex || groupIndex + 1}.${splitIndex}`,
+        };
+      });
+    });
+  }
+
   function expandApartmentUnitLoads(groups, unitSystem) {
     const units = [];
     const summaries = [];
 
-    groups.forEach((group, index) => {
+    expandGroupsByPartialUnitLoads(groups).forEach((group, index) => {
       const qty = Math.max(0, Math.floor(number(group.qty)));
       const area = unitLivingAreaM2(group, unitSystem);
       const areaM2 = area.total;
+      const quoteLoads = splitQuoteLoads(group.quoteLoads || []);
       const basicW = apartmentBasicLoad(areaM2);
       const rangeConnectedW = unitRangeConnectedWatts(group);
       const hasRange = rangeConnectedW > 0;
       const rangeW = rangeDemandFromWatts(rangeConnectedW);
-      const waterW = unitWaterConnectedWatts(group);
-      const otherConnectedW = unitOtherConnectedWatts(group);
+      const waterW = unitWaterConnectedWatts(group) + sumLoads(quoteLoads.water);
+      const otherConnectedW = unitOtherConnectedWatts(group) + sumLoads(quoteLoads.other);
       const otherW = apartmentOtherDemandFromWatts(otherConnectedW, hasRange);
       const baseW = basicW + rangeW + waterW + otherW;
-      const { heatW, acW, evW } = unitHeatAcEvLoads(group);
+      const { heatW, acW, evW } = unitHeatAcEvLoads(group, quoteLoads);
 
       for (let i = 0; i < qty; i += 1) {
         units.push({ baseW, heatW, acW, evW });
       }
 
       summaries.push({
-        index: index + 1,
+        index: group.sourceIndex || index + 1,
         qty,
         areaM2,
         basicW,
@@ -308,16 +349,17 @@
     const area = unitLivingAreaM2(group, unitSystem);
     const areaM2 = area.total;
     const nonBasementAreaM2 = area.aboveBasement;
+    const quoteLoads = splitQuoteLoads(group.quoteLoads || []);
     const basicW = singleBasicLoad(areaM2);
     const rangeConnectedW = unitRangeConnectedWatts(group);
     const hasRange = rangeConnectedW > 0;
     const rangeW = rangeDemandFromWatts(rangeConnectedW);
-    const waterW = unitWaterConnectedWatts(group);
+    const waterW = unitWaterConnectedWatts(group) + sumLoads(quoteLoads.water);
     const otherConnectedW = unitOtherConnectedWatts(group);
     const otherLoads = otherConnectedW > 0
       ? [{ name: "Other unit loads", watts: otherConnectedW }]
       : [];
-    const other = singleOtherDemand(otherLoads, hasRange);
+    const other = singleOtherDemand([...otherLoads, ...quoteLoads.other], hasRange);
     const itemA = basicW + rangeW + waterW + other.demand;
     const itemB = nonBasementAreaM2 >= 80 ? 24000 : 14400;
 
@@ -340,17 +382,18 @@
     const units = [];
     const summaries = [];
 
-    groups.forEach((group, index) => {
+    expandGroupsByPartialUnitLoads(groups).forEach((group, index) => {
       const qty = Math.max(0, Math.floor(number(group.qty)));
       const base = rowHousingUnitBaseLoad(group, unitSystem);
-      const { heatW, acW, evW } = unitHeatAcEvLoads(group);
+      const quoteLoads = splitQuoteLoads(group.quoteLoads || []);
+      const { heatW, acW, evW } = unitHeatAcEvLoads(group, quoteLoads);
 
       for (let i = 0; i < qty; i += 1) {
         units.push({ baseW: base.baseW, heatW, acW, evW });
       }
 
       summaries.push({
-        index: index + 1,
+        index: group.sourceIndex || index + 1,
         qty,
         areaM2: base.areaM2,
         nonBasementAreaM2: base.nonBasementAreaM2,
@@ -536,6 +579,7 @@ if (typeof document !== "undefined") {
     modeButtons: $$("[data-mode]"),
     unitSystem: $("#unit-system"),
     mainBreakerAmps: $("#main-breaker-amps"),
+    mainBreakerLabel: $("#main-breaker-label"),
     supplyMode: $("#supply-mode"),
     resetButton: $("#reset-calculator"),
     exportButton: $("#export-pdf"),
@@ -557,7 +601,11 @@ if (typeof document !== "undefined") {
     ruleComparison: $("#rule-comparison"),
     panelCheck: $("#panel-check"),
     panelWarning: $("#panel-warning"),
+    serviceFeederCheck: $("#service-feeder-check"),
     proposedLoadHelp: $("#proposed-load-help"),
+    multiProposedTarget: $("#multi-proposed-target"),
+    multiProposedGroup: $("#multi-proposed-group"),
+    multiProposedUnitQty: $("#multi-proposed-unit-qty"),
     breakdown: $("#breakdown-list"),
     notes: $("#note-list"),
     singleLoads: $("#single-other-loads"),
@@ -608,21 +656,7 @@ if (typeof document !== "undefined") {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
   }
 
-  function addKwToInput(selector, watts) {
-    const input = $(selector);
-    input.value = ((positiveNumber(input.value) * 1000 + watts) / 1000).toFixed(1);
-  }
-
-  function addMultiPresetLoad(preset) {
-    const watts = app.breakerWatts(preset.amps, preset.volts, preset.qty);
-    if (preset.bucket === "evse") {
-      addKwToInput("#multi-common-ev", watts);
-    } else {
-      addKwToInput("#multi-common", watts);
-    }
-  }
-
-  function addSingleLoad(values = {}) {
+  function addLoadRow(container, values = {}) {
     const node = els.loadTemplate.content.firstElementChild.cloneNode(true);
     const defaults = {
       name: "Load",
@@ -637,12 +671,37 @@ if (typeof document !== "undefined") {
     $("[data-load-amps]", node).value = next.amps;
     $("[data-load-volts]", node).value = next.volts;
     $("[data-load-bucket]", node).value = next.bucket;
+    const unitCount = $("[data-load-unit-count]", node);
+    if (unitCount) unitCount.value = next.unitCount || "";
     $("[data-remove-load]", node).addEventListener("click", () => {
       node.remove();
       render();
     });
     node.addEventListener("input", render);
-    els.singleLoads.append(node);
+    container.append(node);
+    return node;
+  }
+
+  function addSingleLoad(values = {}) {
+    addLoadRow(els.singleLoads, values);
+  }
+
+  function loadRows(container) {
+    return $$(".load-row", container).map((row) => ({
+      name: $("[data-load-name]", row).value,
+      qty: $("[data-load-qty]", row).value,
+      amps: $("[data-load-amps]", row).value,
+      volts: $("[data-load-volts]", row).value,
+      bucket: $("[data-load-bucket]", row).value,
+      unitCount: $("[data-load-unit-count]", row)?.value || "",
+    }));
+  }
+
+  function hasConnectedLoadRow(row) {
+    const qty = loadQty($("[data-load-qty]", row).value);
+    const amps = $("[data-load-amps]", row).value;
+    const volts = $("[data-load-volts]", row).value;
+    return app.breakerWatts(amps, volts, qty) > 0;
   }
 
   function loadQty(value) {
@@ -706,6 +765,24 @@ if (typeof document !== "undefined") {
       .filter((detail) => detail.connectedW > 0);
   }
 
+  function unitLoadDetail(row, groupIndex, scope) {
+    const qty = loadQty($("[data-load-qty]", row).value);
+    const amps = $("[data-load-amps]", row).value;
+    const volts = $("[data-load-volts]", row).value;
+    const connectedW = app.breakerWatts(amps, volts, qty);
+    const bucket = $("[data-load-bucket]", row);
+    return {
+      name: fieldText($("[data-load-name]", row), "Unit load"),
+      scope: `Group ${groupIndex + 1} ${scope}`,
+      qty,
+      amps,
+      connectedW,
+      voltsText: selectedText($("[data-load-volts]", row)),
+      bucketText: selectedText(bucket),
+      bucket: bucket.value,
+    };
+  }
+
   function proposedLoads() {
     return proposedLoadDetails().map((detail) => detail.load);
   }
@@ -715,15 +792,15 @@ if (typeof document !== "undefined") {
   }
 
   function addUnitGroup(values = {}) {
-      const node = els.groupTemplate.content.firstElementChild.cloneNode(true);
-      const defaults = {
-        qty: 4,
-        area: {
-          ground: 650,
-          basement: 0,
-          above: 0,
-        },
-        rangeAmps: 40,
+    const node = els.groupTemplate.content.firstElementChild.cloneNode(true);
+    const defaults = {
+      qty: 4,
+      area: {
+        ground: 650,
+        basement: 0,
+        above: 0,
+      },
+      rangeAmps: 40,
       rangeVolts: 240,
       rangeKw: 0,
       otherAmps: 30,
@@ -764,9 +841,21 @@ if (typeof document !== "undefined") {
     $("[data-unit-heat-amps]", node).value = next.heatAmps;
     $("[data-unit-heat]", node).value = next.heatKw;
     $("[data-unit-heat-method]", node).value = next.heatMethod;
+    const unitLoads = $("[data-unit-loads]", node);
+    (next.quoteLoads || []).forEach((load) => addLoadRow(unitLoads, load));
     $("[data-remove-group]", node).addEventListener("click", () => {
       node.remove();
       render();
+    });
+    $("[data-add-unit-load]", node).addEventListener("click", () => {
+      addLoadRow(unitLoads);
+      render();
+    });
+    $$("[data-unit-preset-load]", node).forEach((button) => {
+      button.addEventListener("click", () => {
+        addLoadRow(unitLoads, presetLoads[button.dataset.unitPresetLoad]);
+        render();
+      });
     });
     node.addEventListener("input", render);
     node.addEventListener("change", render);
@@ -775,13 +864,7 @@ if (typeof document !== "undefined") {
 
   function singleInput(options = {}) {
     const includeProposed = options.includeProposed !== false;
-    const quoteLoads = $$(".load-row", els.singleLoads).map((row) => ({
-      name: $("[data-load-name]", row).value,
-      qty: $("[data-load-qty]", row).value,
-      amps: $("[data-load-amps]", row).value,
-      volts: $("[data-load-volts]", row).value,
-      bucket: $("[data-load-bucket]", row).value,
-    }));
+    const quoteLoads = loadRows(els.singleLoads);
     if (includeProposed) quoteLoads.push(...proposedLoads());
 
     return {
@@ -814,12 +897,45 @@ if (typeof document !== "undefined") {
     };
   }
 
+  function multiProposedTarget(groups) {
+    const groupCount = groups.length;
+    const requestedGroup = Math.floor(positiveNumber(els.multiProposedGroup.value) || 1);
+    const groupIndex = groupCount > 0 ? Math.min(Math.max(requestedGroup, 1), groupCount) - 1 : 0;
+    const groupQty = groupCount > 0 ? Math.max(0, Math.floor(positiveNumber(groups[groupIndex].qty))) : 0;
+    const requestedQty = Math.floor(positiveNumber(els.multiProposedUnitQty.value) || 1);
+    const unitQty = groupQty > 0 ? Math.min(Math.max(requestedQty, 1), groupQty) : 0;
+    return { groupIndex, unitQty };
+  }
+
+  function groupsWithProposedUnitLoads(groups, loads) {
+    if (!loads.length || !groups.length) return groups;
+    const target = multiProposedTarget(groups);
+    if (target.unitQty <= 0) return groups;
+    return groups.flatMap((group, index) => {
+      if (index !== target.groupIndex) return [group];
+      const groupQty = Math.max(0, Math.floor(positiveNumber(group.qty)));
+      const unaffectedQty = Math.max(0, groupQty - target.unitQty);
+      const proposedGroup = {
+        ...group,
+        qty: target.unitQty,
+        quoteLoads: [...(group.quoteLoads || []), ...loads],
+        proposedUnitTarget: true,
+        originalGroupIndex: index,
+      };
+      if (unaffectedQty <= 0) return [proposedGroup];
+      return [
+        { ...group, qty: unaffectedQty, originalGroupIndex: index },
+        proposedGroup,
+      ];
+    });
+  }
+
   function multiInput(options = {}) {
     const includeProposed = options.includeProposed !== false;
-    return {
-      unitSystem: els.unitSystem.value,
-      buildingType: els.multiBuildingType.value,
-      groups: $$(".unit-group", els.unitGroups).map((row) => ({
+    const proposedUnitLoads = includeProposed ? proposedLoads() : [];
+    const groups = $$(".unit-group", els.unitGroups).map((row) => {
+      const existingUnitLoads = loadRows($("[data-unit-loads]", row));
+      return {
         qty: $("[data-unit-qty]", row).value,
         area: {
           ground: $("[data-unit-ground]", row).value,
@@ -843,14 +959,81 @@ if (typeof document !== "undefined") {
         heatMethod: $("[data-unit-heat-method]", row).value,
         acAmps: $("[data-unit-ac-amps]", row).value,
         acKw: $("[data-unit-ac-kw]", row).value,
-      })),
+        quoteLoads: existingUnitLoads,
+        existingUnitLoads,
+      };
+    });
+    const target = multiProposedTarget(groups);
+    return {
+      unitSystem: els.unitSystem.value,
+      buildingType: els.multiBuildingType.value,
+      groups: groupsWithProposedUnitLoads(groups, proposedUnitLoads),
+      enteredGroups: groups,
+      proposedTargetGroup: target.groupIndex + 1,
+      proposedTargetUnitQty: target.unitQty,
       commonKw: readValue("#multi-common"),
       commonEvKw: readValue("#multi-common-ev"),
       commonEvMode: readValue("#multi-common-ev-mode"),
       commonEvManagedKw: readValue("#multi-common-ev-managed"),
       hvacInterlocked: readChecked("#multi-hvac-interlock"),
-      proposedLoads: includeProposed ? proposedLoads() : [],
+      proposedLoads: [],
+      proposedUnitLoads,
     };
+  }
+
+  function isPartialUnitLoad(load, groupQty) {
+    const count = positiveNumber(load.unitCount);
+    return count > 0 && count < groupQty;
+  }
+
+  function selectedUnitSingleInput(includeProposed = false) {
+    const input = multiInput({ includeProposed: false });
+    const target = multiProposedTarget(input.enteredGroups || input.groups);
+    const group = (input.enteredGroups || input.groups)[target.groupIndex] || (input.enteredGroups || input.groups)[0];
+    if (!group) return singleInput({ includeProposed });
+
+    const groupQty = Math.max(0, Math.floor(positiveNumber(group.qty)));
+    const baseLoads = (group.existingUnitLoads || group.quoteLoads || [])
+      .filter((load) => !isPartialUnitLoad(load, groupQty));
+    const quoteLoads = includeProposed
+      ? [...baseLoads, ...proposedLoads()]
+      : baseLoads;
+
+    return {
+      unitSystem: input.unitSystem,
+      area: group.area,
+      rangeAmps: group.rangeAmps,
+      rangeVolts: 240,
+      rangeKw: group.rangeKw,
+      gasRange: positiveNumber(group.rangeAmps) <= 0 && positiveNumber(group.rangeKw) <= 0,
+      dryerAmps: group.otherAmps,
+      dryerKw: group.otherKw,
+      dryerVolts: 240,
+      waterAmps: group.waterAmps,
+      waterKw: group.waterKw,
+      heatAmps: group.heatAmps,
+      heatKw: group.heatKw,
+      heatMethod: group.heatMethod,
+      acAmps: group.acAmps,
+      acKw: group.acKw,
+      hvacInterlocked: input.hvacInterlocked,
+      evAmps: group.evAmps,
+      evKw: group.evKw,
+      evMode: group.evMode,
+      evManagedKw: group.evManagedKw,
+      quoteLoads,
+    };
+  }
+
+  function panelEvaluationResults(beforeResult, afterResult) {
+    if (activeMode !== "multi") {
+      return { before: beforeResult, after: afterResult, checkMode: "single" };
+    }
+    const before = app.calculateSingle(selectedUnitSingleInput(false));
+    const after = app.calculateSingle(selectedUnitSingleInput(true));
+    before.panelLabel = "Selected unit before proposed loads";
+    after.panelLabel = "Selected unit after proposed loads";
+    return { before, after, checkMode: "single" };
   }
 
   function formatWatts(value) {
@@ -879,41 +1062,43 @@ if (typeof document !== "undefined") {
     return Number.isFinite(result?.itemA) && Number.isFinite(result?.itemB) && result.itemB >= result.itemA;
   }
 
-  function panelLimitFactor(result) {
-    if (activeMode !== "single") return 1;
+  function panelLimitFactor(result, checkMode = activeMode) {
+    if (checkMode !== "single") return 1;
     return itemBMinimumGoverns(result) ? 1 : PANEL_LOAD_LIMIT_FACTOR;
   }
 
-  function panelLimitAmps(breakerAmps, result) {
-    return breakerAmps * panelLimitFactor(result);
+  function panelLimitAmps(breakerAmps, result, checkMode = activeMode) {
+    return breakerAmps * panelLimitFactor(result, checkMode);
   }
 
-  function panelLimitBasis(result) {
-    if (activeMode !== "single") {
-      return "Multi-family calculated load compared directly to the selected main breaker";
+  function panelLimitBasis(result, checkMode = activeMode) {
+    if (checkMode !== "single") {
+      return "Multi-family calculated load compared directly to the selected service or feeder breaker";
     }
     return itemBMinimumGoverns(result)
       ? "8-200(1)(b) minimum governs; compare to selected main with no 80% reduction"
       : "8-200(1)(a) entered-load subtotal governs; Calgary 80% maximum applies";
   }
 
-  function panelLimitLabel(breakerAmps, result) {
+  function panelLimitLabel(breakerAmps, result, checkMode = activeMode) {
     if (itemBMinimumGoverns(result)) {
       return `${formatAmps(breakerAmps)} (selected main; no 80% reduction under 8-200(1)(b))`;
     }
-    return `${formatAmps(panelLimitAmps(breakerAmps, result))} (80% of ${formatAmps(breakerAmps)})`;
+    if (checkMode !== "single") return `${formatAmps(breakerAmps)} selected service/feeder`;
+    return `${formatAmps(panelLimitAmps(breakerAmps, result, checkMode))} (80% of ${formatAmps(breakerAmps)})`;
   }
 
-  function panelLimitShortLabel(result) {
+  function panelLimitShortLabel(result, checkMode = activeMode) {
+    if (checkMode !== "single") return "selected service/feeder";
     return itemBMinimumGoverns(result) ? "selected main" : "80% limit";
   }
 
-  function panelMarginText(amps, limitAmps, result) {
+  function panelMarginText(amps, limitAmps, result, checkMode = activeMode) {
     const margin = Math.abs(limitAmps - amps);
-    if (margin < 0.05) return `at ${panelLimitShortLabel(result)}`;
+    if (margin < 0.05) return `at ${panelLimitShortLabel(result, checkMode)}`;
     return amps < limitAmps
-      ? `${formatAmpsOneDecimal(margin)} below ${panelLimitShortLabel(result)}`
-      : `${formatAmpsOneDecimal(margin)} over ${panelLimitShortLabel(result)}`;
+      ? `${formatAmpsOneDecimal(margin)} below ${panelLimitShortLabel(result, checkMode)}`
+      : `${formatAmpsOneDecimal(margin)} over ${panelLimitShortLabel(result, checkMode)}`;
   }
 
   function formatReportDate(value) {
@@ -935,6 +1120,39 @@ if (typeof document !== "undefined") {
 
   function displayedLoadWatts(result) {
     return result.totalW;
+  }
+
+  function standardProtectionSize(amps) {
+    const sizes = [60, 70, 80, 90, 100, 110, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500, 600, 700, 800, 1000, 1200, 1600, 2000, 2500, 3000, 4000];
+    return sizes.find((size) => amps <= size) || Math.ceil(amps / 100) * 100;
+  }
+
+  function serviceFeederCheck(beforeResult, afterResult) {
+    if (activeMode !== "multi") return null;
+    const beforeAmps = app.ampsForWatts(displayedLoadWatts(beforeResult), els.supplyMode.value).amps;
+    const afterAmps = app.ampsForWatts(displayedLoadWatts(afterResult), els.supplyMode.value).amps;
+    const expectedProtectionA = standardProtectionSize(beforeAmps);
+    const exceedsExpected = afterAmps > expectedProtectionA;
+    return {
+      beforeAmps,
+      afterAmps,
+      expectedProtectionA,
+      exceedsExpected,
+      supplyLabel: selectedText(els.supplyMode),
+    };
+  }
+
+  function serviceFeederCheckRows(check) {
+    if (!check) return [];
+    return [
+      ["Existing aggregate calculated amps", formatAmps(check.beforeAmps)],
+      ["Expected existing service/feed protection", formatAmps(check.expectedProtectionA)],
+      ["After-proposed aggregate calculated amps", formatAmps(check.afterAmps)],
+      ["Supply basis", check.supplyLabel],
+      ["Status", check.exceedsExpected
+        ? "After-proposed load exceeds the expected existing feeder/protection size. Physically verify the service feeder conductors and overcurrent protection before relying on the add."
+        : "After-proposed load is within the expected existing feeder/protection size. Physically verify actual equipment and conductor sizes before relying on it."],
+    ];
   }
 
   function breakdownValue(row) {
@@ -1000,13 +1218,13 @@ if (typeof document !== "undefined") {
     parent.append(table);
   }
 
-  function appendPanelStatusCards(parent, beforeResult, afterResult) {
+  function appendPanelStatusCards(parent, beforeResult, afterResult, checkMode = activeMode) {
     const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
-    if (activeMode !== "single" || breakerAmps <= 0) return;
+    if (breakerAmps <= 0) return;
     const list = createEl("div", "print-status-list");
     [
-      panelCheckStatus(beforeResult, "Before proposed loads"),
-      panelCheckStatus(afterResult, "After proposed loads"),
+      panelCheckStatus(beforeResult, beforeResult.panelLabel || "Before proposed loads", checkMode),
+      panelCheckStatus(afterResult, afterResult.panelLabel || "After proposed loads", checkMode),
     ].forEach((check) => {
       const card = createEl("div", `print-status-card ${check.passes ? "is-pass" : "is-fail"}`);
       const heading = createEl("div", "print-status-heading");
@@ -1021,7 +1239,7 @@ if (typeof document !== "undefined") {
         ["Selected main", formatAmps(breakerAmps)],
         ["Required max", check.limitLabel],
         ["Rule basis", check.basis],
-        ["Margin", panelMarginText(check.ampResult.amps, check.limitAmps, check.result)],
+        ["Margin", panelMarginText(check.ampResult.amps, check.limitAmps, check.result, check.checkMode)],
       ].forEach(([label, value]) => {
         metrics.append(createEl("dt", "", label));
         metrics.append(createEl("dd", "", value));
@@ -1032,42 +1250,42 @@ if (typeof document !== "undefined") {
     parent.append(list);
   }
 
-  function panelDecision(beforeResult, afterResult) {
+  function panelDecision(beforeResult, afterResult, checkMode = activeMode) {
     const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
-    const before = panelCheckStatus(beforeResult, "Before proposed loads");
-    const after = panelCheckStatus(afterResult, "After proposed loads");
+    const before = panelCheckStatus(beforeResult, beforeResult.panelLabel || "Before proposed loads", checkMode);
+    const after = panelCheckStatus(afterResult, afterResult.panelLabel || "After proposed loads", checkMode);
     if (after.passes) {
       return {
         passes: true,
         title: "PASS AFTER PROPOSED LOADS",
-        detail: `The proposed loads can be added based on the selected main breaker check. Calculated load after the proposed loads is ${formatAmps(after.ampResult.amps)}, which is ${panelMarginText(after.ampResult.amps, after.limitAmps, after.result)} against ${after.limitLabel}. ${after.basis}.`,
+        detail: `The proposed loads can be added based on the selected main breaker check. Calculated load after the proposed loads is ${formatAmps(after.ampResult.amps)}, which is ${panelMarginText(after.ampResult.amps, after.limitAmps, after.result, after.checkMode)} against ${after.limitLabel}. ${after.basis}.`,
       };
     }
     if (!before.passes) {
       return {
         passes: false,
         title: "FAIL BEFORE PROPOSED LOADS",
-        detail: `Existing calculated load is ${formatAmps(before.ampResult.amps)}, which is already ${panelMarginText(before.ampResult.amps, before.limitAmps, before.result)} before the proposed loads are included. ${before.basis}.`,
+        detail: `Existing calculated load is ${formatAmps(before.ampResult.amps)}, which is already ${panelMarginText(before.ampResult.amps, before.limitAmps, before.result, before.checkMode)} before the proposed loads are included. ${before.basis}.`,
       };
     }
     return {
       passes: false,
       title: "LOAD MANAGEMENT REQUIRED",
-      detail: `Load management is required to add the proposed load(s). The proposed loads push the calculated load to ${formatAmps(after.ampResult.amps)}, which is ${panelMarginText(after.ampResult.amps, after.limitAmps, after.result)} against ${after.limitLabel}. ${after.basis}.`,
+      detail: `Load management is required to add the proposed load(s). The proposed loads push the calculated load to ${formatAmps(after.ampResult.amps)}, which is ${panelMarginText(after.ampResult.amps, after.limitAmps, after.result, after.checkMode)} against ${after.limitLabel}. ${after.basis}.`,
     };
   }
 
-  function appendProposedLoadDecision(parent, beforeResult, afterResult) {
-    const decision = panelDecision(beforeResult, afterResult);
+  function appendProposedLoadDecision(parent, beforeResult, afterResult, checkMode = activeMode) {
+    const decision = panelDecision(beforeResult, afterResult, checkMode);
     const banner = createEl("div", `print-decision-banner ${decision.passes ? "is-pass" : "is-fail"}`);
     banner.append(createEl("strong", "", decision.title));
     banner.append(createEl("p", "", decision.detail));
     parent.append(banner);
 
-    appendTable(parent, ["Proposed load", "Qty", "Connected load", "Input basis", "Demand bucket"], proposedLoadDetailRows(), {
+    appendTable(parent, ["Proposed load", "Scope", "Qty", "Connected load", "Input basis", "Demand bucket"], proposedLoadDetailRows(), {
       className: "print-table print-proposed-table",
     });
-    appendPanelStatusCards(parent, beforeResult, afterResult);
+    appendPanelStatusCards(parent, beforeResult, afterResult, checkMode);
   }
 
   function splitCodeReference(label) {
@@ -1133,15 +1351,16 @@ if (typeof document !== "undefined") {
     const dwelling = activeMode === "single"
       ? "Single dwelling"
       : selectedText(els.multiBuildingType);
+    const contextMode = activeMode === "multi" ? "single" : activeMode;
     const panelLimit = breakerAmps > 0
-      ? panelLimitLabel(breakerAmps, result)
+      ? panelLimitLabel(breakerAmps, result, contextMode)
       : "Not evaluated";
     const panelBasis = breakerAmps > 0
-      ? panelLimitBasis(result)
+      ? panelLimitBasis(result, contextMode)
       : "Not evaluated";
     return [
       ["Dwelling type", dwelling],
-      ["Selected main breaker", selectedText(els.mainBreakerAmps)],
+      [activeMode === "multi" ? "Selected unit panel" : "Selected main breaker", selectedText(els.mainBreakerAmps)],
       ["Panel check basis", panelBasis],
       ["Required maximum", panelLimit],
       ["Amps basis", selectedText(els.supplyMode)],
@@ -1159,12 +1378,12 @@ if (typeof document !== "undefined") {
     ];
   }
 
-  function panelCheckRows(beforeResult, afterResult) {
+  function panelCheckRows(beforeResult, afterResult, checkMode = activeMode) {
     const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
     if (breakerAmps <= 0) return [];
     return [
-      panelCheckStatus(beforeResult, "Before proposed loads"),
-      panelCheckStatus(afterResult, "After proposed loads"),
+      panelCheckStatus(beforeResult, beforeResult.panelLabel || "Before proposed loads", checkMode),
+      panelCheckStatus(afterResult, afterResult.panelLabel || "After proposed loads", checkMode),
     ].map((check) => [
       check.label,
       `${check.text}: ${formatWatts(displayedLoadWatts(check.result))} / ${formatAmps(check.ampResult.amps)} against ${check.limitLabel}. ${check.basis}`,
@@ -1172,20 +1391,25 @@ if (typeof document !== "undefined") {
   }
 
   function proposedLoadDetailRows() {
-    const details = proposedLoadDetails();
-    if (!details.length) return [["None entered", "-", "-", "-", "-"]];
+    const target = activeMode === "multi"
+      ? `Unit group ${readValue("#multi-proposed-group") || "1"}, ${readValue("#multi-proposed-unit-qty") || "1"} unit(s)`
+      : "Dwelling unit";
+    const details = proposedLoadDetails().map((detail) => ({ ...detail, scope: target }));
+    if (!details.length) return [["None entered", "-", "-", "-", "-", "-"]];
     return [
       ...details.map((detail) => [
-        detail.load.name,
+        detail.load ? detail.load.name : detail.name,
+        detail.scope,
         String(detail.qty),
         formatWatts(detail.connectedW),
         detail.knownKw > 0
           ? `${valueWithUnit(detail.knownKw, "kW")} known rating`
-          : `${valueWithUnit(detail.load.amps, "A")} at ${detail.voltsText}`,
+          : `${valueWithUnit(detail.load ? detail.load.amps : detail.amps, "A")} at ${detail.voltsText}`,
         detail.bucketText,
       ]),
       [
         "Combined proposed load",
+        "-",
         "-",
         formatWatts(details.reduce((sum, detail) => sum + detail.connectedW, 0)),
         "Total connected load package",
@@ -1213,10 +1437,16 @@ if (typeof document !== "undefined") {
   }
 
   function multiInputRows(input, result) {
+    const enteredGroups = input.enteredGroups || input.groups;
+    const existingUnitLoadRows = enteredGroups.reduce((sum, group) => sum + (group.existingUnitLoads || []).length, 0);
+    const proposedUnitLoadRows = (input.proposedUnitLoads || []).length;
     return [
       ["Calculation path", selectedText(els.multiBuildingType)],
-      ["Unit groups", String(input.groups.length)],
+      ["Unit groups", String(enteredGroups.length)],
       ["Dwelling units included", String(result.unitCount || 0)],
+      ["Existing unit load rows", String(existingUnitLoadRows)],
+      ["Proposed unit load rows", String(proposedUnitLoadRows)],
+      ["Proposed target", `Group ${input.proposedTargetGroup || 1}, ${input.proposedTargetUnitQty || 1} unit(s)`],
       ["Unit heating and AC interlocked", yesNo(input.hvacInterlocked)],
       ["Common lighting / power", valueWithUnit(input.commonKw, "kW")],
       ["Common EVSE", `${valueWithUnit(input.commonEvKw, "kW")} / ${selectedText($("#multi-common-ev-mode"))}`],
@@ -1249,6 +1479,46 @@ if (typeof document !== "undefined") {
       headings: keepIndexes.map((index) => headings[index]),
       rows: rows.map((row) => keepIndexes.map((index) => row[index])),
     };
+  }
+
+  function demandBucketText(value) {
+    return {
+      other: "Dryer / other over 1500 W",
+      water: "Tankless / pool / spa water heat",
+      evse: "EVSE",
+      ac: "Air conditioning",
+      heat: "Electric space heat",
+    }[value] || value || "-";
+  }
+
+  function unitLoadReportRows(input) {
+    return (input.enteredGroups || input.groups).flatMap((group, index) => {
+      const rowsFor = (loads, scope) => (loads || [])
+        .map((load) => {
+          const qty = loadQty(load.qty);
+          const connectedW = app.breakerWatts(load.amps, load.volts, qty);
+          const groupQty = Math.max(0, Math.floor(positiveNumber(group.qty)));
+          const unitCount = load.unitCount ? Math.min(Math.floor(positiveNumber(load.unitCount)), groupQty) : groupQty;
+          return {
+            row: [
+              `Group ${index + 1}`,
+              scope,
+              load.name || "Unit load",
+              String(qty),
+              unitCount > 0 ? String(unitCount) : "All",
+              formatWatts(connectedW),
+              `${valueWithUnit(load.amps, "A")} at ${valueWithUnit(load.volts, "V")}`,
+              demandBucketText(load.bucket),
+            ],
+            connectedW,
+          };
+        })
+        .filter((entry) => entry.connectedW > 0)
+        .map((entry) => entry.row);
+      return [
+        ...rowsFor(group.existingUnitLoads, "Existing per unit"),
+      ];
+    });
   }
 
   function appendUnitGroupDetails(parent, input, result) {
@@ -1315,6 +1585,12 @@ if (typeof document !== "undefined") {
       ]), [0, 1, 2, 7]);
       appendTable(section, table.headings, table.rows, { className: "print-table print-unit-table" });
     }
+    const unitLoadRows = unitLoadReportRows(input);
+    if (unitLoadRows.length) {
+      appendTable(section, ["Group", "Scope", "Load", "Qty", "Units with load", "Connected load", "Input basis", "Demand bucket"], unitLoadRows, {
+        className: "print-table print-unit-table",
+      });
+    }
     appendCalculationList(section, comparisonRowsForReport(result, els.supplyMode.value));
   }
 
@@ -1339,7 +1615,7 @@ if (typeof document !== "undefined") {
       ["Unit heating and AC interlock", yesNo(input.hvacInterlocked)],
       ["Unit EVSE demand modes", input.groups.map((group, index) => `Group ${index + 1}: ${evModeLabel(group.evMode)}${group.evMode === "managed" ? `, max ${valueWithUnit(group.evManagedKw, "kW")}` : ""}`).join("; ") || "No unit groups"],
       ["Common EVSE demand mode", `${evModeLabel(input.commonEvMode)}${input.commonEvMode === "managed" ? ` / EVEMS max ${valueWithUnit(input.commonEvManagedKw, "kW")}` : ""}`],
-      ["Proposed loads", "In multi-family mode, proposed loads are treated as loads outside dwelling units only: common non-EVSE loads under 8-202(3)(e), or common EVSE under 8-202(3)(d) and 8-106. Unit-level changes must be entered in unit groups."]
+      ["Proposed loads", "In multi-family mode, proposed loads are applied to the selected dwelling-unit group and affected-unit quantity only. The after-proposed calculation splits that group so unchanged units stay unchanged."]
     );
     return rows;
   }
@@ -1366,10 +1642,11 @@ if (typeof document !== "undefined") {
 
   function renderPrintReport(result, ampResult) {
     const report = els.printReport;
-    const input = activeMode === "single" ? singleInput({ includeProposed: false }) : multiInput({ includeProposed: false });
+    const input = activeMode === "single" ? singleInput({ includeProposed: false }) : multiInput({ includeProposed: true });
     const beforeResult = activeMode === "single"
       ? app.calculateSingle(singleInput({ includeProposed: false }))
       : app.calculateMulti(multiInput({ includeProposed: false }));
+    const panelEval = panelEvaluationResults(beforeResult, result);
     const generatedAt = new Date().toLocaleString();
     report.innerHTML = "";
 
@@ -1387,7 +1664,18 @@ if (typeof document !== "undefined") {
 
     if (hasProposedLoad()) {
       const proposed = appendSection(report, "Proposed Load Decision");
-      appendProposedLoadDecision(proposed, beforeResult, result);
+      appendProposedLoadDecision(proposed, panelEval.before, panelEval.after, panelEval.checkMode);
+    }
+
+    const feederCheck = serviceFeederCheck(beforeResult, result);
+    if (feederCheck) {
+      const feeder = appendSection(report, "Expected Upstream Service / Feeder Check");
+      appendTable(feeder, ["Item", "Value"], serviceFeederCheckRows(feederCheck), {
+        className: "print-table print-assumptions-table",
+      });
+      if (feederCheck.exceedsExpected) {
+        feeder.append(createEl("p", "print-note", "Warning: the proposed load exceeds the expected existing service/feed protection size. Physically verify feeder conductor sizes, overcurrent protection, service equipment, and utility/service details before relying on the added load."));
+      }
     }
 
     const summary = createEl("section", "print-summary");
@@ -1405,7 +1693,10 @@ if (typeof document !== "undefined") {
     report.append(summary);
 
     const context = appendSection(report, "Calculation Context");
-    appendTable(context, ["Item", "Value"], reportContextRows(result, ampResult));
+    appendTable(context, ["Item", "Value"], reportContextRows(
+      panelEval.after,
+      app.ampsForWatts(displayedLoadWatts(panelEval.after), els.supplyMode.value)
+    ));
 
     const inputs = appendSection(report, "Entered Inputs");
     appendTable(inputs, ["Input", "Value"], activeMode === "single"
@@ -1512,7 +1803,7 @@ if (typeof document !== "undefined") {
     supplyMode);
   }
 
-  function renderPanelWarning(result, calculatedAmps, beforeResult = result) {
+  function renderPanelWarning(result, calculatedAmps, beforeResult = result, checkMode = activeMode) {
     const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
     if (breakerAmps <= 0 || !Number.isFinite(calculatedAmps)) {
       els.summary.classList.remove("is-over-main-80", "is-over-main-100");
@@ -1521,10 +1812,10 @@ if (typeof document !== "undefined") {
       return;
     }
 
-    const check = panelCheckStatus(result, "Current calculated load");
-    const beforeCheck = panelCheckStatus(beforeResult, "Before proposed loads");
+    const check = panelCheckStatus(result, result.panelLabel || "Current calculated load", checkMode);
+    const beforeCheck = panelCheckStatus(beforeResult, beforeResult.panelLabel || "Before proposed loads", checkMode);
     const failedBefore = !beforeCheck.passes;
-    const showCaution = !itemBMinimumGoverns(result) && check.passes && calculatedAmps >= check.limitAmps * 0.9;
+    const showCaution = checkMode === "single" && !itemBMinimumGoverns(result) && check.passes && calculatedAmps >= check.limitAmps * 0.9;
     els.summary.classList.toggle("is-over-main-80", showCaution);
     els.summary.classList.toggle("is-over-main-100", !check.passes);
     if (!check.passes) {
@@ -1541,11 +1832,11 @@ if (typeof document !== "undefined") {
     }
   }
 
-  function panelCheckStatus(result, label) {
+  function panelCheckStatus(result, label, checkMode = activeMode) {
     const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
     const ampResult = app.ampsForWatts(displayedLoadWatts(result), els.supplyMode.value);
-    const limitAmps = panelLimitAmps(breakerAmps, result);
-    const usesSelectedMain = itemBMinimumGoverns(result);
+    const limitAmps = panelLimitAmps(breakerAmps, result, checkMode);
+    const usesSelectedMain = checkMode === "single" && itemBMinimumGoverns(result);
     const passes = breakerAmps > 0 && (usesSelectedMain ? ampResult.amps <= limitAmps : ampResult.amps <= limitAmps);
     return {
       label,
@@ -1553,14 +1844,15 @@ if (typeof document !== "undefined") {
       ampResult,
       breakerAmps,
       limitAmps,
-      limitLabel: panelLimitLabel(breakerAmps, result),
-      basis: panelLimitBasis(result),
+      limitLabel: panelLimitLabel(breakerAmps, result, checkMode),
+      basis: panelLimitBasis(result, checkMode),
+      checkMode,
       passes,
       text: passes ? "Pass" : "Fail",
     };
   }
 
-  function renderPanelCheck(beforeResult, afterResult) {
+  function renderPanelCheck(beforeResult, afterResult, checkMode = activeMode) {
     const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
     if (breakerAmps <= 0) {
       els.panelCheck.className = "panel-check hidden";
@@ -1569,8 +1861,8 @@ if (typeof document !== "undefined") {
     }
 
     const checks = [
-      panelCheckStatus(beforeResult, "Before proposed loads"),
-      panelCheckStatus(afterResult, "After proposed loads"),
+      panelCheckStatus(beforeResult, beforeResult.panelLabel || "Before proposed loads", checkMode),
+      panelCheckStatus(afterResult, afterResult.panelLabel || "After proposed loads", checkMode),
     ];
     els.panelCheck.innerHTML = "";
     checks.forEach((check) => {
@@ -1583,32 +1875,55 @@ if (typeof document !== "undefined") {
     els.panelCheck.className = "panel-check";
   }
 
+  function renderServiceFeederCheck(beforeResult, afterResult) {
+    const check = serviceFeederCheck(beforeResult, afterResult);
+    if (!check) {
+      els.serviceFeederCheck.className = "service-feeder-check hidden";
+      els.serviceFeederCheck.innerHTML = "";
+      return;
+    }
+
+    els.serviceFeederCheck.className = `service-feeder-check ${check.exceedsExpected ? "is-danger" : "is-caution"}`;
+    els.serviceFeederCheck.innerHTML = "";
+    els.serviceFeederCheck.append(createEl("strong", "", `Expected existing service/feed protection: ${formatAmps(check.expectedProtectionA)}`));
+    els.serviceFeederCheck.append(createEl(
+      "span",
+      "",
+      `Existing aggregate is ${formatAmps(check.beforeAmps)}; after proposed is ${formatAmps(check.afterAmps)}.`
+    ));
+    els.serviceFeederCheck.append(createEl(
+      "span",
+      "",
+      check.exceedsExpected
+        ? "Warning: proposed load exceeds the expected upstream feeder/protection size. Physically verify feeder conductors and overcurrent protection before relying on this add."
+        : "Verify the actual upstream feeder conductors and overcurrent protection before relying on this expected size."
+    ));
+  }
+
   function updateProposedLoadControls() {
     const multiMode = activeMode === "multi";
+    els.mainBreakerLabel.textContent = multiMode ? "Unit panel" : "Main breaker";
+    els.multiProposedTarget.classList.toggle("hidden", !multiMode);
+    els.multiProposedTarget.hidden = !multiMode;
     els.proposedLoadHelp.textContent = multiMode
-      ? "Use this only for proposed loads outside dwelling units. Non-EVSE loads are common building loads added at 75% under 8-202(3)(e); EVSE is added as common EVSE under 8-202(3)(d) and 8-106. Enter unit-level changes in the unit groups."
+      ? "Use this for the load being added to the selected dwelling unit group. For a normal AC add, set units receiving proposed load to 1."
       : "Use this for the new load package being checked against the selected main breaker. The panel check compares the dwelling before and after all proposed loads are added.";
 
     $("[data-proposed-load-bucket]", els.proposedLoadTemplate.content).querySelector('[value="other"]').textContent = multiMode
-      ? "Common building load outside units"
+      ? "Dryer / other over 1500 W"
       : "Dryer / other over 1500 W";
     $("[data-proposed-load-bucket]", els.proposedLoadTemplate.content).querySelector('[value="evse"]').textContent = multiMode
-      ? "Common EVSE"
+      ? "EVSE"
       : "EVSE";
 
     $$("[data-proposed-load-bucket]").forEach((select) => {
       const other = select.querySelector('[value="other"]');
       const evse = select.querySelector('[value="evse"]');
-      other.textContent = multiMode ? "Common building load outside units" : "Dryer / other over 1500 W";
-      evse.textContent = multiMode ? "Common EVSE" : "EVSE";
-
+      other.textContent = "Dryer / other over 1500 W";
+      evse.textContent = "EVSE";
       ["water", "ac", "heat"].forEach((value) => {
-        const option = select.querySelector(`[value="${value}"]`);
-        option.disabled = multiMode;
+        select.querySelector(`[value="${value}"]`).disabled = false;
       });
-      if (multiMode && ["water", "ac", "heat"].includes(select.value)) {
-        select.value = "other";
-      }
     });
   }
 
@@ -1649,14 +1964,17 @@ if (typeof document !== "undefined") {
       : app.calculateMulti(multiInput({ includeProposed: true }));
     const displayW = displayedLoadWatts(result);
     const ampResult = app.ampsForWatts(displayW, els.supplyMode.value);
+    const panelEval = panelEvaluationResults(beforeResult, result);
+    const panelAmpResult = app.ampsForWatts(displayedLoadWatts(panelEval.after), els.supplyMode.value);
     latestResult = result;
     latestAmpResult = ampResult;
     els.resultKw.textContent = formatWatts(displayW);
     els.resultAmps.textContent = formatAmps(ampResult.amps);
     els.ampsLabel.textContent = ampResult.label;
     renderRuleComparison(result, els.supplyMode.value);
-    renderPanelCheck(beforeResult, result);
-    renderPanelWarning(result, ampResult.amps, beforeResult || result);
+    renderPanelCheck(panelEval.before, panelEval.after, panelEval.checkMode);
+    renderPanelWarning(panelEval.after, panelAmpResult.amps, panelEval.before, panelEval.checkMode);
+    renderServiceFeederCheck(beforeResult, result);
     renderBreakdown(result.breakdown);
     renderNotes(result.notes);
   }
@@ -1718,12 +2036,6 @@ if (typeof document !== "undefined") {
   $$("[data-preset-load]").forEach((button) => {
     button.addEventListener("click", () => {
       addSingleLoad(presetLoads[button.dataset.presetLoad]);
-      render();
-    });
-  });
-  $$("[data-multi-preset-load]").forEach((button) => {
-    button.addEventListener("click", () => {
-      addMultiPresetLoad(presetLoads[button.dataset.multiPresetLoad]);
       render();
     });
   });
