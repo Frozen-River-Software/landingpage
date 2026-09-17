@@ -1,0 +1,8 @@
+{
+  "name": "residential-load-calculator",
+  "private": true,
+  "scripts": {
+    "test": "node --test report.test.js",
+    "check": "node --check app.js"
+  }
+}

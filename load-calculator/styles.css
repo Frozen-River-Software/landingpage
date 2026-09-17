@@ -294,6 +294,17 @@ button:focus-visible {
   border-color: var(--focus);
 }
 
+.rating-warning {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  border: 2px solid var(--amber);
+  border-radius: 6px;
+  color: var(--ink);
+  background: #382b16;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .help-text {
   max-width: 70ch;
   margin-top: 0.75rem;
@@ -358,7 +369,7 @@ button:focus-visible {
 
 .load-row {
   display: grid;
-  grid-template-columns: minmax(9rem, 1.2fr) 5rem 6.5rem 7rem minmax(11rem, 1fr) 42px;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
   gap: 0.65rem;
   align-items: end;
 }
@@ -368,7 +379,7 @@ button:focus-visible {
 }
 
 .unit-load-list .load-row {
-  grid-template-columns: minmax(9rem, 1.2fr) 5rem 6.5rem 7rem minmax(11rem, 1fr) 7rem 42px;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
 }
 
 .unit-load-list .load-row .unit-count-field {
@@ -376,7 +387,7 @@ button:focus-visible {
 }
 
 .proposed-load-row {
-  grid-template-columns: minmax(9rem, 1.2fr) 4.5rem 6.5rem 7rem 8rem minmax(11rem, 1fr) 42px;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
 }
 
 .unit-group {
@@ -830,7 +841,8 @@ button:focus-visible {
   }
 
   .three-col,
-  .load-row {
+  .load-row,
+  .unit-load-list .load-row {
     grid-template-columns: 1fr;
   }
 
@@ -971,11 +983,29 @@ button:focus-visible {
     line-height: 1.25;
   }
 
+  .print-page-start {
+    break-before: page;
+  }
+
+  .print-evidence-warning {
+    margin: 0.12in 0;
+    padding: 0.1in;
+    border: 2pt solid #805515;
+    background: #fff3cf;
+    color: #33240d;
+    font-size: 10pt;
+    font-weight: 750;
+    line-height: 1.4;
+    break-inside: avoid;
+  }
+
   .print-table {
     width: 100%;
+    table-layout: fixed;
+    overflow-wrap: anywhere;
     border-collapse: collapse;
-    font-size: 8.6pt;
-    line-height: 1.32;
+    font-size: 10pt;
+    line-height: 1.4;
     page-break-inside: auto;
   }
 
@@ -993,8 +1023,39 @@ button:focus-visible {
     font-weight: 850;
   }
 
+  .print-table thead {
+    display: table-header-group;
+  }
+
   .print-table tr {
     break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-inventory-table,
+  .print-worked-table {
+    margin-top: 0.1in;
+    font-size: 9.5pt;
+    line-height: 1.45;
+  }
+
+  .print-inventory-table td {
+    white-space: pre-line;
+  }
+
+  .print-worked-table th:first-child {
+    width: 27%;
+  }
+
+  .print-inventory-table th:nth-child(1) { width: 32%; }
+  .print-inventory-table th:nth-child(2) { width: 39%; }
+  .print-inventory-table th:nth-child(3) { width: 29%; }
+
+  .print-report p,
+  .print-report li {
+    orphans: 3;
+    widows: 3;
+    overflow-wrap: anywhere;
   }
 
   .print-meta-table td:first-child {

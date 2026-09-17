@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CEC Residential Load Calculator</title>
-    <link rel="stylesheet" href="styles.css?v=20260519-20">
+    <link rel="stylesheet" href="styles.css?v=20260917-21">
   </head>
   <body>
     <header class="app-header">
@@ -103,6 +103,7 @@
 
           <fieldset>
             <legend>Existing Loads</legend>
+            <p class="rating-warning">BREAKER ESTIMATE WARNING: breaker A × V is not equipment nameplate input power. Enter a positive verified kW rating to override the estimate. Blank means unknown, not 0 kW. For compatibility, an entered 0 kW also uses breaker fallback; use 0 breaker amps for no connected load and verify absence on site. Equipment and source notes are optional and unverified.</p>
             <div class="three-col">
               <label class="field" data-single-range-field>
                 <span>Range breaker, A</span>
@@ -110,7 +111,15 @@
               </label>
               <label class="field" data-single-range-field>
                 <span>Known range rating, kW</span>
-                <input id="single-range-kw" type="number" min="0" step="0.1" value="0">
+                <input id="single-range-kw" type="number" min="0" step="0.01" placeholder="Unknown — optional">
+              </label>
+              <label class="field">
+                <span>Equipment make / model (optional)</span>
+                <input id="single-range-model" type="text" maxlength="300">
+              </label>
+              <label class="field">
+                <span>Rating source / nameplate notes (optional)</span>
+                <input id="single-range-source" type="text" maxlength="600" placeholder="e.g. nameplate photo reference; not verified">
               </label>
             </div>
             <div class="three-col">
@@ -120,7 +129,15 @@
               </label>
               <label class="field">
                 <span>Known dryer rating, kW</span>
-                <input id="single-dryer-kw" type="number" min="0" step="0.1" value="0">
+                <input id="single-dryer-kw" type="number" min="0" step="0.01" placeholder="Unknown — optional">
+              </label>
+              <label class="field">
+                <span>Equipment make / model (optional)</span>
+                <input id="single-dryer-model" type="text" maxlength="300">
+              </label>
+              <label class="field">
+                <span>Rating source / nameplate notes (optional)</span>
+                <input id="single-dryer-source" type="text" maxlength="600" placeholder="e.g. nameplate photo reference; not verified">
               </label>
             </div>
             <div class="three-col">
@@ -130,7 +147,15 @@
               </label>
               <label class="field">
                 <span>Known AC rating, kW</span>
-                <input id="single-ac-kw" type="number" min="0" step="0.1" value="0">
+                <input id="single-ac-kw" type="number" min="0" step="0.01" placeholder="Unknown — optional">
+              </label>
+              <label class="field">
+                <span>Equipment make / model (optional)</span>
+                <input id="single-ac-model" type="text" maxlength="300">
+              </label>
+              <label class="field">
+                <span>Rating source / nameplate notes (optional)</span>
+                <input id="single-ac-source" type="text" maxlength="600" placeholder="e.g. nameplate photo reference; not verified">
               </label>
             </div>
             <div class="three-col">
@@ -140,7 +165,15 @@
               </label>
               <label class="field">
                 <span>Known tankless / pool / spa water heat, kW</span>
-                <input id="single-water" type="number" min="0" step="0.1" value="0">
+                <input id="single-water" type="number" min="0" step="0.01" placeholder="Unknown — optional">
+              </label>
+              <label class="field">
+                <span>Equipment make / model (optional)</span>
+                <input id="single-water-model" type="text" maxlength="300">
+              </label>
+              <label class="field">
+                <span>Rating source / nameplate notes (optional)</span>
+                <input id="single-water-source" type="text" maxlength="600" placeholder="e.g. nameplate photo reference; not verified">
               </label>
             </div>
             <div class="three-col">
@@ -150,7 +183,15 @@
               </label>
               <label class="field">
                 <span>Known electric space heat, kW</span>
-                <input id="single-heat" type="number" min="0" step="0.1" value="0">
+                <input id="single-heat" type="number" min="0" step="0.01" placeholder="Unknown — optional">
+              </label>
+              <label class="field">
+                <span>Equipment make / model (optional)</span>
+                <input id="single-heat-model" type="text" maxlength="300">
+              </label>
+              <label class="field">
+                <span>Rating source / nameplate notes (optional)</span>
+                <input id="single-heat-source" type="text" maxlength="600" placeholder="e.g. nameplate photo reference; not verified">
               </label>
             </div>
             <p class="help-text">
@@ -186,7 +227,15 @@
               </label>
               <label class="field">
                 <span>Known EVSE rating, kW</span>
-                <input id="single-ev-kw" type="number" min="0" step="0.1" value="0">
+                <input id="single-ev-kw" type="number" min="0" step="0.01" placeholder="Unknown — optional">
+              </label>
+              <label class="field">
+                <span>Equipment make / model (optional)</span>
+                <input id="single-ev-model" type="text" maxlength="300">
+              </label>
+              <label class="field">
+                <span>Rating source / nameplate notes (optional)</span>
+                <input id="single-ev-source" type="text" maxlength="600" placeholder="e.g. nameplate photo reference; not verified">
               </label>
             </div>
             <div class="three-col">
@@ -267,6 +316,7 @@
 
           <fieldset>
             <legend>Dwelling Unit Groups</legend>
+            <p class="rating-warning">BREAKER ESTIMATE WARNING: positive nameplate kW overrides breaker A × V. Blank means unknown; an entered 0 kW also uses breaker fallback. Use 0 breaker amps for no connected load and verify absence on site. Shared additional-load rows accept kW per item and optional equipment/source notes.</p>
             <div id="unit-groups" class="unit-groups"></div>
             <div class="three-col">
               <div class="checkbox-stack">
@@ -329,6 +379,7 @@
                   <input id="multi-proposed-unit-qty" type="number" min="1" step="1" value="1">
                 </label>
               </div>
+              <p class="rating-warning">Use electrical input/nameplate kW, not cooling capacity or breaker rating. Positive kW per item overrides breaker A × V; blank or 0 uses the breaker estimate. Record equipment and the rating source when known. Additional/proposed EVSE remains at 100% outside the existing EVEMS limit; verify eligibility separately.</p>
               <div id="proposed-loads" class="load-list proposed-load-list"></div>
               <button id="add-proposed-load" class="secondary-action" type="button">Add proposed load</button>
             </fieldset>
@@ -406,6 +457,18 @@
           </select>
         </label>
         <label class="field">
+          <span>Nameplate kW per item (optional)</span>
+          <input data-load-kw type="number" min="0" step="0.01" placeholder="Unknown">
+        </label>
+        <label class="field equipment-metadata">
+          <span>Equipment make / model (optional)</span>
+          <input data-load-model type="text" maxlength="300">
+        </label>
+        <label class="field equipment-metadata">
+          <span>Rating source / nameplate notes (optional)</span>
+          <input data-load-source type="text" maxlength="600" placeholder="e.g. photo reference; not verified">
+        </label>
+        <label class="field">
           <span>Demand bucket</span>
           <select data-load-bucket>
             <option value="other">Dryer / other over 1500 W</option>
@@ -446,8 +509,16 @@
           </select>
         </label>
         <label class="field">
-          <span>Known rating, kW</span>
-          <input data-proposed-load-kw type="number" min="0" step="0.1" value="0">
+          <span>Nameplate kW per item (optional)</span>
+          <input data-proposed-load-kw type="number" min="0" step="0.01" placeholder="Unknown">
+        </label>
+        <label class="field equipment-metadata">
+          <span>Equipment make / model (optional)</span>
+          <input data-proposed-load-model type="text" maxlength="300">
+        </label>
+        <label class="field equipment-metadata">
+          <span>Rating source / nameplate notes (optional)</span>
+          <input data-proposed-load-source type="text" maxlength="600" placeholder="e.g. photo reference; not verified">
         </label>
         <label class="field">
           <span>Demand bucket</span>
@@ -495,7 +566,7 @@
           </label>
           <label class="field">
             <span>Known range rating, kW</span>
-            <input data-unit-range-kw type="number" min="0" step="0.1" value="0">
+            <input data-unit-range-kw type="number" min="0" step="0.01" placeholder="Unknown — optional">
           </label>
         </div>
         <div class="three-col unit-entry-grid">
@@ -505,7 +576,7 @@
           </label>
           <label class="field">
             <span>Known dryer / other rating, kW</span>
-            <input data-unit-other-kw type="number" min="0" step="0.1" value="0">
+            <input data-unit-other-kw type="number" min="0" step="0.01" placeholder="Unknown — optional">
           </label>
         </div>
         <div class="three-col unit-entry-grid">
@@ -515,7 +586,7 @@
           </label>
           <label class="field">
             <span>Known AC rating, kW</span>
-            <input data-unit-ac-kw type="number" min="0" step="0.1" value="0">
+            <input data-unit-ac-kw type="number" min="0" step="0.01" placeholder="Unknown — optional">
           </label>
         </div>
         <div class="three-col unit-entry-grid">
@@ -525,7 +596,7 @@
           </label>
           <label class="field">
             <span>Known EVSE rating, kW</span>
-            <input data-unit-ev-kw type="number" min="0" step="0.1" value="0">
+            <input data-unit-ev-kw type="number" min="0" step="0.01" placeholder="Unknown — optional">
           </label>
         </div>
         <div class="three-col unit-entry-grid">
@@ -549,7 +620,7 @@
           </label>
           <label class="field">
             <span>Known tankless / pool / spa water heat, kW</span>
-            <input data-unit-water type="number" min="0" step="0.1" value="0">
+            <input data-unit-water type="number" min="0" step="0.01" placeholder="Unknown — optional">
           </label>
         </div>
         <div class="three-col unit-entry-grid">
@@ -559,7 +630,7 @@
           </label>
           <label class="field">
             <span>Known electric heat per unit, kW</span>
-            <input data-unit-heat type="number" min="0" step="0.1" value="0">
+            <input data-unit-heat type="number" min="0" step="0.01" placeholder="Unknown — optional">
           </label>
         </div>
         <div class="three-col unit-entry-grid">
@@ -613,6 +684,6 @@
 
     <section id="print-report" class="print-report" aria-hidden="true"></section>
 
-    <script src="app.js?v=20260519-20"></script>
+    <script src="app.js?v=20260917-21"></script>
   </body>
 </html>
