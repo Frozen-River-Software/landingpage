@@ -690,7 +690,7 @@
       "Planning aid only. Equipment/source text is user-entered and has not been verified. Unknown rating is not a verified 0 kW load.",
       "Existing calculation behavior retained: 0 kW does not override a breaker estimate. To enter no connected load, clear the rating and set breaker amps to 0; verify absence on site.",
       "Other-load eligibility is tested on each entered row total (> 1.5 kW), including its quantity. Range presets in the additional-load list remain in the other bucket, not the primary range formula. Verify classifications.",
-      "Panel pass/fail uses the pre-existing Item-B-versus-80% policy. This report does not validate that policy or EVEMS/interlock eligibility; confirm the applicable requirements with the authority having jurisdiction.",
+      "The greater of Rule 8-200(1)(a) and Rule 8-200(1)(b) determines the single-dwelling calculated load. Compare its current against the applicable service capacity; verify equipment ratings, interlocks, EV management and any documented service restrictions with the authority having jurisdiction.",
     ];
     if (loads.some(load => load.isEstimate)) warnings.unshift("BREAKER ESTIMATE WARNING: one or more loads use breaker A × V, not equipment input/nameplate power. Replace estimates with verified equipment ratings before relying on this calculation.");
     if (loads.some(load => load.bucket === "evse" && load.key !== "ev")) warnings.push("Existing engine behavior: additional / proposed EVSE is added at 100% after the existing EVSE management/omission calculation; it is not capped by that EVEMS maximum.");
@@ -842,7 +842,32 @@
     };
   }
 
+  // Capacity limits are separate from dwelling demand. No default derating or
+  // inferred utility limit belongs here. Any continuous-load treatment in a
+  // future calculation method must be explicit and isolated to that method.
+  function evaluateServiceCapacity(calculatedAmps, limits = {}) {
+    const sources = [];
+    const errors = [];
+    for (const field of ["mainBreakerAmps", "serviceConductorAmps", "utilityAhjLimitAmps"]) {
+      const raw = limits[field];
+      if (raw !== undefined && raw !== null && typeof raw !== "number" && typeof raw !== "string") {
+        errors.push(`Invalid ${field} type`);
+        continue;
+      }
+      const missing = raw === undefined || raw === null || String(raw).trim() === "";
+      if (missing && field !== "mainBreakerAmps") continue;
+      const value = Number(raw);
+      if (missing || !Number.isFinite(value) || value <= 0) errors.push(`Invalid or missing ${field}`);
+      else sources.push({ field, amps: value });
+    }
+    if (!Number.isFinite(calculatedAmps) || calculatedAmps < 0) errors.push("Invalid calculated current");
+    const evaluated = errors.length === 0;
+    const applicableAmps = evaluated ? Math.min(...sources.map(source => source.amps)) : null;
+    return { evaluated, applicableAmps, passes: evaluated && calculatedAmps <= applicableAmps, sources, errors };
+  }
+
   return {
+    evaluateServiceCapacity,
     buildSingleInspectorReport,
     prepareLoadInput,
     describeLoadRating,
@@ -916,7 +941,7 @@ if (typeof document !== "undefined") {
   let latestResult = null;
   let latestAmpResult = null;
   let printReportPrepared = false;
-  const PANEL_LOAD_LIMIT_FACTOR = 0.8;
+
   const presetLoads = {
     "ac-20": { name: "Air conditioner", qty: 1, amps: 20, volts: 240, bucket: "ac" },
     "ac-30": { name: "Air conditioner", qty: 1, amps: 30, volts: 240, bucket: "ac" },
@@ -1365,39 +1390,26 @@ if (typeof document !== "undefined") {
     return `${value.toLocaleString(undefined, { maximumFractionDigits: 1 })} A`;
   }
 
-  function itemBMinimumGoverns(result) {
-    return Number.isFinite(result?.itemA) && Number.isFinite(result?.itemB) && result.itemB >= result.itemA;
-  }
-
-  function panelLimitFactor(result, checkMode = activeMode) {
-    if (checkMode !== "single") return 1;
-    return itemBMinimumGoverns(result) ? 1 : PANEL_LOAD_LIMIT_FACTOR;
-  }
-
-  function panelLimitAmps(breakerAmps, result, checkMode = activeMode) {
-    return breakerAmps * panelLimitFactor(result, checkMode);
+  function serviceCapacityInputs(breakerAmps) {
+    // Future conductor/AHJ inputs must be explicitly entered and documented;
+    // do not infer them from a city name, the breaker, or the governing item.
+    return { mainBreakerAmps: breakerAmps };
   }
 
   function panelLimitBasis(result, checkMode = activeMode) {
-    if (checkMode !== "single") {
-      return "Multi-family calculated load compared directly to the selected service or feeder breaker";
-    }
-    return itemBMinimumGoverns(result)
-      ? "8-200(1)(b) minimum governs; compare to selected main with no 80% reduction"
-      : "8-200(1)(a) entered-load subtotal governs; Calgary 80% maximum applies";
+    return checkMode === "single"
+      ? "The greater of Rule 8-200(1)(a) and Rule 8-200(1)(b) is compared directly against the applicable service capacity"
+      : "Multi-family calculated load compared directly to the selected service or feeder rating";
   }
 
   function panelLimitLabel(breakerAmps, result, checkMode = activeMode) {
-    if (itemBMinimumGoverns(result)) {
-      return `${formatAmps(breakerAmps)} (selected main; no 80% reduction under 8-200(1)(b))`;
-    }
-    if (checkMode !== "single") return `${formatAmps(breakerAmps)} selected service/feeder`;
-    return `${formatAmps(panelLimitAmps(breakerAmps, result, checkMode))} (80% of ${formatAmps(breakerAmps)})`;
+    const capacity = app.evaluateServiceCapacity(0, serviceCapacityInputs(breakerAmps));
+    if (!capacity.evaluated) return "Service capacity not entered";
+    return `${formatAmps(capacity.applicableAmps)} ${checkMode === "single" ? "applicable service capacity" : "selected service/feeder"}`;
   }
 
   function panelLimitShortLabel(result, checkMode = activeMode) {
-    if (checkMode !== "single") return "selected service/feeder";
-    return itemBMinimumGoverns(result) ? "selected main" : "80% limit";
+    return checkMode === "single" ? "applicable service capacity" : "selected service/feeder";
   }
 
   function panelMarginText(amps, limitAmps, result, checkMode = activeMode) {
@@ -2054,9 +2066,11 @@ if (typeof document !== "undefined") {
     final.append(banner);
     appendTable(final, [], [
       ["Selected main breaker", selectedText(els.mainBreakerAmps)],
-      ["Panel check limit", positiveNumber(els.mainBreakerAmps.value) > 0 ? `${check.limitLabel}. ${check.basis}.` : "Not evaluated"],
+      ["Applicable service capacity", check.evaluated ? formatAmps(check.limitAmps) : "Not evaluated"],
+      ["Governing calculated current", formatAmps(check.ampResult.amps)],
+      ["Result", check.evaluated ? check.text.toUpperCase() : "Not evaluated"],
     ], { className: "print-table print-meta-table", showHead: false });
-    final.append(createEl("p", "print-note", "Result reflects entered values and the selected panel-check policy; PASS is not approval to install. Inventory and calculation follow. Review assumptions and verify the installation before sign-off."));
+    final.append(createEl("p", "print-note", "The governing calculated dwelling load is the greater of CEC Rule 8-200(1)(a) and Rule 8-200(1)(b), and its current is compared against the applicable service capacity. The selected main breaker is the rating entered for this comparison; verify service conductors and any documented utility/AHJ restriction separately. PASS is not approval to install."));
 
     const inventory = page("02 / Equipment", "Equipment Inventory");
     inventory.append(createEl("p", "print-note", "Contributing existing equipment and all proposed equipment. Demand treatment reflects the after-proposal calculation; pooled values are not additive per-device demands."));
@@ -2089,7 +2103,8 @@ if (typeof document !== "undefined") {
       "Basement area is weighted at 75% only where height exceeds 1.8 m. Item B uses ground and upper-floor area, excluding the basement.",
       "Other-load eligibility applies to each entered row total, including quantity, strictly over 1500 W. Additional range presets remain in the other-load category, not the primary range calculation.",
       "Report values are rounded for readability (kW to two decimals, area/current generally to one). Calculations and threshold decisions retain full precision. The headline current rounds up to whole amperes, consistent with the calculator.",
-      "Verify the entered ratings, demand classifications, interlock and EV management eligibility, and applicable local requirements. The selected Item-B-versus-80% panel-check policy is retained, not validated by this report.",
+      "The governing single-dwelling calculated load is the greater of Rule 8-200(1)(a) and Rule 8-200(1)(b). The resulting current is compared directly against the applicable service capacity. This comparison uses the selected main breaker; confirm conductor capacity and documented utility/AHJ restrictions before relying on it.",
+      "Verify equipment ratings, demand classifications, interlock and EV management eligibility, and applicable local requirements. No additional service restriction is assumed automatically.",
     ];
     if (proposedLoads.some(load => load.bucket === "evse") || (input.quoteLoads || []).some(load => load.bucket === "evse")) bullets.push("Additional / proposed EVSE is added at 100% after the existing EVSE demand calculation; the existing EVEMS maximum does not cap these rows. Confirm the control design and permitted calculation method separately.");
     bullets.push("Planning aid only. Confirm final service, feeder, conductor and overcurrent sizing with the authority having jurisdiction. Rule references do not reproduce CSA C22.1 text.");
@@ -2291,7 +2306,7 @@ if (typeof document !== "undefined") {
   function renderPanelWarning(result, calculatedAmps, beforeResult = result, checkMode = activeMode) {
     const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
     if (breakerAmps <= 0 || !Number.isFinite(calculatedAmps)) {
-      els.summary.classList.remove("is-over-main-80", "is-over-main-100");
+      els.summary.classList.remove("is-near-capacity", "is-over-capacity");
       els.panelWarning.className = "panel-warning hidden";
       els.panelWarning.textContent = "";
       return;
@@ -2300,9 +2315,9 @@ if (typeof document !== "undefined") {
     const check = panelCheckStatus(result, result.panelLabel || "Current calculated load", checkMode);
     const beforeCheck = panelCheckStatus(beforeResult, beforeResult.panelLabel || "Before proposed loads", checkMode);
     const failedBefore = !beforeCheck.passes;
-    const showCaution = checkMode === "single" && !itemBMinimumGoverns(result) && check.passes && calculatedAmps >= check.limitAmps * 0.9;
-    els.summary.classList.toggle("is-over-main-80", showCaution);
-    els.summary.classList.toggle("is-over-main-100", !check.passes);
+    const showCaution = check.passes && calculatedAmps >= check.limitAmps * 0.9;
+    els.summary.classList.toggle("is-near-capacity", showCaution);
+    els.summary.classList.toggle("is-over-capacity", !check.passes);
     if (!check.passes) {
       els.panelWarning.className = "panel-warning is-danger";
       els.panelWarning.textContent = failedBefore
@@ -2320,15 +2335,16 @@ if (typeof document !== "undefined") {
   function panelCheckStatus(result, label, checkMode = activeMode) {
     const breakerAmps = positiveNumber(els.mainBreakerAmps.value);
     const ampResult = app.ampsForWatts(displayedLoadWatts(result), panelSupplyMode());
-    const limitAmps = panelLimitAmps(breakerAmps, result, checkMode);
-    const usesSelectedMain = checkMode === "single" && itemBMinimumGoverns(result);
-    const passes = breakerAmps > 0 && (usesSelectedMain ? ampResult.amps <= limitAmps : ampResult.amps <= limitAmps);
+    const capacity = app.evaluateServiceCapacity(ampResult.amps, serviceCapacityInputs(breakerAmps));
+    const limitAmps = capacity.applicableAmps;
+    const passes = capacity.passes;
     return {
       label,
       result,
       ampResult,
       breakerAmps,
       limitAmps,
+      evaluated: capacity.evaluated,
       limitLabel: panelLimitLabel(breakerAmps, result, checkMode),
       basis: panelLimitBasis(result, checkMode),
       supplyLabel: panelSupplyText(),

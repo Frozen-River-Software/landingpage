@@ -470,13 +470,13 @@ button:focus-visible {
   overflow-wrap: anywhere;
 }
 
-.summary.is-over-main-80 #result-kw,
-.summary.is-over-main-80 .amps span {
+.summary.is-near-capacity #result-kw,
+.summary.is-near-capacity .amps span {
   color: #ffd159;
 }
 
-.summary.is-over-main-100 #result-kw,
-.summary.is-over-main-100 .amps span {
+.summary.is-over-capacity #result-kw,
+.summary.is-over-capacity .amps span {
   color: #ff9b9b;
 }
 
