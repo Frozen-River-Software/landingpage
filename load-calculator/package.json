@@ -2,7 +2,7 @@
   "name": "residential-load-calculator",
   "private": true,
   "scripts": {
-    "test": "node --test report.test.js",
+    "test": "node --test *.test.js",
     "check": "node --check app.js"
   }
 }

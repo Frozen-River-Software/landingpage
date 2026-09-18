@@ -1329,6 +1329,46 @@ button:focus-visible {
     padding-left: 0.18in;
   }
 
+  .inspector-page + .inspector-page {
+    break-before: page;
+  }
+
+  .inspector-report .print-header {
+    padding-bottom: 0.11in;
+    break-after: avoid;
+  }
+
+  .inspector-report .print-header h1 { font-size: 21pt; }
+  .inspector-report .print-section { margin-top: 0.16in; }
+  .inspector-report .print-note,
+  .inspector-report .print-notes { font-size: 10pt; line-height: 1.35; }
+  .inspector-report .print-notes { gap: 0.1in; }
+  .inspector-report .inspector-result { font-size: 23pt; margin: 0.08in 0; }
+
+  .inspector-inventory { margin-top: 0.14in; font-size: 9.5pt; line-height: 1.35; }
+  .inspector-inventory td { white-space: pre-line; }
+  .inspector-inventory th:nth-child(1) { width: 21%; }
+  .inspector-inventory th:nth-child(2) { width: 10%; }
+  .inspector-inventory th:nth-child(3) { width: 22%; }
+  .inspector-inventory th:nth-child(4) { width: 12%; }
+  .inspector-inventory th:nth-child(5) { width: 21%; }
+  .inspector-inventory th:nth-child(6) { width: 14%; }
+  .inspector-inventory th,
+  .inspector-inventory td { padding: 0.07in 0.055in; }
+
+  .inspector-step { margin-top: 0.075in; }
+  .inspector-step h3 { color: #1f4f59; font-size: 10pt; line-height: 1.25; margin: 0 0 0.02in; break-after: avoid; }
+  .inspector-step p { font-size: 10pt; line-height: 1.3; margin: 0; }
+  .inspector-comparison { font-size: 10pt; line-height: 1.25; }
+  .inspector-comparison th:first-child { width: 52%; }
+  .inspector-comparison th,
+  .inspector-comparison td { padding: 0.035in 0.07in; }
+  .inspector-comparison tbody tr:nth-child(7),
+  .inspector-comparison tbody tr:nth-child(9),
+  .inspector-comparison tbody tr:last-child { font-weight: 800; background: #f3f7f7; }
+  .inspector-report .inspector-sum-note { margin: 0 0 0.06in; }
+  .inspector-report .inspector-governing { border-left: 3px solid #1f4f59; padding-left: 0.1in; }
+
   .print-footer {
     margin-top: 0.22in;
     padding-top: 0.08in;

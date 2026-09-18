@@ -697,7 +697,153 @@
     return { before, after, loads, warnings };
   }
 
+  // Increase display precision only when rounding would conceal a decision boundary.
+  function inspectorRounded(value, digits, boundaries = []) {
+    for (let precision = digits; precision <= 12; precision += 1) {
+      const printed = Number(value).toFixed(precision);
+      if (!boundaries.some(boundary => value !== boundary && Number(printed) === Number(boundary.toFixed(precision)))) return printed;
+    }
+    return String(value);
+  }
+
+  function singleInspectorMath(input, trace, supplyMode) {
+    const before = trace.before.result;
+    const after = trace.after.result;
+    const c = after.components;
+    const powerBoundaries = [0, 1.5, 6, 10, 12, 14.4, 24,
+      ...[before, after].flatMap(result => [result.itemA, result.itemB, result.totalW, result.components.heatW, result.components.acW]).map(watts => watts / 1000)];
+    const k = watts => `${inspectorRounded(watts / 1000, 2, powerBoundaries)} kW`;
+    const n = value => String(Number(inspectorRounded(value, 1, [0, 80, Math.floor(value / 90) * 90, Math.ceil(value / 90) * 90])));
+    const a = input.area;
+    const unit = input.unitSystem === "ft2" ? "ft²" : "m²";
+    const weighted = number(a.basement) * 0.75;
+    const effective = number(a.ground) + number(a.above) + weighted;
+    const worked = [];
+    const add = (title, text) => worked.push({ title, text });
+    add("8-110 — Effective living area", `Ground: ${reportNumber(number(a.ground))} ${unit}; upper: ${reportNumber(number(a.above))} ${unit}. Basement over 1.8 m: ${reportNumber(number(a.basement))} × 75% = ${reportNumber(weighted)} ${unit}. Effective area: ${reportNumber(number(a.ground))} + ${reportNumber(number(a.above))} + ${reportNumber(weighted)} = ${reportNumber(effective)} ${unit}${unit === "ft²" ? ` × 0.09290304 = ${n(after.area.total)} m²` : ""}.`);
+    const portions = (c.basicW - 5000) / 1000;
+    add("8-200(1)(a)(i–ii) — Basic load", after.area.total <= 0 ? "No positive area entered: basic load = 0.00 kW."
+      : `First 90 m² (or part) = 5.00 kW. ${portions > 0 ? `Remaining ${n(after.area.total - 90)} m² requires ${portions} additional 90 m² portions = ${k(c.basicW - 5000)}. ` : "No additional 90 m² portions. "}Basic load = ${k(c.basicW)}.`);
+    add("8-200(1)(a)(iv) — Range", !c.hasRange ? "No electric range included: calculated range demand = 0.00 kW."
+      : `Connected load = ${k(c.rangeConnectedW)}. ${c.rangeConnectedW <= 12000 ? `Rating does not exceed 12 kW; calculated range demand = ${k(c.rangeW)}.` : `Rating exceeds 12 kW: 6.00 kW + (${k(c.rangeConnectedW)} − 12.00 kW) × 40% = ${k(c.rangeW)}.`}`);
+    // Repeat only changed arithmetic, not an entire second worked report.
+    const scenarios = (describe) => {
+      const existing = describe(before.components);
+      const proposed = describe(c);
+      return existing === proposed ? proposed : `Existing: ${existing} After proposal: ${proposed}`;
+    };
+    if (c.other.total > 0 || before.components.other.total > 0) add("8-200(1)(a)(vii) — Other loads over 1500 W", scenarios(values => {
+      const other = values.other;
+      const names = other.qualifying.map(load => `${load.name}: ${k(load.watts)}`).join("; ");
+      const math = values.hasRange ? `${k(other.total)} × 25% = ${k(other.demand)}`
+        : other.total <= 6000 ? `${k(other.total)} × 100% = ${k(other.demand)}`
+        : `First 6.00 kW at 100% + remaining ${k(other.total - 6000)} × 25% = ${k(other.demand)}`;
+      return `${names ? `${names}. ` : ""}Total = ${k(other.total)}. ${math}.`;
+    }));
+    if (c.heatConnectedW > 0 || c.acW > 0 || before.components.hvacW > 0) add("8-200(1)(a)(iii), 62-118 — Heating / A/C", scenarios(values => {
+      if (values.heatConnectedW === 0 && values.acW === 0) return "No connected heating or A/C load entered: 0.00 kW.";
+      if (values.heatConnectedW === 0 && !input.hvacInterlocked) return `A/C: ${k(values.acW)} × 100% = ${k(values.hvacW)}; no connected heat entered.`;
+      const heat = input.heatMethod === "residential-zoned" && values.heatConnectedW > 10000
+        ? `first 10.00 kW at 100% + remaining ${k(values.heatConnectedW - 10000)} × 75% = ${k(values.heatW)}`
+        : `${k(values.heatConnectedW)} × 100% = ${k(values.heatW)}`;
+      const selection = input.hvacInterlocked
+        ? `Interlocked: greater of heat ${k(values.heatW)} and A/C ${k(values.acW)} = ${k(values.hvacW)}`
+        : `Not interlocked: ${k(values.heatW)} + ${k(values.acW)} = ${k(values.hvacW)}`;
+      return `Heat: ${heat}. A/C: ${k(values.acW)} × 100% = ${k(values.acW)}. ${selection}.`;
+    }));
+    if (c.waterW > 0 || before.components.waterW > 0) add("8-200(1)(a)(v) — Water heating", scenarios(values => `${k(values.waterW)} × 100% = ${k(values.waterW)}.`));
+    if (c.evW > 0 || before.components.evW > 0 || c.evConnectedW > 0) add("8-200(1)(a)(vi), 8-106 — EVSE", scenarios(values => {
+      const existing = evseDemandFromWatts(values.evConnectedW, input.evMode, input.evManagedKw);
+      const basis = input.evMode === "managed" ? `EVEMS maximum ${k(existing)}`
+        : input.evMode === "omitted" ? "Existing EVSE omitted under selected option: 0.00 kW" : `Existing ${k(values.evConnectedW)} × 100%`;
+      return `${basis} + additional/proposed ${k(values.evW - existing)} × 100% = ${k(values.evW)}.`;
+    }));
+    const denominator = { "single-208": "208 V", "three-208": "(√3 × 208 V)", "three-240": "(√3 × 240 V)" }[supplyMode] || "240 V";
+    add("8-200(1)(b) — Minimum & current", `Above-basement area: ${reportNumber(number(a.ground))} + ${reportNumber(number(a.above))} = ${reportNumber(number(a.ground) + number(a.above))} ${unit}${unit === "ft²" ? ` / ${n(after.area.aboveBasement)} m²` : ""}. ${after.area.aboveBasement >= 80 ? "At least" : "Below"} 80 m²: Item B = ${k(after.itemB)}. After proposal: ${n(after.itemA)} W ÷ ${denominator} = ${n(ampsForWatts(after.itemA, supplyMode).amps)} A (Item A); ${n(after.totalW)} W ÷ ${denominator} = ${n(ampsForWatts(after.totalW, supplyMode).amps)} A (governing).`);
+    const components = [["Basic load", "basicW"], ["Range", "rangeW"], ["Heating / A/C", "hvacW"], ["Water heating", "waterW"], ["EVSE", "evW"], ["Other loads", null]];
+    const comparison = components.map(([name, key]) => [name, k(key ? before.components[key] : before.components.other.demand), k(key ? c[key] : c.other.demand)]);
+    [["8-200(1)(a) Item A", "itemA"], ["8-200(1)(b) Item B minimum", "itemB"], ["Governing calculated load", "totalW"]].forEach(([name, key]) => comparison.push([name, k(before[key]), k(after[key])]));
+    comparison.push(["Item A current", `${n(ampsForWatts(before.itemA, supplyMode).amps)} A`, `${n(ampsForWatts(after.itemA, supplyMode).amps)} A`],
+      ["Governing current", `${n(ampsForWatts(before.totalW, supplyMode).amps)} A`, `${n(ampsForWatts(after.totalW, supplyMode).amps)} A`]);
+    const governingNote = (after.itemB > after.itemA
+      ? `8-200(1)(b) governs because ${k(after.itemB)} is greater than the ${k(after.itemA)} calculated under Item A.`
+      : after.itemA > after.itemB ? `Item A governs because ${k(after.itemA)} is greater than the ${k(after.itemB)} Item B minimum.`
+      : `Item A and the Item B minimum are equal at ${k(after.totalW)}.`)
+      + ` ${after.itemA > before.itemA ? "The proposal increases" : "The proposal leaves"} Item A ${after.itemA === before.itemA ? `at ${k(after.itemA)}` : `from ${k(before.itemA)} to ${k(after.itemA)}`}; the governing calculated service load ${after.totalW === before.totalW ? "remains" : "becomes"} ${k(after.totalW)} / ${n(ampsForWatts(after.totalW, supplyMode).amps)} A.`;
+    return { worked, comparison, governingNote };
+  }
+
+  // Inspector-facing presentation only; all demand totals come from the existing engine.
+  function buildSingleInspectorReport(input, proposedLoads = [], supplyMode = "single-240") {
+    const trace = buildSingleReportTrace(input, proposedLoads, supplyMode);
+    const c = trace.after.result.components;
+    const k = watts => `${(watts / 1000).toFixed(2)} kW`;
+    const zeroNames = { range: "electric range", dryer: "dryer", ac: "existing A/C", water: "electric water heating", heat: "electric space heat", ev: "EVSE" };
+    const classified = trace.loads.map(load => {
+      const connectedW = load.key === "range" && input.gasRange
+        ? connectedWatts(input.rangeKw, input.rangeAmps, 240, 1) : load.connectedW;
+      let excluded = "";
+      if (load.key === "range" && input.gasRange) excluded = "gas / no electric range selected";
+      else if (load.bucket === "other" && connectedW <= 1500) excluded = "row total at or below 1.5 kW; excluded from other-load demand";
+      else if (load.key === "ev" && input.evMode === "omitted") excluded = "existing EVSE omitted under selected 8-106 option";
+      else if (load.key === "ev" && input.evMode === "managed" && number(input.evManagedKw) === 0) excluded = "EVEMS maximum entered as zero";
+      else if (input.hvacInterlocked && load.bucket === "ac" && c.heatW > c.acW) excluded = "heat governs the HVAC interlock comparison";
+      else if (input.hvacInterlocked && load.bucket === "heat" && c.acW > c.heatW) excluded = "A/C governs the HVAC interlock comparison";
+      else if (!["range", "other", "water", "ac", "heat", "evse"].includes(load.bucket)) excluded = "unrecognized category; excluded";
+      const managed = load.key === "ev" && input.evMode === "managed" && number(input.evManagedKw) > 0;
+      return { ...load, connectedW, excluded, contributes: !excluded && (connectedW > 0 || managed) };
+    });
+    const zeroLoads = classified.filter(load => load.connectedW === 0 && !load.contributes && load.scope !== "Proposed addition");
+    const loadName = load => load.key ? load.name.replace(/^Existing /, "").replace(/^range$/, "Range").replace(/^dryer$/, "Dryer") : load.name;
+    const loadScope = load => load.scope === "Proposed addition" ? "Proposed" : "Existing";
+    const ratingBasis = load => {
+      const qty = Math.max(1, Math.floor(number(load.qty) || 1));
+      const enteredZero = load.kw !== undefined && load.kw !== null && String(load.kw).trim() !== "" && Number(load.kw) === 0;
+      return (enteredZero ? "0 kW entered; " : "") + (load.isEstimate
+        ? `${reportNumber(number(load.amps))} A × ${reportNumber(number(load.volts) || 240)} V${qty > 1 ? ` × ${qty}` : ""}, breaker estimate`
+        : number(load.kw) > 0 ? `Entered nameplate rating: ${reportNumber(number(load.kw))} kW${qty > 1 ? ` × ${qty}` : ""}`
+        : load.connectedW > 0 ? `Entered connected load${qty > 1 ? ` (row total, qty ${qty})` : ""}` : enteredZero ? "no connected load" : "No rating entered");
+    };
+    const equipmentNotes = classified.flatMap(load => {
+      const evidence = [
+        ...(load.model !== "Not supplied" ? [`Model: ${load.model}`] : []),
+        ...(load.source !== "Not supplied" ? [`Source: ${load.source}`] : []),
+      ];
+      return evidence.length ? [`${loadScope(load)} — ${loadName(load)} — ${evidence.join("; ")}`] : [];
+    });
+    const inventory = classified.filter(load => load.contributes || load.scope === "Proposed addition").map(load => {
+      const name = loadName(load);
+      const rating = ratingBasis(load);
+      let treatment = load.bucket === "range" ? "CEC 8-200(1)(a)(iv)" : load.bucket === "other" ? "25%" : "100%";
+      let demand = k(load.bucket === "range" ? c.rangeW : load.bucket === "other" ? load.connectedW * 0.25 : load.connectedW);
+      if (load.excluded || load.connectedW === 0) {
+        treatment = load.excluded || "No connected load entered";
+        demand = k(0);
+      }
+      if (!load.excluded && load.bucket === "other" && !c.hasRange && load.connectedW > 1500) {
+        treatment = "No-range pool: first 6 kW at 100%, balance at 25%";
+        demand = "Pooled — see calculation";
+      }
+      if (!load.excluded && (load.bucket === "heat" || (load.bucket === "ac" && input.hvacInterlocked))) {
+        treatment = load.bucket === "heat" ? "Combined heat demand; see HVAC calculation" : "100% into A/C pool; HVAC interlock applies";
+        demand = "Pooled — see HVAC";
+      }
+      if (!load.excluded && load.key === "ev" && input.evMode === "managed") {
+        treatment = "Entered EVEMS maximum";
+        demand = k(kwToW(input.evManagedKw));
+      }
+      return [name, load.scope === "Proposed addition" ? "Proposed" : "Existing", rating, k(load.connectedW), treatment, demand];
+    });
+    const excluded = classified.filter(load => load.connectedW > 0 && !load.contributes && load.scope !== "Proposed addition");
+    return { ...singleInspectorMath(input, trace, supplyMode), inventory, equipmentNotes,
+      excludedNote: excluded.length ? `Entered loads not contributing after proposal: ${excluded.map(load => `${load.name}: ${k(load.connectedW)} (${ratingBasis(load)}) — ${load.excluded}`).join(". ")}.` : "",
+      zeroNote: zeroLoads.length ? `No connected load entered for: ${zeroLoads.map(load => zeroNames[load.key] || load.name).join(", ")}. Equipment absence not verified.` : "",
+      breakerNote: trace.loads.some(load => load.isEstimate) ? "Breaker-derived connected loads are estimates only. Use verified equipment nameplate ratings where available." : "",
+    };
+  }
+
   return {
+    buildSingleInspectorReport,
     prepareLoadInput,
     describeLoadRating,
     buildSingleReportTrace,
@@ -1679,20 +1825,6 @@ if (typeof document !== "undefined") {
     ];
   }
 
-  function singleInputRows(input) {
-    return [
-      ["Ground floor", valueWithUnit(input.area.ground, input.unitSystem)],
-      ["Basement over 1.8 m", valueWithUnit(input.area.basement, input.unitSystem)],
-      ["Upper floors above ground floor", valueWithUnit(input.area.above, input.unitSystem)],
-      ["Gas range / no electric range", yesNo(input.gasRange)],
-      ["Heat demand method", heatMethodLabel(input.heatMethod)],
-      ["Heating and AC interlocked", yesNo(input.hvacInterlocked)],
-      ["Existing EVSE demand mode", evModeLabel(input.evMode)],
-      ["Existing EVEMS maximum", valueWithUnit(input.evManagedKw, "kW")],
-      ["Equipment ratings and additional loads", "Every input is listed individually in the equipment inventory, including unknown ratings and zero-connected rows."],
-    ];
-  }
-
   function multiInputRows(input, result) {
     const enteredGroups = input.enteredGroups || input.groups;
     const existingUnitLoadRows = enteredGroups.reduce((sum, group) => sum + (group.existingUnitLoads || []).length, 0);
@@ -1856,16 +1988,6 @@ if (typeof document !== "undefined") {
       ["Breaker-size entries", "Breaker entries estimate connected load as amps times volts. Use nameplate kW where known, especially for permit evidence."],
     ];
 
-    if (activeMode === "single") {
-      rows.push(
-        ["Heat demand method", heatMethodLabel(input.heatMethod)],
-        ["Heating and AC interlock", yesNo(input.hvacInterlocked)],
-        ["EVSE demand mode", `${evModeLabel(input.evMode)}${input.evMode === "managed" ? ` / EVEMS max ${valueWithUnit(input.evManagedKw, "kW")}` : ""}`],
-        ["Proposed loads", "Proposed loads are added to the selected demand bucket and compared before/after against the selected main breaker."]
-      );
-      return rows;
-    }
-
     rows.push(
       ["Calculation path", selectedText(els.multiBuildingType)],
       ["Unit heat demand methods", input.groups.map((group, index) => `Group ${index + 1}: ${heatMethodLabel(group.heatMethod)}`).join("; ") || "No unit groups"],
@@ -1897,33 +2019,85 @@ if (typeof document !== "undefined") {
     return [];
   }
 
-  function appendSingleWorkedReport(parent, trace) {
-    const comparison = appendSection(parent, "Before / After — Item A versus Item B");
-    appendTable(comparison, ["Scenario", "Item A subtotal", "Item B minimum", "Governing load"], [
-      ["Before proposed loads", formatWatts(trace.before.result.itemA), formatWatts(trace.before.result.itemB), formatWatts(trace.before.result.totalW)],
-      ["After proposed loads", formatWatts(trace.after.result.itemA), formatWatts(trace.after.result.itemB), formatWatts(trace.after.result.totalW)],
-    ]);
-    comparison.append(createEl("p", "print-note", `Item A changes from ${formatWatts(trace.before.result.itemA)} to ${formatWatts(trace.after.result.itemA)}. The governing result is separately selected as max(Item A, Item B) in each scenario; a load addition can leave that result unchanged while the minimum still governs.`));
+  function renderSingleInspectorReport(report, input, result) {
+    const proposedLoads = proposedLoadDetails(true).map(detail => detail.load);
+    const data = app.buildSingleInspectorReport(input, proposedLoads, els.supplyMode.value);
+    const before = app.calculateSingle(input);
+    const page = (label, title) => {
+      const section = createEl("section", "inspector-page");
+      const header = createEl("header", "print-header");
+      header.append(createEl("p", "print-eyebrow", `CSA C22.1:24 Section 8 · Single dwelling · ${label}`));
+      header.append(createEl("h1", "", title));
+      section.append(header);
+      report.append(section);
+      return section;
+    };
+    const overview = page("01 / Project & result", "Residential Load Calculation");
+    const meta = appendSection(overview, "Project information");
+    const metadata = reportMetadataRows();
+    if (metadata.length) appendTable(meta, [], metadata, { className: "print-table print-meta-table", showHead: false });
+    else meta.append(createEl("p", "print-note", "Project identification has not been entered."));
+    const proposed = appendSection(overview, "Proposed equipment");
+    if (proposedLoads.length) appendTable(proposed, ["Equipment", "Connected load", "Calculation category"], proposedLoads.map(load => [
+      `${load.name || "Load"}${Number(load.qty) > 1 ? ` (qty ${load.qty})` : ""}`,
+      formatWatts(app.describeLoadRating(load).connectedW), demandBucketText(load.bucket),
+    ]), { className: "print-table inspector-proposed" });
+    else proposed.append(createEl("p", "print-note", "No proposed equipment entered; existing-load assessment only."));
+    const final = appendSection(overview, "Final calculated result");
+    const check = panelCheckStatus(result, "After proposed loads", "single");
+    const banner = createEl("div", `print-decision-banner ${check.passes ? "is-pass" : "is-fail"}`);
+    banner.append(createEl("strong", "", positiveNumber(els.mainBreakerAmps.value) > 0
+      ? proposedLoads.length ? panelDecision(before, result, "single").title : `${check.text.toUpperCase()} — EXISTING LOADS`
+      : "MAIN BREAKER CHECK NOT EVALUATED"));
+    banner.append(createEl("p", "inspector-result", `${formatWatts(result.totalW)} / ${formatAmps(app.ampsForWatts(result.totalW, els.supplyMode.value).amps)}`));
+    banner.append(createEl("p", "", selectedText(els.supplyMode)));
+    final.append(banner);
+    appendTable(final, [], [
+      ["Selected main breaker", selectedText(els.mainBreakerAmps)],
+      ["Panel check limit", positiveNumber(els.mainBreakerAmps.value) > 0 ? `${check.limitLabel}. ${check.basis}.` : "Not evaluated"],
+    ], { className: "print-table print-meta-table", showHead: false });
+    final.append(createEl("p", "print-note", "Result reflects entered values and the selected panel-check policy; PASS is not approval to install. Inventory and calculation follow. Review assumptions and verify the installation before sign-off."));
 
-    const inventory = appendSection(parent, "Equipment Inventory — Existing and Proposed");
-    inventory.classList.add("print-page-start");
-    inventory.append(createEl("p", "print-note", "All ratings and identification below are entered information, not verified equipment data. Connected input power is not the final demand. Unknown inputs and zero-connected rows remain visible; they are not proof of absent equipment. Each additional row includes its quantity before the existing threshold logic is applied."));
-    appendTable(inventory, ["Equipment / scope / source", "Rating and connected-load arithmetic", "Demand treatment"], trace.loads.map(load => [
-      `${load.name}\n${load.scope}\nQty: ${load.qty || 1}\nModel: ${load.model}\nSource / nameplate notes: ${load.source}`,
-      `${load.ratingText}\n${load.formula}\nEntered breaker: ${load.amps === undefined || load.amps === "" ? "Not supplied" : load.amps + " A"}; voltage: ${load.volts || 240} V`,
-      `${demandBucketText(load.bucket)}\n${load.treatment}`,
-    ]), { className: "print-table print-inventory-table" });
+    const inventory = page("02 / Equipment", "Equipment Inventory");
+    inventory.append(createEl("p", "print-note", "Contributing existing equipment and all proposed equipment. Demand treatment reflects the after-proposal calculation; pooled values are not additive per-device demands."));
+    if (data.inventory.length) appendTable(inventory, ["Equipment", "Status", "Rating basis", "Connected load", "Demand calculation", "Calculated demand"], data.inventory, { className: "print-table inspector-inventory" });
+    else inventory.append(createEl("p", "print-note", "No contributing or proposed equipment entered."));
+    [data.breakerNote, data.zeroNote, data.excludedNote, ...data.equipmentNotes].filter(Boolean).forEach(text => inventory.append(createEl("p", "print-note", text)));
 
-    [["Before proposed loads", trace.before], ["After proposed loads", trace.after]].forEach(([title, stage]) => {
-      const section = appendSection(parent, `Worked Calculation — ${title}`);
-      section.classList.add("print-page-start");
-      section.append(createEl("p", "print-note", "Arithmetic uses unrounded calculation values. Display text is rounded to at most eight decimal places. Heat, AC, water and EV additions include all rows assigned to that bucket in this scenario."));
-      appendTable(section, ["Step / reference", "Substitution and result"], stage.steps.map(s => [s.label, s.formula]), { className: "print-table print-worked-table" });
+    const calculation = page("03 / Calculation", "Worked Load Calculation");
+    data.worked.forEach(step => {
+      const block = createEl("div", "inspector-step");
+      block.append(createEl("h3", "", step.title), createEl("p", "", step.text));
+      calculation.append(block);
     });
-    const caveats = appendSection(parent, "Input Evidence and Calculation Limitations");
+    const comparison = appendSection(calculation, "Existing / after proposal");
+    comparison.append(createEl("p", "print-note inspector-sum-note", "Item A = basic + range + heating / A/C + water heating + EVSE + other loads."));
+    appendTable(comparison, ["Calculation", "Existing", "After proposal"], data.comparison, { className: "print-table inspector-comparison" });
+    comparison.append(createEl("p", "print-note inspector-governing", data.governingNote));
+
+    const notes = page("04 / Review", "Notes, Assumptions & Sign-Off");
+    const assumptions = appendSection(notes, "Selected assumptions");
+    appendTable(assumptions, [], [
+      ["Range", input.gasRange ? "Gas / no electric range selected" : "Electric range calculation when a connected rating is entered"],
+      ["Heat demand", heatMethodLabel(input.heatMethod)],
+      ["Heating / A/C interlock", input.hvacInterlocked ? "Interlocked — greater demand selected; verify control arrangement" : "Not interlocked — heating and A/C demands added"],
+      ["Existing EVSE", `${evModeLabel(input.evMode)}${input.evMode === "managed" ? `; entered EVEMS maximum ${valueWithUnit(input.evManagedKw, "kW")}` : ""}`],
+    ], { className: "print-table print-assumptions-table", showHead: false });
+    const evidence = appendSection(notes, "Input evidence & verification");
+    const bullets = [
+      "Equipment identification and source notes are user-entered, not independently verified. Blank ratings are unknown. An entered 0 kW retains the breaker fallback; neither zero nor a blank entry verifies equipment absence.",
+      "Basement area is weighted at 75% only where height exceeds 1.8 m. Item B uses ground and upper-floor area, excluding the basement.",
+      "Other-load eligibility applies to each entered row total, including quantity, strictly over 1500 W. Additional range presets remain in the other-load category, not the primary range calculation.",
+      "Report values are rounded for readability (kW to two decimals, area/current generally to one). Calculations and threshold decisions retain full precision. The headline current rounds up to whole amperes, consistent with the calculator.",
+      "Verify the entered ratings, demand classifications, interlock and EV management eligibility, and applicable local requirements. The selected Item-B-versus-80% panel-check policy is retained, not validated by this report.",
+    ];
+    if (proposedLoads.some(load => load.bucket === "evse") || (input.quoteLoads || []).some(load => load.bucket === "evse")) bullets.push("Additional / proposed EVSE is added at 100% after the existing EVSE demand calculation; the existing EVEMS maximum does not cap these rows. Confirm the control design and permitted calculation method separately.");
+    bullets.push("Planning aid only. Confirm final service, feeder, conductor and overcurrent sizing with the authority having jurisdiction. Rule references do not reproduce CSA C22.1 text.");
     const list = createEl("ul", "print-notes");
-    trace.warnings.forEach(warning => list.append(createEl("li", "", warning)));
-    caveats.append(list);
+    bullets.forEach(text => list.append(createEl("li", "", text)));
+    evidence.append(list);
+    appendSignatureSection(notes);
+    notes.append(createEl("footer", "print-footer", "Review of this worksheet does not replace equipment verification or authority approval."));
   }
 
   function appendMultiRatingEvidence(parent, input) {
@@ -1955,7 +2129,12 @@ if (typeof document !== "undefined") {
       ? app.calculateSingle(singleInput({ includeProposed: false }))
       : app.calculateMulti(multiInput({ includeProposed: false }));
     const panelEval = panelEvaluationResults(beforeResult, result);
-    report.innerHTML = "";
+    report.replaceChildren();
+    report.classList.toggle("inspector-report", activeMode === "single");
+    if (activeMode === "single") {
+      renderSingleInspectorReport(report, input, result);
+      return;
+    }
 
     const header = createEl("header", "print-header");
     header.append(createEl("p", "print-eyebrow", "CSA C22.1:24 Section 8"));
@@ -2007,16 +2186,9 @@ if (typeof document !== "undefined") {
     ));
 
     const inputs = appendSection(report, "Entered Inputs");
-    appendTable(inputs, ["Input", "Value"], activeMode === "single"
-      ? singleInputRows(input)
-      : multiInputRows(input, result));
-
-    if (activeMode === "single") {
-      appendSingleWorkedReport(report, app.buildSingleReportTrace(input, proposedLoadDetails(true).map(detail => detail.load), els.supplyMode.value));
-    } else {
-      appendUnitGroupDetails(report, input, result);
-      appendMultiRatingEvidence(report, input);
-    }
+    appendTable(inputs, ["Input", "Value"], multiInputRows(input, result));
+    appendUnitGroupDetails(report, input, result);
+    appendMultiRatingEvidence(report, input);
     appendAssumptionsSection(report, input);
 
     const comparison = appendSection(report, "Code Comparison");

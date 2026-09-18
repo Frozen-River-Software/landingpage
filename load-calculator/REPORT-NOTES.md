@@ -1,6 +1,6 @@
-# Worked-report implementation notes
+# Inspector report implementation notes
 
-This is a static calculator; there are no runtime packages or build step. Tests require a Node version with `node:test` (Node 18+).
+Static HTML/CSS/JavaScript; no runtime packages or build step. Node 18+ supports the dependency-free tests:
 
 ```sh
 cd load-calculator
@@ -8,31 +8,36 @@ npm test
 npm run check
 ```
 
-## Report scope
+## Single-dwelling export
 
-- Single dwelling exports include an individual equipment inventory (including inactive/unknown rows), before/after Item A versus Item B, and explicit substitution arithmetic for area, basic load, range, heating, AC/interlock, water, EVSE, other loads, minimum and amps conversion.
-- `calculateSingle` exposes its existing intermediates as `components`. The pure `buildSingleReportTrace` uses those values; it does not implement a second demand calculation.
-- Equipment model and source/nameplate notes are optional user-entered text, not verified data. Single fixed inputs, shared additional-load rows and proposed rows support these notes. No equipment data is prefilled.
-- Positive **per-item** nameplate kW on shared additional-load rows is adapted to the engine's existing connected-watts input. Quantity applies once. This works for single dwellings, apartment groups, row-housing groups and partial-unit loads.
-- Multi-family exports retain their existing group/diversity calculations and add rating/source evidence for every fixed group input, additional row and proposed row. Full step-by-step multi-family diversity and selected-unit auditing are **not** implemented. That limitation is stated in the export. Fixed group inputs do not have individual model/source fields; their source is printed as not supplied.
-- Print CSS allows multiple pages, repeats table headers, keeps normal rows together, wraps long text and starts the inventory and each single-dwelling worked scenario on a new page. Chromium PDF pagination was exercised and the nine-page illustrative worksheet inspected visually; all extracted words were inside page bounds. Browser differences still warrant checking the actual submission PDF.
+- The dedicated single-dwelling renderer replaces the legacy duplicated report sections. The normal report has four intentional page starts: project/proposal/final result, equipment inventory, worked calculation with one before/after comparison, and assumptions/review/sign-off. Long equipment lists, source notes or complex calculations may continue onto extra pages rather than shrink or clip.
+- `buildSingleInspectorReport` is a pure presentation helper. It obtains before/after engine components through the existing public `buildSingleReportTrace`; the trace and its regression tests remain available. Calculation formulas, thresholds, rounding and panel-check policy are unchanged.
+- The six-column inventory contains contributing existing equipment and every proposed row. Zero existing entries collapse to a single “No connected load entered for…” line with an absence-not-verified qualification. Nonzero excluded equipment is retained in a concise note with its reason. Classification reflects the **after-proposal** scenario; changed before/after HVAC and other-load arithmetic is shown on the calculation page.
+- Rating basis shows breaker A × V estimates, per-item nameplate kW and quantity, or entered row-total connected load. A single breaker-estimate warning follows the table. Optional model/source evidence follows as full-width text, preventing long metadata from bloating the six-column rows. All user-entered text is rendered with `textContent`, not interpolated HTML.
+- A no-range other-load pool and diversified/interlocked HVAC do not have additive per-device demands. Their inventory rows explicitly point to the pooled calculation. Managed existing EVSE uses the entered EVEMS maximum; additional/proposed EVSE remains separately counted at 100% under the existing engine behavior.
+- Worked arithmetic covers basement weighting, effective area, additional 90 m² portions, both range branches, other-load factors, heat diversity/interlock, water and EV demand, Item B and current conversion. Only changed arithmetic is repeated between scenarios. User-facing output does not print `ceil()`, `max()` or `min()` expressions.
+- One comparison table shows every demand component, Item A, Item B, governing load, Item A current and governing current. The explanation identifies which value governs and why a real addition may leave the final requirement unchanged.
+- Print body/calculation text is generally 10 pt; inventory is 9.5 pt, with wrapping and repeated headers. Headline current retains the existing whole-amp upward rounding; table current and area generally use one decimal and kW two decimals. Engine values and threshold decisions remain full precision.
 
 ## Preserved behavior requiring review
 
-This change is not a CEC compliance audit and does not establish inspector acceptance. Original demand formulas and panel/feeder policies are retained.
+This is a report presentation change, **not** a CEC compliance audit or assurance of inspector acceptance.
 
-- A positive kW rating overrides breaker A × V. **Blank means unknown. An entered 0 kW historically falls back to the breaker**, rather than overriding it. The UI and report distinguish these inputs and explain that behavior. Setting breaker amps to zero with no positive rating enters no connected load; that does not verify equipment absence.
-- Additional/proposed EVSE is added at 100% after the existing EVSE management/omission calculation. The existing EVEMS maximum does not cap these rows. Reports warn about this rather than silently changing the rule.
-- Other-load qualification is evaluated on each row's total including quantity, strictly greater than 1500 W. Without a primary electric range, the first 6 kW of the qualifying pool is taken at 100%, the remainder at 25%.
-- Additional range presets remain in the existing `other` bucket. They do not become the primary range formula.
-- The existing Item-B-versus-80% panel policy and multi-family partial-unit allocation/selected-unit policies are not validated or revised. Confirm applicability with the authority having jurisdiction.
+- Positive per-item kW overrides breaker A × V. Blank means unknown. Entered **0 kW still falls back to the breaker**, rather than overriding it; inventory and notes distinguish this. Zero does not verify equipment absence.
+- Other-load qualification uses each row total including quantity, strictly greater than 1500 W. With no primary electric range, the first 6 kW of that pool is at 100% and the balance at 25%. Additional range presets remain in the other-load category.
+- Additional/proposed EVSE is added at 100% after existing EVSE management/omission; an existing EVEMS maximum does not cap those additions.
+- Existing Item-B-versus-80% panel policy and multi-family partial-unit/selected-unit policies are retained, not validated. Confirm applicability with the authority having jurisdiction.
+- Multi-family exports retain their group/diversity and rating-evidence path. Full worked multi-family diversity and selected-unit auditing are not implemented; the export continues to state that limitation.
 
 ## Verification
 
-TDD: the first fixture test was run against the missing report helper and failed (`undefined` instead of `function`). Further tests were run while heat/EV steps, inventory/source evidence and the kW adapter were missing (4 failing, 1 passing), then implemented. The Node suite now covers the requested illustrative fixture, alternate formulas, threshold/minimum boundaries, evidence preservation, input immutability, and shared multi-family kW/quantity handling.
+- Strict RED→GREEN slices were exercised for the missing inspector helper, active-only inventory, truthful pooling/exclusions, canonical human arithmetic/comparison, alternate demand branches, compact optional equipment evidence, elimination of zero-HVAC multiplication clutter, and literal custom labels/zero-rating evidence. Existing public-trace tests were retained. `npm test` now runs both `*.test.js` files.
+- The canonical illustrative fixture is 1400 + 800 + (1400 × 75%) = 3250 ft² / 301.9 m², 8 kW basic, 6 kW range, and (7.2 + 1.8) × 25% = 2.25 kW other demand. Proposed 5.1 kW A/C changes Item A 16.25 → 21.35 kW; Item B remains 24 kW, so governing current remains 100 A at 240 V. The Jet tub label is explicitly illustrative, not a claim about installed equipment.
+- 18 Node tests pass, including review regressions for threshold precision, an HVAC interlock winner changing, excluded-rating/quantity evidence, and identification notes on zero-connected entries. Syntax and diff-whitespace checks pass. A pre-existing independent baseline harness confirms 288 single-dwelling combinations retain original calculation outputs.
+- Display precision increases when ordinary rounding would hide a threshold or make unequal comparison values look equal; entered floor-area operands retain their supplied precision. Equipment identification notes are collected independently of inclusion, labelled Existing/Proposed, and excluded-load notes retain the same rating basis and quantity as active rows.
+- Parent verification reran the canonical and complex browser exports, visually inspected all canonical pages, and exercised twelve loads with long equipment/source notes. The canonical example remains four pages; the long-input report expands and retains every end marker and sign-off.
+- Parent-workspace QA `qa-tools/inspector-report.cjs` was observed failing against the legacy nine-page report, then passing all assertions against a four-page Chromium PDF with project metadata, optional proposed model/source, named illustrative load, unchanged totals and no software functions/repeated missing-data placeholders. Output: `artifacts/inspector-redesign.pdf`; generated artifacts are outside the deployed repository. Inventory and calculation pages were visually inspected for readable columns and unclipped content. Parent review separately verifies the final PDF.
 
-The 1.8 kW extra load in the test fixture is explicitly illustrative, not a claim about installed equipment. The fixture verifies 3250 ft² → 301.93488 m², 8 kW basic, 6 kW range, (7.2 + 1.8) × 25% = 2.25 kW other, and 5.1 kW proposed AC: Item A 16.25 → 21.35 kW, both below the 24 kW minimum, yielding 24000 W ÷ 240 V = 100 A.
+- Additional Chromium smoke checks pass for literal HTML equipment text, positive-nameplate override and quantity, 390/768/1440 px screens, both multi-family export paths with partial-unit loads, and gas-range/heating-diversity/interlock/managed-EV arithmetic. The extra QA script is `qa-tools/inspector-extra-subagent.cjs`, outside the repository.
 
-A separate deterministic comparison against baseline commit `6705d3a` exercised 360 original-input cases across single, apartment and row-housing calculations. All original result fields were identical (excluding the newly added `components` field).
-
-Final verification: 10 Node tests pass, syntax and diff-whitespace checks pass. Independent Chromium exercises cover nameplate overrides, quantity multiplication, equipment/source propagation, literal HTML handling, 390/768/1440 px screen widths, both multi-family export paths with a partial-unit load, and gas-range/heat-interlock/EVEMS scenarios. An additional 288 single-dwelling comparisons preserve baseline calculation results. Review caught and fixed a contradictory range-inventory label when no connected range is entered; a regression test covers that branch. Both Item-A current and governing current now print their complete conversions. Browser harnesses and illustrative PDFs are outside the deployed repository in the parent workspace's `qa-tools/` and `artifacts/` directories. No deployment is implied by these checks.
+No commit, push or deployment is implied by these checks.
